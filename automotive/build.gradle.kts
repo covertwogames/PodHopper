@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.viewpager)
     implementation(libs.automattic.crashlogging)
+    implementation(libs.coil)
     implementation(libs.compose.material)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)

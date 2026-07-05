@@ -98,24 +98,26 @@ data class PocketCastsImageRequestFactory(
         }
 
     private fun RequestType.data(context: Context) = when (this) {
-        is RequestType.Podcast -> data(context)
+        is RequestType.Podcast -> data()
         is RequestType.PodcastEpisode -> data(context)
         is RequestType.UserEpisode -> data()
         is RequestType.FileOrUrl -> filePathOrUrl
     }
 
-    // PodHopper: a bare podcast uuid used to be turned into a Pocket Casts artwork CDN url, which
-    // has no entry for feed podcasts. Feed artwork flows through create(podcast)/FileOrUrl with
-    // the real feed image url; a uuid-only request falls straight to the placeholder drawable.
-    private fun RequestType.Podcast.data(context: Context) = placeholderId
+    // PodHopper: a bare podcast uuid becomes a podhopper-artwork marker uri. FeedArtworkInterceptor
+    // (registered on the app ImageLoader) resolves the marker to the feed's thumbnail url from the
+    // local database, which is how uuid-only surfaces (podcast page header, playlist artwork, the
+    // compose PodcastImage component) show feed artwork with no Pocket Casts url ever built. A
+    // podcast with no feed artwork falls through to the request's error drawable.
+    private fun RequestType.Podcast.data() = podcastUuid?.let(FeedArtworkInterceptor::podcastArtworkUri) ?: placeholderId
 
-    // PodHopper: episode rows used to fall back to the Pocket Casts artwork CDN keyed by the
-    // podcast uuid, which 404s for feed podcasts. Use the feed's episode image, then the artwork
-    // embedded in the downloaded file, then the placeholder drawable; never a Pocket Casts url.
+    // PodHopper: mirrors the upstream fallback structure with the marker uri in place of the
+    // Pocket Casts CDN url, so the players, Up Next and episode rows show the podcast's feed
+    // artwork when there is no per-episode image or the episode-artwork setting is off.
     private fun RequestType.PodcastEpisode.data(context: Context): Any = if (useEpisodeArtwork) {
-        episode.imageUrl ?: EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: placeholderId
+        episode.imageUrl ?: EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: FeedArtworkInterceptor.podcastArtworkUri(episode.podcastUuid)
     } else {
-        EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: placeholderId
+        FeedArtworkInterceptor.podcastArtworkUri(episode.podcastUuid)
     }
 
     private fun RequestType.UserEpisode.data(): Any = if (useEpisodeArtwork) {

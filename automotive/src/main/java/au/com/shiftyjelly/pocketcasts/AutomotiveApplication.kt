@@ -31,6 +31,8 @@ import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.FirebaseRemote
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.PreferencesFeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.utils.log.RxJavaUncaughtExceptionHandling
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.squareup.moshi.Moshi
@@ -51,6 +53,8 @@ class AutomotiveApplication :
     Configuration.Provider {
 
     @Inject lateinit var moshi: Moshi
+
+    @Inject lateinit var coilImageLoader: ImageLoader
 
     @Inject lateinit var playbackManager: PlaybackManager
 
@@ -83,6 +87,11 @@ class AutomotiveApplication :
 
     override fun onCreate() {
         super.onCreate()
+
+        // PodHopper: register the DI ImageLoader (which carries FeedArtworkInterceptor) as the
+        // singleton the loadInto extension and compose surfaces resolve, so uuid-addressed
+        // artwork resolves to feed thumbnails on the car exactly as it does on the phone.
+        SingletonImageLoader.setSafe { coilImageLoader }
 
         setupFeatureFlags()
 
