@@ -19,6 +19,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSync
 import au.com.shiftyjelly.pocketcasts.repositories.file.FileStorage
 import au.com.shiftyjelly.pocketcasts.repositories.file.StorageOptions
 import au.com.shiftyjelly.pocketcasts.repositories.jobs.VersionMigrationsWorker
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -209,6 +210,9 @@ class PocketCastsApplication :
             notificationManager.setupOffersNotifications()
             appLifecycleObserver.setup()
             PlaybackServiceToggle.ensureCorrectServiceEnabled(this@PocketCastsApplication)
+            // PodHopper: periodic cross-device sync so positions and completions from other
+            // devices land even while the app is closed (playlists, badges, auto-download).
+            PodHopperSyncWorker.schedulePeriodicWork(this@PocketCastsApplication)
 
             SingletonImageLoader.setSafe { coilImageLoader }
 

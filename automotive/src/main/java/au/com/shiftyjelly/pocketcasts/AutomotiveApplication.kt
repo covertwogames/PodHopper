@@ -22,6 +22,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
@@ -127,6 +128,9 @@ class AutomotiveApplication :
 
         PlaybackStatsSyncWorker.scheduleOneTimeWork(this)
         PlaybackStatsSyncWorker.schedulePeriodicWork(this)
+        // PodHopper: periodic cross-device sync on the car too, so completions and positions from
+        // the phone land between drives, not only at session connect.
+        PodHopperSyncWorker.schedulePeriodicWork(this)
     }
 
     override fun onTerminate() {

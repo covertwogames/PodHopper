@@ -32,6 +32,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadType
 import au.com.shiftyjelly.pocketcasts.repositories.file.FileStorage
 import au.com.shiftyjelly.pocketcasts.repositories.images.PocketCastsImageRequestFactory
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationOpenReceiverActivity
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -94,6 +95,7 @@ class RefreshPodcastsThread(
         fun syncManager(): SyncManager
         fun ratingsManager(): RatingsManager
         fun appDatabase(): AppDatabase
+        fun podHopperPositionSync(): PodHopperPositionSync
     }
 
     @Volatile
@@ -235,6 +237,12 @@ class RefreshPodcastsThread(
             settings.setRefreshState(syncRefreshState)
         } else {
             settings.setRefreshState(RefreshState.Success(Date(System.currentTimeMillis())))
+            // PodHopper: piggyback the cross-device sync on every successful refresh. Playlists
+            // and badge counts recompute against fresh played and position state at the same
+            // moment new episodes arrive, and parked positions for episodes this refresh just
+            // brought in get applied. Fire-and-forget with its own throttle, so it never slows
+            // the refresh down or hammers the backend on refresh bursts.
+            entryPoint.podHopperPositionSync().fullSync()
         }
     }
 

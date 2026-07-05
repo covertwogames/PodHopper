@@ -35,10 +35,13 @@ import org.json.JSONObject
  * Syncs playback position and completion across devices (phone and car) through Supabase.
  *
  * This restores the cross device resume behaviour that worked in the AntennaPod build, with no
- * dependency on Pocket Casts servers. Two pulls (when the playback service starts, and when the
- * app comes to the foreground) and four pushes (a periodic sample while playing, an immediate push
- * on pause, an immediate push on service shutdown, and an explicit completion push on natural
- * finish or manual mark-as-played) keep both surfaces in step.
+ * dependency on Pocket Casts servers. Pulls run when the playback service starts, when the app
+ * comes to the foreground (and on a timer while it stays there), piggybacked on every successful
+ * podcast refresh, and from a periodic background worker; pushes run as a periodic sample while
+ * playing, immediately on pause and on service shutdown, and as an explicit completion push on
+ * natural finish or manual mark-as-played. The background paths also run a cursor-independent
+ * completions reconcile (see [reconcileCompletionsBlocking]) so an episode finished on another
+ * device is marked played here even when the completion predates this device's first sync.
  *
  * Completion is an explicit fact, not a guess. A finish writes completed=true to the row; the
  * receiver runs a real local mark-as-played (removes from Up Next and auto-archives per the
@@ -230,6 +233,19 @@ class PodHopperPositionSync @Inject constructor(
             return
         }
         applicationScope.launch(Dispatchers.IO) {
+            pullLatestPositionsBlocking(adoptCurrentEpisode)
+        }
+    }
+
+    /**
+     * The pull body, run to completion. Callers that must wait for the sync to finish (the
+     * periodic sync worker) use this directly; [pullLatestPositions] launches it fire-and-forget.
+     */
+    private suspend fun pullLatestPositionsBlocking(adoptCurrentEpisode: Boolean) {
+        if (!supabaseClient.isLoggedIn()) {
+            return
+        }
+        withContext(Dispatchers.IO) {
             try {
                 val installId = getOrCreateInstallId()
                 var cursor = prefs().getLong(PREF_LAST_PULL_MS, FIRST_SYNC_SENTINEL)
@@ -287,6 +303,105 @@ class PodHopperPositionSync @Inject constructor(
                 }
             } catch (e: Exception) {
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position pull failed: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * PodHopper background sync: the delta position pull plus the completions reconcile, run to
+     * completion. This is the entry point for the periodic sync worker and the refresh piggyback.
+     * Throttled to one run every [FULL_SYNC_MIN_INTERVAL_MS] unless [force] is set (the periodic
+     * worker forces, since WorkManager already spaces its runs), so a burst of refresh triggers
+     * cannot hammer the backend. Never adopts the now-playing episode; that belongs to the
+     * foreground reconcile.
+     */
+    suspend fun fullSyncBlocking(force: Boolean = false) {
+        if (!supabaseClient.isLoggedIn()) {
+            return
+        }
+        val now = System.currentTimeMillis()
+        val last = prefs().getLong(PREF_LAST_FULL_SYNC_MS, 0L)
+        if (!force && now - last < FULL_SYNC_MIN_INTERVAL_MS) {
+            return
+        }
+        prefs().edit().putLong(PREF_LAST_FULL_SYNC_MS, now).apply()
+        pullLatestPositionsBlocking(adoptCurrentEpisode = false)
+        reconcileCompletionsBlocking()
+    }
+
+    /** Fire-and-forget [fullSyncBlocking], for callers that cannot suspend (the refresh pipeline). */
+    fun fullSync() {
+        if (!supabaseClient.isLoggedIn()) {
+            return
+        }
+        applicationScope.launch(Dispatchers.IO) {
+            fullSyncBlocking()
+        }
+    }
+
+    /**
+     * Reconciles completed episodes independently of the delta pull's cursor. The delta cursor is
+     * deliberately seeded to "now" on a device's first sync and only ever moves forward, so a
+     * completion written before that first sync, or inside any window a pull missed, is invisible
+     * to it forever; the episode then sits unplayed in this device's playlists even though it was
+     * finished elsewhere. This pass walks every completed row for the account with its own
+     * cursor, starting from the beginning of history, and runs a real local mark-as-played for any
+     * episode that is not already completed here (Up Next removal and this device's auto-archive
+     * settings included, via [applyOne]). It is idempotent: rows already applied are skipped by
+     * the local completed check, and a completed episode is never regressed. Positions are
+     * deliberately NOT replayed from history, because a historical position row can be older than
+     * this device's local progress and would rewind it; live positions belong to the delta pull.
+     */
+    private suspend fun reconcileCompletionsBlocking() {
+        withContext(Dispatchers.IO) {
+            try {
+                val installId = getOrCreateInstallId()
+                var cursor = prefs().getLong(PREF_COMPLETIONS_CURSOR, 0L)
+                while (true) {
+                    val query = "select=episode_key,position_sec,total_sec,updated_at_ms" +
+                        "&completed=is.true" +
+                        "&device_id=neq.$installId" +
+                        "&updated_at_ms=gt.$cursor" +
+                        "&order=updated_at_ms.asc" +
+                        "&limit=${PodHopperConfig.PULL_PAGE_LIMIT}"
+                    val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
+                    val count = rows.length()
+                    if (count == 0) {
+                        break
+                    }
+                    var maxTs = cursor
+                    for (i in 0 until count) {
+                        val row = rows.getJSONObject(i)
+                        val updatedAtMs = row.optLong("updated_at_ms", 0L)
+                        if (updatedAtMs > maxTs) {
+                            maxTs = updatedAtMs
+                        }
+                        val episodeKey = row.optString("episode_key")
+                        if (episodeKey.isEmpty()) {
+                            continue
+                        }
+                        val episode = episodeManager.findByUuid(episodeKey)
+                        if (episode == null) {
+                            // Same guarantee as the delta pull: an episode whose feed has not
+                            // refreshed here yet is parked, not dropped, and applied once it exists.
+                            parkRow(episodeKey, row.optInt("position_sec", -1), row.optInt("total_sec", 0), completed = true, remoteTs = updatedAtMs)
+                        } else if (episode.playingStatus != EpisodePlayingStatus.COMPLETED) {
+                            applyOne(episode, row.optInt("position_sec", -1), row.optInt("total_sec", 0), completed = true)
+                        }
+                    }
+                    if (maxTs > cursor) {
+                        cursor = maxTs
+                        prefs().edit().putLong(PREF_COMPLETIONS_CURSOR, cursor).apply()
+                    } else {
+                        break
+                    }
+                    if (count < PodHopperConfig.PULL_PAGE_LIMIT) {
+                        break
+                    }
+                }
+                retryParkedRows()
+            } catch (e: Exception) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper completions reconcile failed: ${e.message}")
             }
         }
     }
@@ -693,6 +808,8 @@ class PodHopperPositionSync @Inject constructor(
             .remove(PREF_LAST_PULL_MS)
             .remove(PREF_PARKED)
             .remove(PREF_LAST_LOCAL_ACTIVITY_MS)
+            .remove(PREF_COMPLETIONS_CURSOR)
+            .remove(PREF_LAST_FULL_SYNC_MS)
             .apply()
     }
 
@@ -704,6 +821,9 @@ class PodHopperPositionSync @Inject constructor(
         private const val PREF_LAST_PULL_MS = "last_pull_ms"
         private const val PREF_PARKED = "parked_rows"
         private const val PREF_LAST_LOCAL_ACTIVITY_MS = "last_local_activity_ms"
+        private const val PREF_COMPLETIONS_CURSOR = "completions_cursor"
+        private const val PREF_LAST_FULL_SYNC_MS = "last_full_sync_ms"
+        private const val FULL_SYNC_MIN_INTERVAL_MS = 15 * 60 * 1000L
         private const val MIN_PUSH_INTERVAL_MS = 4000L
         private const val PLAY_PULL_TIMEOUT_MS = 5000L
         private const val BROWSE_PULL_MIN_INTERVAL_MS = 10000L
