@@ -114,7 +114,8 @@ internal enum class ProfileSection(
     ;
 
     companion object {
-        fun visibleEntries(): List<ProfileSection> = entries.toList()
+        // PodHopper: the Files section is Pocket Casts cloud storage, which no longer exists.
+        fun visibleEntries(): List<ProfileSection> = entries.filterNot { it == CloudFiles }
     }
 }
 

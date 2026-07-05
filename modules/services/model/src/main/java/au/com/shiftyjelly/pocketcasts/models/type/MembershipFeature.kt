@@ -29,6 +29,24 @@ data class Membership(
             createdAt = null,
             features = emptyList(),
         )
+
+        // PodHopper: there is no Plus tier to buy, so every install is permanently entitled. This
+        // synthetic lifetime subscription is the cachedMembership default, which unlocks every
+        // membership gated feature (bookmarks, chapter deselection, headphone bookmark action,
+        // banner ad suppression) with no billing and no Pocket Casts account. Gift platform with
+        // zero gift days keeps isChampion false; auto renewing keeps isExpiring false.
+        val PodHopperLifetime = Membership(
+            subscription = Subscription(
+                tier = SubscriptionTier.Plus,
+                billingCycle = null,
+                platform = SubscriptionPlatform.Gift,
+                expiryDate = Instant.parse("9999-12-31T23:59:59Z"),
+                isAutoRenewing = true,
+                giftDays = 0,
+            ),
+            createdAt = null,
+            features = emptyList(),
+        )
     }
 }
 

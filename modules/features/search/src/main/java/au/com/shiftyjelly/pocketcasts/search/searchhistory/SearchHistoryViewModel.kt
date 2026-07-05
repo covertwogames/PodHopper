@@ -50,8 +50,9 @@ class SearchHistoryViewModel @Inject constructor(
 
     fun start() {
         viewModelScope.launch(ioDispatcher) {
-            signInState.collect { signInState ->
-                isSignedInAsPlusOrPatron = signInState.isSignedInAsPlusOrPatron
+            signInState.collect {
+                // PodHopper: folders are unlocked for every install, so folder history always shows.
+                isSignedInAsPlusOrPatron = true
                 loadSearchHistory()
             }
         }

@@ -78,7 +78,8 @@ class TranscriptViewModel @AssistedInject constructor(
         viewModelScope.launch {
             userManager.getSignInState().asFlow().collect { signInState ->
                 _uiState.update { state ->
-                    state.copy(isPlusUser = signInState.isSignedInAsPlusOrPatron)
+                    // PodHopper: every install is entitled; generated transcripts simply mark unavailable.
+                    state.copy(isPlusUser = true)
                 }
             }
         }

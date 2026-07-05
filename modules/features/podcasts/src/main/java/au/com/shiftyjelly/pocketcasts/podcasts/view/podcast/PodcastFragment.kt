@@ -66,9 +66,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeRowDataProvide
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.settings.HeadphoneControlsSettingsFragment
 import au.com.shiftyjelly.pocketcasts.settings.SettingsFragment
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingLauncher
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingUpgradeSource
 import au.com.shiftyjelly.pocketcasts.ui.extensions.openUrl
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.ui.helper.StatusBarIconColor
@@ -541,11 +538,7 @@ class PodcastFragment : BaseFragment() {
     private val onFoldersClicked: () -> Unit = {
         lifecycleScope.launch {
             eventHorizon.track(PodcastScreenFolderTappedEvent)
-            val isSignedInAsPlusOrPatron = viewModel.signInState.value?.isSignedInAsPlusOrPatron == true
-            if (!isSignedInAsPlusOrPatron) {
-                OnboardingLauncher.openOnboardingFlow(requireActivity(), OnboardingFlow.Upsell(OnboardingUpgradeSource.FOLDERS_PODCAST_SCREEN))
-                return@launch
-            }
+            // PodHopper: folders are unlocked for every install; the folder chooser opens directly.
             val folder = viewModel.getFolder()
             if (folder == null) {
                 eventHorizon.track(FolderChooseShownEvent)

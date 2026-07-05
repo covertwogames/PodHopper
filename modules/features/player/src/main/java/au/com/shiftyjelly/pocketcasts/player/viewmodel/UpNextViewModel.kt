@@ -1,7 +1,6 @@
 package au.com.shiftyjelly.pocketcasts.player.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import au.com.shiftyjelly.pocketcasts.models.type.UpNextSortType
 import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextQueue
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
@@ -11,8 +10,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 
 @HiltViewModel
 class UpNextViewModel @Inject constructor(
@@ -20,16 +17,9 @@ class UpNextViewModel @Inject constructor(
     private val upNextQueue: UpNextQueue,
     private val eventHorizon: EventHorizon,
 ) : ViewModel() {
-    private val _isSignedInAsPaidUser = MutableStateFlow(false)
+    // PodHopper: Up Next shuffle is unlocked for every install (local entitlement, no Plus tier).
+    private val _isSignedInAsPaidUser = MutableStateFlow(true)
     val isSignedInAsPaidUser: StateFlow<Boolean> get() = _isSignedInAsPaidUser
-
-    init {
-        viewModelScope.launch {
-            userManager.getSignInState().asFlow().collect { signInState ->
-                _isSignedInAsPaidUser.value = signInState.isSignedInAsPlusOrPatron
-            }
-        }
-    }
 
     fun sortUpNext(sortType: UpNextSortType) {
         eventHorizon.track(

@@ -36,6 +36,8 @@ class SubscriptionManagerImpl @Inject constructor(
     }
 
     override fun clearCachedMembership() {
-        settings.cachedMembership.set(Membership.Empty, updateModifiedAt = false)
+        // PodHopper: never regress the local lifetime entitlement, even if a legacy sign out path
+        // is somehow reached.
+        settings.cachedMembership.set(Membership.PodHopperLifetime, updateModifiedAt = false)
     }
 }

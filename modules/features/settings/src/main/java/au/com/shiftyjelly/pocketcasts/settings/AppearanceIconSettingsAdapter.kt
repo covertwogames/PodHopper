@@ -124,10 +124,7 @@ class AppearanceIconSettingsAdapter(
             notifyDataSetChanged()
         }
 
-        private fun isValidIcon(appIcon: AppIcon.AppIconType) = when (appIcon.tier) {
-            SubscriptionTier.Plus -> signInState?.isSignedInAsPlusOrPatron == true
-            SubscriptionTier.Patron -> signInState?.isSignedInAsPatron == true
-            null -> true
-        }
+        // PodHopper: every app icon is unlocked for every install (local entitlement, no tiers).
+        private fun isValidIcon(appIcon: AppIcon.AppIconType) = true
     }
 }

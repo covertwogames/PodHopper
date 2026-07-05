@@ -81,9 +81,6 @@ import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.PodcastsViewModel
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.model.PodcastGridLayoutType
 import au.com.shiftyjelly.pocketcasts.search.SearchFragment
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingLauncher
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingUpgradeSource
 import au.com.shiftyjelly.pocketcasts.ui.extensions.getColor
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.utils.extensions.hideShadow
@@ -226,14 +223,8 @@ class PodcastsFragment :
         )
         toolbar.setOnMenuItemClickListener(this)
 
-        toolbar.menu.findItem(R.id.folders_locked).setOnMenuItemClickListener {
-            if (viewModel.areSuggestedFoldersAvailable.value) {
-                showSuggestedFoldersCreation(SuggestedFoldersFragment.Source.ToolbarButton)
-            } else {
-                OnboardingLauncher.openOnboardingFlow(requireActivity(), OnboardingFlow.Upsell(OnboardingUpgradeSource.FOLDERS))
-            }
-            true
-        }
+        // PodHopper: folders are unlocked for every install, so the locked folders menu item is
+        // permanently hidden below and its upsell handler is gone.
 
         binding.swipeRefreshLayout.setOnRefreshListener {
             viewModel.refreshPodcasts()

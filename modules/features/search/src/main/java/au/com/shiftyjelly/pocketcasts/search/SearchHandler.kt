@@ -20,7 +20,6 @@ import com.automattic.eventhorizon.SearchFailedEvent
 import com.automattic.eventhorizon.SearchPerformedEvent
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.schedulers.Schedulers
@@ -70,23 +69,19 @@ class SearchHandler @Inject constructor(
             if (query.isEmpty() || onlySearchRemote) {
                 Observable.just(emptyList())
             } else {
-                // search folders
+                // PodHopper: folders are unlocked for every install, so local search always
+                // includes them.
                 val folderSearch =
-                    if (signInState.isSignedInAsPlusOrPatron) {
-                        // only show folders if the user has Plus
-                        folderManager.findFoldersSingle()
-                            .subscribeOn(Schedulers.io())
-                            .flatMapObservable { Observable.fromIterable(it) }
-                            .filter { it.name.contains(query, ignoreCase = true) }
-                            .switchMapSingle { folder ->
-                                podcastManager
-                                    .findPodcastsInFolderRxSingle(folderUuid = folder.uuid)
-                                    .map { podcasts -> FolderItem.Folder(folder = folder, podcasts = podcasts) }
-                            }
-                            .toList()
-                    } else {
-                        Single.just(emptyList())
-                    }
+                    folderManager.findFoldersSingle()
+                        .subscribeOn(Schedulers.io())
+                        .flatMapObservable { Observable.fromIterable(it) }
+                        .filter { it.name.contains(query, ignoreCase = true) }
+                        .switchMapSingle { folder ->
+                            podcastManager
+                                .findPodcastsInFolderRxSingle(folderUuid = folder.uuid)
+                                .map { podcasts -> FolderItem.Folder(folder = folder, podcasts = podcasts) }
+                        }
+                        .toList()
 
                 // search podcasts
                 val podcastSearch = podcastManager.findSubscribedRxSingle()

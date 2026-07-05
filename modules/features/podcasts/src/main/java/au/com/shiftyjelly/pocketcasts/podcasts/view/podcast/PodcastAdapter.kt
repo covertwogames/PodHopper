@@ -842,8 +842,8 @@ class PodcastAdapter(
                         isFollowed = podcast.isSubscribed,
                         areNotificationsEnabled = podcast.isShowNotifications,
                         isFundingUrlAvailable = podcast.fundingUrl != null,
+                        // PodHopper: folders are unlocked for every install; the buy state is gone.
                         folderIcon = when {
-                            !signInState.isSignedInAsPlusOrPatron -> PodcastFolderIcon.BuyFolders
                             podcast.folderUuid != null -> PodcastFolderIcon.AddedToFolder
                             else -> PodcastFolderIcon.NotInFolder
                         },

@@ -139,9 +139,9 @@ class PodcastsViewModel @AssistedInject constructor(
         sortType: PodcastsSortType,
         signInState: SignInState,
     ) = UiState(
+        // PodHopper: folders are unlocked for every install (local entitlement, no Plus tier), so
+        // the home grid always builds folder items and never the free tier flat list.
         items = when {
-            signInState.isNoAccountOrFree -> buildPodcastItems(podcasts, sortType)
-
             folderUuid == null -> buildHomeFolderItems(podcasts, folders, sortType)
 
             else -> folders.find { it.uuid == folderUuid }
@@ -150,7 +150,7 @@ class PodcastsViewModel @AssistedInject constructor(
                 .orEmpty()
         },
         folder = folders.find { it.uuid == folderUuid }?.folder,
-        isSignedInAsPlusOrPatron = signInState.isSignedInAsPlusOrPatron,
+        isSignedInAsPlusOrPatron = true,
     )
 
     private fun buildHomeFolderItems(podcasts: List<Podcast>, folders: List<FolderItem>, podcastSortType: PodcastsSortType) = when (podcastSortType) {
@@ -188,17 +188,6 @@ class PodcastsViewModel @AssistedInject constructor(
                 .apply { addAll(folders) }
 
             items.sortedWith(podcastSortType.folderComparator)
-        }
-    }
-
-    private fun buildPodcastItems(podcasts: List<Podcast>, podcastSortType: PodcastsSortType): List<FolderItem> {
-        val items = podcasts.map { podcast -> FolderItem.Podcast(podcast) }
-        return when (podcastSortType) {
-            PodcastsSortType.EPISODE_DATE_NEWEST_TO_OLDEST,
-            PodcastsSortType.RECENTLY_PLAYED,
-            -> items
-
-            else -> items.sortedWith(podcastSortType.folderComparator)
         }
     }
 

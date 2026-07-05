@@ -1151,9 +1151,12 @@ class SettingsImpl @Inject constructor(
 
     private val membershipAdapter = moshi.adapter(Membership::class.java)
 
+    // PodHopper: the default membership is the synthetic lifetime entitlement, and nothing in
+    // PodHopper ever writes this setting (the fetch requires a Pocket Casts login and the clear
+    // only fires on Pocket Casts sign out), so the default is the value on every install.
     override val cachedMembership = UserSetting.PrefFromString(
         sharedPrefKey = "user_membership",
-        defaultValue = Membership.Empty,
+        defaultValue = Membership.PodHopperLifetime,
         sharedPrefs = privatePreferences,
         fromString = { value ->
             value
@@ -1161,7 +1164,7 @@ class SettingsImpl @Inject constructor(
                 ?.let(::decrypt)
                 ?.let { decryptedValue -> runCatching { membershipAdapter.fromJson(decryptedValue) } }
                 ?.getOrNull()
-                ?: Membership.Empty
+                ?: Membership.PodHopperLifetime
         },
         toString = { value -> encrypt(membershipAdapter.toJson(value)) },
     )

@@ -169,7 +169,8 @@ class EpisodeFragmentViewModel @Inject constructor(
         viewModelScope.launch {
             userManager.getSignInState().asFlow().collect { signInState ->
                 _pageState.update { state ->
-                    state.copy(isPlusUser = signInState.isSignedInAsPlusOrPatron)
+                    // PodHopper: every install is entitled; upsell states can no longer be shown.
+                    state.copy(isPlusUser = true)
                 }
             }
         }

@@ -80,7 +80,8 @@ class AppearanceSettingsFragment : BaseFragment() {
 
                 is SettingsAppearanceState.ThemesAndIconsLoaded -> {
                     val mainWidth = activity?.resources?.displayMetrics?.widthPixels // Display metrics gives the app size not the display, it's badly named. Works in chromebooks and split screen
-                    val isSignedInAsPlusOrPatron = viewModel.signInState.value?.isSignedInAsPlusOrPatron ?: false
+                    // PodHopper: every theme is unlocked for every install.
+                    val isSignedInAsPlusOrPatron = true
                     binding.themeRecyclerView.adapter = AppearanceThemeSettingsAdapter(mainWidth, isSignedInAsPlusOrPatron, state.currentThemeType, state.themeList) { beforeThemeType, afterThemeType, validTheme ->
                         if (validTheme) {
                             (activity as? AppCompatActivity)?.let {
@@ -126,16 +127,11 @@ class AppearanceSettingsFragment : BaseFragment() {
                 val afterThemeType = changeThemeType.second
 
                 if (beforeThemeType != null && afterThemeType != null) {
-                    if (signInState.isSignedInAsPlusOrPatron) {
-                        (activity as? AppCompatActivity)?.let {
-                            theme.updateTheme(it, afterThemeType)
-                            binding.swtSystemTheme.isChecked = theme.getUseSystemTheme() // Update switch if changing the theme updated the setting
-                            viewModel.updateChangeThemeType(Pair(null, null))
-                        }
-                    } else {
+                    // PodHopper: every theme is unlocked, so the change always applies.
+                    (activity as? AppCompatActivity)?.let {
+                        theme.updateTheme(it, afterThemeType)
+                        binding.swtSystemTheme.isChecked = theme.getUseSystemTheme() // Update switch if changing the theme updated the setting
                         viewModel.updateChangeThemeType(Pair(null, null))
-                        (binding.themeRecyclerView.adapter as? AppearanceThemeSettingsAdapter)?.updateTheme(beforeThemeType)
-                        scrollToCurrentTheme()
                     }
                 }
             }
@@ -145,19 +141,15 @@ class AppearanceSettingsFragment : BaseFragment() {
                 val afterAppIconType = changeAppIconType.second
 
                 if (beforeAppIconType != null && afterAppIconType != null) {
-                    if (signInState.isSignedInAsPlusOrPatron) {
-                        viewModel.updateGlobalIcon(afterAppIconType)
-                        viewModel.updateChangeAppIconType(Pair(null, null))
+                    // PodHopper: every app icon is unlocked, so the change always applies.
+                    viewModel.updateGlobalIcon(afterAppIconType)
+                    viewModel.updateChangeAppIconType(Pair(null, null))
 
-                        AlertDialog.Builder(binding.appIconRecyclerView.context)
-                            .setTitle(LR.string.settings_app_icon_updated)
-                            .setMessage(LR.string.settings_app_icon_updated_message)
-                            .setPositiveButton(LR.string.settings_app_icon_ok, null)
-                            .show()
-                    } else {
-                        (binding.appIconRecyclerView.adapter as? AppearanceIconSettingsAdapter)?.updateAppIcon(beforeAppIconType)
-                        scrollToCurrentAppIcon()
-                    }
+                    AlertDialog.Builder(binding.appIconRecyclerView.context)
+                        .setTitle(LR.string.settings_app_icon_updated)
+                        .setMessage(LR.string.settings_app_icon_updated_message)
+                        .setPositiveButton(LR.string.settings_app_icon_ok, null)
+                        .show()
                 }
             }
 
@@ -169,7 +161,7 @@ class AppearanceSettingsFragment : BaseFragment() {
                 }
             }
 
-            (binding.themeRecyclerView.adapter as? AppearanceThemeSettingsAdapter)?.updatePlusSignedIn(signInState.isSignedInAsPlusOrPatron)
+            (binding.themeRecyclerView.adapter as? AppearanceThemeSettingsAdapter)?.updatePlusSignedIn(true)
             (binding.appIconRecyclerView.adapter as? AppearanceIconSettingsAdapter)?.updatePlusSignedIn(signInState)
             binding.upgradeGroup.isVisible = false
         }
