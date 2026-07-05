@@ -65,4 +65,38 @@ class ItunesFeedSearcher @Inject constructor() {
             emptyList()
         }
     }
+
+    /**
+     * PodHopper: resolves an Apple Podcasts page link (podcasts.apple.com or itunes.apple.com) to
+     * the podcast's real RSS feed url via the public iTunes lookup API, the same directory the
+     * search above uses. Returns null when the url carries no iTunes id or the lookup returns no
+     * feed url.
+     */
+    suspend fun resolveApplePodcastsUrl(pageUrl: String): String? = withContext(Dispatchers.IO) {
+        val itunesId = APPLE_PODCASTS_ID_PATTERN.find(pageUrl)?.groupValues?.get(1) ?: return@withContext null
+        try {
+            val request = Request.Builder()
+                .url("https://itunes.apple.com/lookup?id=$itunesId")
+                .header("User-Agent", "PodHopper")
+                .build()
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    Timber.e("PodHopper iTunes lookup HTTP ${response.code} for id $itunesId")
+                    return@use null
+                }
+                val results = JSONObject(response.body.string()).optJSONArray("results") ?: return@use null
+                val first = results.optJSONObject(0) ?: return@use null
+                first.optString("feedUrl", "").ifBlank { null }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "PodHopper iTunes lookup failed for url: $pageUrl")
+            null
+        }
+    }
+
+    companion object {
+        // Matches the iTunes id path segment in Apple Podcasts links,
+        // e.g. https://podcasts.apple.com/us/podcast/show-name/id123456789
+        private val APPLE_PODCASTS_ID_PATTERN = Regex("/id(\\d+)")
+    }
 }

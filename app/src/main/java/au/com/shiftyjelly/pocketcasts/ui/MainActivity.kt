@@ -164,6 +164,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextSource
 import au.com.shiftyjelly.pocketcasts.repositories.playlist.Playlist
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
+import au.com.shiftyjelly.pocketcasts.repositories.search.ItunesFeedSearcher
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
@@ -281,6 +282,9 @@ class MainActivity :
 
     @Inject
     lateinit var podcastManager: PodcastManager
+
+    @Inject
+    lateinit var itunesFeedSearcher: ItunesFeedSearcher
 
     @Inject
     lateinit var episodeManager: EpisodeManager
@@ -1894,13 +1898,19 @@ class MainActivity :
     private fun openPodcastUrl(url: String?) {
         url ?: return
 
-        // PodHopper: this url used to be sent to the Pocket Casts server for resolution. The deep
-        // links that land here (pcast, itpc, feed and Subscribe on Android links) carry RSS feed
-        // urls, so open them through the client feed engine instead. A url the feed engine cannot
-        // parse (for example an Apple Podcasts page link) shows the add-failed error.
+        // PodHopper: pcast, itpc, feed and Subscribe on Android links carry RSS feed urls and go
+        // straight to the client feed engine. Apple Podcasts page links carry an iTunes id
+        // instead, so resolve the id to the real feed url through the public iTunes lookup API
+        // first. Anything that cannot be resolved or parsed shows the add-failed error.
         val dialog = android.app.ProgressDialog.show(this, getString(LR.string.loading), getString(LR.string.please_wait), true)
         lifecycleScope.launch {
-            val podcastUuid = podcastManager.addFeedUrlAsUnsubscribed(url)
+            val host = Uri.parse(url).host.orEmpty().removePrefix("www.")
+            val feedUrl = if (host == "podcasts.apple.com" || host == "itunes.apple.com") {
+                itunesFeedSearcher.resolveApplePodcastsUrl(url)
+            } else {
+                url
+            }
+            val podcastUuid = feedUrl?.let { podcastManager.addFeedUrlAsUnsubscribed(it) }
             UiUtil.hideProgressDialog(dialog)
             if (podcastUuid != null) {
                 openPodcastPage(podcastUuid)
