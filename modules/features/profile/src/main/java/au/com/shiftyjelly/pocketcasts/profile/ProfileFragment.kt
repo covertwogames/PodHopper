@@ -104,10 +104,11 @@ class ProfileFragment :
             },
             onCreateFreeAccountBannerClick = {
                 profileViewModel.onCreateFreeAccountClick()
-                OnboardingLauncher.openOnboardingFlow(
-                    activity = requireActivity(),
-                    onboardingFlow = OnboardingFlow.LoggedOut,
-                )
+                // PodHopper: this banner used to open the old Pocket Casts onboarding
+                // (OnboardingFlow.LoggedOut), which was the last UI path that could create a
+                // Pocket Casts account and arm the dormant PC sync layer. Route it to the
+                // PodHopper (Supabase) sign up flow instead.
+                startActivity(PodHopperOnboardingActivity.newInstance(requireContext()))
             },
             onDismissCreateFreeAccountBannerClick = {
                 profileViewModel.dismissFreeAccountBanner()

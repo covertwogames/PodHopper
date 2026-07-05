@@ -6,20 +6,15 @@ import au.com.shiftyjelly.pocketcasts.models.entity.Folder
 import au.com.shiftyjelly.pocketcasts.models.entity.SuggestedFolder
 import au.com.shiftyjelly.pocketcasts.models.type.PodcastsSortType
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
-import au.com.shiftyjelly.pocketcasts.servers.podcast.SuggestedFoldersRequest
 import au.com.shiftyjelly.pocketcasts.utils.UUIDProvider
-import au.com.shiftyjelly.pocketcasts.utils.extensions.md5
 import jakarta.inject.Inject
 import java.time.Clock
 import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 
 class SuggestedFoldersManager @Inject constructor(
     private val database: AppDatabase,
-    private val cahceServiceManager: PodcastCacheServiceManager,
     private val settings: Settings,
     private val clock: Clock,
     private val uuidProvider: UUIDProvider,
@@ -31,22 +26,11 @@ class SuggestedFoldersManager @Inject constructor(
     fun observeSuggestedFolders() = suggestedFoldersDao.findAll()
 
     suspend fun refreshSuggestedFolders() {
-        val podcastsIds = podcastDao.findSubscribedUuids()
-        if (podcastsIds.isEmpty()) {
-            suggestedFoldersDao.deleteAll()
-            settings.suggestedFoldersFollowedHash.set("", updateModifiedAt = false)
-        } else {
-            val newHash = withContext(Dispatchers.Default) { podcastsIds.sorted().md5() }
-            if (newHash != null && newHash != settings.suggestedFoldersFollowedHash.value) {
-                try {
-                    val folders = cahceServiceManager.suggestedFolders(SuggestedFoldersRequest(podcastsIds))
-                    suggestedFoldersDao.deleteAndInsertAll(folders)
-                    settings.suggestedFoldersFollowedHash.set(newHash, updateModifiedAt = false)
-                } catch (e: Throwable) {
-                    Timber.e(e, "Refreshing suggested folders failed")
-                }
-            }
-        }
+        // PodHopper: folder suggestions used to be fetched from the Pocket Casts cache server by
+        // posting the user's full list of subscribed podcast uuids. Never fetch, and clear any
+        // suggestions a previous build may have cached so no stale server suggestion can surface.
+        suggestedFoldersDao.deleteAll()
+        settings.suggestedFoldersFollowedHash.set("", updateModifiedAt = false)
     }
 
     suspend fun useSuggestedFolders(suggestedFolders: List<SuggestedFolder>) {

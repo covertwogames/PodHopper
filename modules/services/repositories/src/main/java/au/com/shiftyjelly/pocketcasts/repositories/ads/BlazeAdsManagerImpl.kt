@@ -1,16 +1,11 @@
 package au.com.shiftyjelly.pocketcasts.repositories.ads
 
-import android.content.Context
 import au.com.shiftyjelly.pocketcasts.models.db.AppDatabase
 import au.com.shiftyjelly.pocketcasts.models.entity.BlazeAd
 import au.com.shiftyjelly.pocketcasts.models.type.BlazeAdLocation
 import au.com.shiftyjelly.pocketcasts.models.type.MembershipFeature
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticServiceManager
-import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
-import com.automattic.android.tracks.crashlogging.CrashLogging
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,31 +14,20 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import timber.log.Timber
 
 @Singleton
 class BlazeAdsManagerImpl @Inject constructor(
     private val settings: Settings,
-    private val staticServiceManager: StaticServiceManager,
-    private val crashLogging: CrashLogging,
     appDatabase: AppDatabase,
-    @ApplicationContext private val context: Context,
 ) : BlazeAdsManager {
 
     private val blazeAdDao = appDatabase.blazeAdDao()
 
     override suspend fun updateAds() {
-        if (settings.cachedMembership.value.hasFeature(MembershipFeature.NoBannerAds) || Util.isAutomotive(context) || Util.isWearOs(context)) {
-            // don't fetch the ads if the user has a subscription, or on Automotive or Wear OS
-            return
-        }
-        try {
-            val ads = staticServiceManager.getBlazeAds()
-            blazeAdDao.replaceAll(ads)
-        } catch (e: Exception) {
-            Timber.e(e)
-            crashLogging.sendReport(e)
-        }
+        // PodHopper: Blaze ad payloads were fetched from the Pocket Casts static server on every
+        // app foreground. PodHopper shows no Blaze ads, so never fetch, and clear anything a
+        // previous build may have cached so no stale ad can ever surface.
+        blazeAdDao.replaceAll(emptyList())
     }
 
     override fun findPodcastListAd(): Flow<BlazeAd?> {

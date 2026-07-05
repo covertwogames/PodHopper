@@ -23,8 +23,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelp
 import au.com.shiftyjelly.pocketcasts.repositories.notification.OnboardingNotificationType
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.servers.di.Downloads
-import au.com.shiftyjelly.pocketcasts.servers.refresh.ImportOpmlResponse
-import au.com.shiftyjelly.pocketcasts.servers.refresh.RefreshServiceManager
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.OpmlImportFailedEvent
@@ -35,14 +33,13 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -59,7 +56,6 @@ class OpmlImportTask @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted parameters: WorkerParameters,
     private val podcastManager: PodcastManager,
-    private val refreshServiceManager: RefreshServiceManager,
     @Downloads private val httpClient: Lazy<OkHttpClient>,
     private val notificationHelper: NotificationHelper,
     private val eventHorizon: EventHorizon,
@@ -70,6 +66,10 @@ class OpmlImportTask @AssistedInject constructor(
         private const val INPUT_URI = "INPUT_URI"
         private const val INPUT_URL = "INPUT_URL"
         private const val WORKER_TAG = "OpmlImportTask.Tag"
+
+        // PodHopper: how many feeds are fetched and parsed at once during an import. Matches the
+        // bounded parallelism the local refresh engine uses.
+        private const val MAX_CONCURRENT_IMPORTS = 6
 
         fun run(uri: Uri, context: Context) {
             val data = workDataOf(INPUT_URI to uri.toString())
@@ -173,30 +173,25 @@ class OpmlImportTask @AssistedInject constructor(
         // keep the job running the in foreground with a notification
         setForeground(createForegroundInfo(0, podcastCount))
 
-        var pollUuids = urls.chunked(100)
-            .asFlow()
-            // call the server with the feed urls to get the podcast uuids
-            .mapNotNull { callServer(urls = it) }
-            // use the podcast uuids to subscribe to the podcasts
-            .subscribeToPodcasts(podcastManager)
-            // update the notification progress
-            .onEach { updateNotification(initialDatabaseCount, podcastCount) }
-            .collectPollUuids()
-
-        var pollCount = 0
-        while (pollUuids.isNotEmpty() && pollCount <= 20) {
-            pollUuids = pollUuids.chunked(100)
-                .asFlow()
-                // poll the server with the create uuids to get the podcast uuids
-                .mapNotNull { pollServer(pollUuids = it) }
-                // use the podcast uuids to subscribe to the podcasts
-                .subscribeToPodcasts(podcastManager)
-                // update the notification progress
-                .onEach { updateNotification(initialDatabaseCount, podcastCount) }
-                .collectPollUuids()
-
-            pollCount++
-            delay(pollCount * 1000L)
+        // PodHopper: this used to post the feed urls to the Pocket Casts refresh server to resolve
+        // them into Pocket Casts podcast uuids and then subscribe by uuid, polling the server for
+        // podcasts it had not indexed yet. Subscribe to each feed url directly through the
+        // client-side feed engine instead: each feed is fetched and parsed on-device, a feed that
+        // fails to parse is logged and skipped, and the rest of the import continues.
+        val semaphore = Semaphore(MAX_CONCURRENT_IMPORTS)
+        coroutineScope {
+            urls.map { feedUrl ->
+                async(Dispatchers.IO) {
+                    semaphore.withPermit {
+                        try {
+                            podcastManager.subscribeToFeedUrl(feedUrl)
+                        } catch (e: Exception) {
+                            LogBuffer.e(LogBuffer.TAG_BACKGROUND_TASKS, e, "OPML import: failed to subscribe to $feedUrl")
+                        }
+                        updateNotification(initialDatabaseCount, podcastCount)
+                    }
+                }
+            }.awaitAll()
         }
 
         // keep the job running while still subscribing to the podcasts
@@ -238,34 +233,4 @@ class OpmlImportTask @AssistedInject constructor(
             .addAction(IR.drawable.ic_cancel, applicationContext.getString(LR.string.settings_import_opml_stop), cancelIntent)
             .build()
     }
-
-    /**
-     * Call the refresh server with feed urls.
-     * The server will return the follow:
-     * - uuids: found podcast uuids
-     * - poll_uuids: the create podcast ids to call the server back with to check if they have been added to the database yet
-     * - failed: the number of podcast creates that have failed
-     */
-    suspend fun callServer(urls: List<String>): ImportOpmlResponse? {
-        val response = refreshServiceManager.importOpml(urls)
-        return response.body()?.result
-    }
-
-    suspend fun pollServer(pollUuids: List<String>): ImportOpmlResponse? {
-        val response = refreshServiceManager.pollImportOpml(pollUuids)
-        return response.body()?.result
-    }
-}
-
-private fun Flow<ImportOpmlResponse>.subscribeToPodcasts(podcastManager: PodcastManager): Flow<ImportOpmlResponse> {
-    return onEach {
-        // add podcast uuid to subscribe queue
-        it.uuids.forEach { uuid -> podcastManager.subscribeToPodcast(uuid, sync = true, shouldAutoDownload = false) }
-    }
-}
-
-private suspend fun Flow<ImportOpmlResponse>.collectPollUuids(): List<String> {
-    return map { it.pollUuids }
-        .toList()
-        .flatten()
 }

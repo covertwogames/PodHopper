@@ -12,10 +12,8 @@ import au.com.shiftyjelly.pocketcasts.models.entity.SuggestedFolder
 import au.com.shiftyjelly.pocketcasts.models.type.PodcastsSortType
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.SettingsImpl
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.sharedtest.MutableClock
 import au.com.shiftyjelly.pocketcasts.utils.UUIDProvider
-import au.com.shiftyjelly.pocketcasts.utils.extensions.md5
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.squareup.moshi.Moshi
 import java.util.Date
@@ -26,9 +24,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 
 class SuggestedFoldersManagerTest {
     private val clock = MutableClock()
@@ -42,7 +37,6 @@ class SuggestedFoldersManagerTest {
             return uuid
         }
     }
-    private val cacheService = mock<PodcastCacheServiceManager>()
     private lateinit var appDatabase: AppDatabase
     private lateinit var settings: Settings
 
@@ -67,45 +61,26 @@ class SuggestedFoldersManagerTest {
 
         manager = SuggestedFoldersManager(
             database = appDatabase,
-            cahceServiceManager = cacheService,
             settings = settings,
             clock = clock,
             uuidProvider = uuidProvider,
         )
     }
 
+    // PodHopper: refreshSuggestedFolders no longer fetches suggestions from the Pocket Casts
+    // cache server. It always clears any cached suggestions and resets the followed hash.
     @Test
-    fun insertSuggestedFolders() = runBlocking {
+    fun refreshClearsCachedSuggestions() = runBlocking {
         appDatabase.podcastDao().insertBlocking(Podcast(uuid = "uuid", isSubscribed = true))
-        val folders = listOf(
-            SuggestedFolder("Folder1", "uuid"),
+        appDatabase.suggestedFoldersDao().insertAll(
+            listOf(SuggestedFolder("Folder1", "uuid")),
         )
-
-        whenever(cacheService.suggestedFolders(any())).thenReturn(folders)
-        manager.refreshSuggestedFolders()
-
-        assertEquals(folders, appDatabase.suggestedFoldersDao().findAll().first())
-    }
-
-    @Test
-    fun doNotRequestSuggestedFoldersWhenNoPodcastChanges() = runBlocking {
-        appDatabase.podcastDao().insertBlocking(Podcast(uuid = "uuid", isSubscribed = true))
-        settings.suggestedFoldersFollowedHash.set(listOf("uuid").md5()!!, updateModifiedAt = false)
-        whenever(cacheService.suggestedFolders(any())).thenThrow(AssertionError("Shouldn't happen"))
+        settings.suggestedFoldersFollowedHash.set("stale-hash", updateModifiedAt = false)
 
         manager.refreshSuggestedFolders()
 
         assertEquals(emptyList<SuggestedFolder>(), appDatabase.suggestedFoldersDao().findAll().first())
-    }
-
-    @Test
-    fun doNotInsertSuggestedFoldersWhenServiceFails() = runBlocking {
-        appDatabase.podcastDao().insertBlocking(Podcast(uuid = "uuid", isSubscribed = true))
-        whenever(cacheService.suggestedFolders(any())).thenThrow(RuntimeException("Test Exception"))
-
-        manager.refreshSuggestedFolders()
-
-        assertEquals(emptyList<SuggestedFolder>(), appDatabase.suggestedFoldersDao().findAll().first())
+        assertEquals("", settings.suggestedFoldersFollowedHash.value)
     }
 
     @Test

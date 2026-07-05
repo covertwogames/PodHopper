@@ -54,7 +54,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.asFlowable
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 class EpisodeManagerImpl @Inject constructor(
@@ -953,18 +952,14 @@ class EpisodeManagerImpl @Inject constructor(
     }
 
     /**
-     * Get the latest episode url from the server and persist it if it is different from
-     * the locally saved downloadUrl if it is different
-     * @return the latest download url for the episode
+     * PodHopper: this used to ask the Pocket Casts cache server for the latest episode url before
+     * every stream and download, which 404s for feed episodes and wasted a round trip. Feed
+     * episodes already carry their url from the RSS feed (and the local refresh keeps it current),
+     * so return the stored url without any network call. Signature kept for the existing callers.
+     * @return the download url for the episode
      */
-    override suspend fun updateDownloadUrl(episode: PodcastEpisode): String? = withContext(Dispatchers.IO) {
-        val newDownloadUrl = podcastCacheServiceManager.getEpisodeUrl(episode)
-        if (newDownloadUrl != null && episode.downloadUrl != newDownloadUrl) {
-            Timber.i("Updating PodcastEpisode url in database for ${episode.uuid} to $newDownloadUrl")
-            episodeDao.updateDownloadUrl(newDownloadUrl, episode.uuid)
-        }
-
-        return@withContext newDownloadUrl ?: episode.downloadUrl
+    override suspend fun updateDownloadUrl(episode: PodcastEpisode): String? {
+        return episode.downloadUrl
     }
 
     override suspend fun getAllPodcastEpisodes(pageLimit: Int): Flow<Pair<PodcastEpisode, Int>> = flow {

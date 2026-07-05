@@ -1,17 +1,15 @@
+// PodHopper: this file is an intentional no-op shell (see the class comment). The retained
+// constructor dependencies and parameters are deliberately unused, and the build compiles with
+// allWarningsAsErrors, so suppress the unused-declaration diagnostics for the whole file.
+@file:Suppress("unused", "UNUSED_PARAMETER", "RedundantSuspendModifier")
+
 package au.com.shiftyjelly.pocketcasts.analytics.experiments
 
 import au.com.shiftyjelly.pocketcasts.analytics.AccountStatusInfo
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
-import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
-import com.automattic.android.experimentation.Experiment
 import com.automattic.android.experimentation.VariationsRepository
-import com.automattic.android.experimentation.domain.Variation.Control
-import com.automattic.android.experimentation.domain.Variation.Treatment
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class ExperimentProvider @Inject constructor(
     private val repository: VariationsRepository,
@@ -23,41 +21,26 @@ class ExperimentProvider @Inject constructor(
         const val PLATFORM = "pocketcasts"
     }
 
+    // PodHopper: the ExPlat experiment platform fetched experiment assignments from Automattic
+    // (public-api.wordpress.com) on every app start. PodHopper runs no remote experiments, so the
+    // whole provider is a local no-op. The class, its constructor and its method signatures are
+    // kept so the existing injection sites and callers (app startup, UserManager, upsell copy)
+    // compile unchanged; getVariation returning null means every caller takes its default path.
+
     fun initialize() {
-        initialize(accountStatusInfo.getUserIds().id)
+        // PodHopper: no-op, no remote experiment fetch.
     }
 
     fun initialize(uuid: String) {
-        LogBuffer.i(TAG, "Initializing experiments with uuid: $uuid")
-        runCatching {
-            repository.initialize(anonymousId = uuid, oAuthToken = null)
-        }.onFailure { throwable ->
-            LogBuffer.e(TAG, throwable, "Failed to initialize experiments")
-            runCatching { repository.clear() }
-        }
+        // PodHopper: no-op, no remote experiment fetch.
     }
 
-    suspend fun refreshExperiments(uuid: String? = null) = withContext(ioDispatcher) {
-        clear()
-        // This will update the repository with the current user ID
-        initialize(uuid ?: accountStatusInfo.getUserIds().id)
+    suspend fun refreshExperiments(uuid: String? = null) {
+        // PodHopper: no-op, no remote experiment fetch.
     }
 
     fun getVariation(experiment: ExperimentType): Variation? {
-        if (!FeatureFlag.isEnabled(Feature.EXPLAT_EXPERIMENT)) {
-            return null
-        }
-
-        return runCatching {
-            when (val variation = repository.getVariation(Experiment(experiment.identifier))) {
-                is Control -> Variation.Control
-                is Treatment -> Variation.Treatment(variation.name)
-            }
-        }.getOrNull()
-    }
-
-    private fun clear() {
-        LogBuffer.i(TAG, "Clearing experiments")
-        repository.clear()
+        // PodHopper: no experiments are ever assigned; callers fall back to their defaults.
+        return null
     }
 }

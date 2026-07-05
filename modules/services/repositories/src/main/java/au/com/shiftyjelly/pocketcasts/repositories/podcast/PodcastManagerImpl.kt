@@ -26,9 +26,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsThread
 import au.com.shiftyjelly.pocketcasts.repositories.sync.PodcastRefresher
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
-import au.com.shiftyjelly.pocketcasts.servers.refresh.RefreshServiceManager
-import au.com.shiftyjelly.pocketcasts.servers.refresh.UpdatePodcastResponse.EpisodeFound
-import au.com.shiftyjelly.pocketcasts.servers.refresh.UpdatePodcastResponse.Retry
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import com.jakewharton.rxrelay2.PublishRelay
@@ -41,7 +38,6 @@ import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -61,7 +57,7 @@ class PodcastManagerImpl @Inject constructor(
     private val settings: Settings,
     @ApplicationContext private val context: Context,
     private val subscribeManager: SubscribeManager,
-    private val refreshServiceManager: RefreshServiceManager,
+    private val feedParser: FeedParser,
     private val syncManager: SyncManager,
     private val podcastRefresher: PodcastRefresher,
     private val downloadQueue: DownloadQueue,
@@ -664,19 +660,30 @@ class PodcastManagerImpl @Inject constructor(
     }
 
     override suspend fun refreshPodcastFeed(podcast: Podcast): Boolean {
-        var response = refreshServiceManager.updatePodcast(
-            podcastUuid = podcast.uuid,
-            lastEpisodeUuid = podcast.latestEpisodeUuid,
-        )
-        LogBuffer.i(TAG, "Refresh podcast feed: $response")
-
-        while (response is Retry) {
-            delay(response.retryAfter.seconds)
-            response = refreshServiceManager.pollUpdatePodcast(response.location)
-            LogBuffer.i(TAG, "Refresh podcast feed poll: $response")
+        // PodHopper: this used to ask the Pocket Casts refresh server whether the podcast had a
+        // newer episode. Check the podcast's own RSS feed on-device instead: parse the feed, and
+        // if it contains an episode we have not stored yet, run the normal (already local) refresh
+        // pipeline, which inserts it and kicks off the usual notification and auto-download work.
+        val feedUrl = podcast.podcastUrl
+        if (feedUrl.isNullOrBlank()) {
+            LogBuffer.i(TAG, "Refresh podcast feed skipped: no feed url for ${podcast.uuid}")
+            return false
         }
+        val parsed = withContext(Dispatchers.IO) { feedParser.parse(feedUrl) }
+        if (parsed == null) {
+            LogBuffer.i(TAG, "Refresh podcast feed: feed unavailable for ${podcast.uuid}")
+            return false
+        }
+        val parsedUuids = parsed.episodes.map { it.uuid }
+        if (parsedUuids.isEmpty()) {
+            LogBuffer.i(TAG, "Refresh podcast feed: feed has no episodes for ${podcast.uuid}")
+            return false
+        }
+        val storedUuids = episodeDao.findByUuids(parsedUuids).map { it.uuid }.toSet()
+        val newEpisodeFound = parsedUuids.any { it !in storedUuids }
+        LogBuffer.i(TAG, "Refresh podcast feed (local): ${podcast.uuid} newEpisodeFound=$newEpisodeFound")
 
-        if (response is EpisodeFound) {
+        if (newEpisodeFound) {
             refreshPodcasts("Refresh podcast feed")
             return true
         } else {

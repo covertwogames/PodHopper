@@ -4,19 +4,14 @@ import au.com.shiftyjelly.pocketcasts.models.db.AppDatabase
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastRatings
 import au.com.shiftyjelly.pocketcasts.models.entity.UserPodcastRating
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
-import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
-import java.io.IOException
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
-import timber.log.Timber
 
 class RatingsManagerImpl @Inject constructor(
-    private val cacheServiceManager: PodcastCacheServiceManager,
     private val syncManager: SyncManager,
     appDatabase: AppDatabase,
 ) : RatingsManager,
@@ -30,25 +25,9 @@ class RatingsManagerImpl @Inject constructor(
         .map { it.firstOrNull() ?: noRatings(podcastUuid) }
 
     override suspend fun refreshPodcastRatings(podcastUuid: String, useCache: Boolean) {
-        try {
-            // The server asks for the ratings to be cached for a period of time. After a user rates ignore the cache to get the new rating.
-            val ratings = cacheServiceManager.getPodcastRatings(podcastUuid, useCache)
-            podcastRatingsDao.insert(
-                PodcastRatings(
-                    podcastUuid = podcastUuid,
-                    total = ratings.total,
-                    average = ratings.average,
-                ),
-            )
-        } catch (e: Exception) {
-            val message = "Failed to refresh podcast ratings"
-            // don't report missing rating or network errors to Sentry
-            if (e is HttpException || e is IOException) {
-                Timber.i(e, message)
-            } else {
-                LogBuffer.e(LogBuffer.TAG_CRASH, e, message)
-            }
-        }
+        // PodHopper: ratings used to be fetched from the Pocket Casts cache server whenever a
+        // podcast page opened. Feed podcasts have no entry there, so never fetch; the ratings flow
+        // falls back to the zero-rating placeholder from the local database.
     }
 
     override suspend fun submitPodcastRating(rating: UserPodcastRating): PodcastRatingResult = try {

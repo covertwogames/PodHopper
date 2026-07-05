@@ -16,7 +16,7 @@ import androidx.fragment.compose.content
 import androidx.lifecycle.lifecycleScope
 import au.com.shiftyjelly.pocketcasts.compose.CallOnce
 import au.com.shiftyjelly.pocketcasts.preferences.model.AppReviewReason
-import au.com.shiftyjelly.pocketcasts.settings.HelpFragment
+import au.com.shiftyjelly.pocketcasts.settings.HelpFeedbackFragment
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.utils.extensions.requireParcelable
 import au.com.shiftyjelly.pocketcasts.views.fragments.BaseDialogFragment
@@ -76,7 +76,10 @@ class AppReviewDialogFragment : BaseDialogFragment() {
 
     private fun goToHelpAndFeedback() {
         val hostListener = requireActivity() as FragmentHostListener
-        hostListener.addFragment(HelpFragment())
+        // PodHopper: HelpFragment was the Pocket Casts support-site web view, and it also linked
+        // the Status page that pings Pocket Casts servers. Open PodHopper's own Help and Feedback
+        // screen instead.
+        hostListener.addFragment(HelpFeedbackFragment())
         hostListener.closeBottomSheet()
         hostListener.closePlayer()
         dismiss()

@@ -153,7 +153,6 @@ import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFilesFragment
 import au.com.shiftyjelly.pocketcasts.profile.sonos.SonosAppLinkActivity
 import au.com.shiftyjelly.pocketcasts.referrals.ReferralsGuestPassFragment
 import au.com.shiftyjelly.pocketcasts.repositories.appreview.AppReviewManager
-import au.com.shiftyjelly.pocketcasts.repositories.bumpstats.BumpStatsTask
 import au.com.shiftyjelly.pocketcasts.repositories.di.NotificationPermissionChecker
 import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
@@ -771,7 +770,8 @@ class MainActivity :
         super.onResume()
 
         refreshApp()
-        BumpStatsTask.scheduleToRun(this)
+        // PodHopper: BumpStatsTask (anonymous stat pings to the WordPress.com bump stats endpoint)
+        // is intentionally not scheduled.
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
