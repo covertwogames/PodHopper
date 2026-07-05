@@ -61,15 +61,17 @@ interface Settings {
 
         const val GOOGLE_SIGN_IN_SERVER_CLIENT_ID = BuildConfig.GOOGLE_SIGN_IN_SERVER_CLIENT_ID
 
-        const val INFO_LEARN_MORE_URL = "https://www.pocketcasts.com/plus/"
-        const val INFO_TOS_URL = "https://support.pocketcasts.com/article/terms-of-use-overview/"
-        const val INFO_PRIVACY_URL = "https://support.pocketcasts.com/article/privacy-policy/"
-        const val INFO_CANCEL_URL = "https://support.pocketcasts.com/knowledge-base/how-to-cancel-a-subscription/"
-        const val INFO_FAQ_URL = "https://support.pocketcasts.com/android/?device=android"
-        const val INFO_DOWNLOAD_AND_PLAYBACK_URL = "https://support.pocketcasts.com/knowledge-base/download-errors/"
-        const val INFO_EPISODE_ACCESS_ISSUES_URL = "https://support.pocketcasts.com/knowledge-base/episode-access-issues/"
-        const val INFO_EPISODE_NOT_FOUND_URL = "https://support.pocketcasts.com/knowledge-base/episode-not-found/"
-        const val INFO_EPISODE_SERVER_PROBLEM_URL = "https://support.pocketcasts.com/knowledge-base/episode-server-problem/"
+        // PodHopper: every support and marketing link points at the PodHopper site instead of
+        // pocketcasts.com. The /terms, /privacy and /help pages need to exist at podhopper.app.
+        const val INFO_LEARN_MORE_URL = "https://podhopper.app"
+        const val INFO_TOS_URL = "https://podhopper.app/terms"
+        const val INFO_PRIVACY_URL = "https://podhopper.app/privacy"
+        const val INFO_CANCEL_URL = "https://podhopper.app/help"
+        const val INFO_FAQ_URL = "https://podhopper.app/help"
+        const val INFO_DOWNLOAD_AND_PLAYBACK_URL = "https://podhopper.app/help"
+        const val INFO_EPISODE_ACCESS_ISSUES_URL = "https://podhopper.app/help"
+        const val INFO_EPISODE_NOT_FOUND_URL = "https://podhopper.app/help"
+        const val INFO_EPISODE_SERVER_PROBLEM_URL = "https://podhopper.app/help"
 
         const val CHROME_CAST_APP_ID = "2FA4D21B"
 

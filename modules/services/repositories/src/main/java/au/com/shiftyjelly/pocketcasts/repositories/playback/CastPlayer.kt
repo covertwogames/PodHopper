@@ -285,7 +285,11 @@ class CastPlayer(
             putString(MediaMetadata.KEY_SUBTITLE, podcast.title)
             putString(MediaMetadata.KEY_ALBUM_ARTIST, podcast.author)
             putString(MediaMetadata.KEY_ALBUM_TITLE, podcast.title)
-            addImage(WebImage(Uri.parse(podcast.getArtworkUrl(960))))
+            // PodHopper: feed artwork only; a podcast without feed artwork sends no image to the
+            // cast device rather than a Pocket Casts CDN url.
+            podcast.getArtworkUrl(960).takeIf { it.isNotBlank() }?.let { artworkUrl ->
+                addImage(WebImage(Uri.parse(artworkUrl)))
+            }
         }
         // STREAM_TYPE_BUFFERED is correct for VOD podcasts (including VOD HLS). Live HLS would
         // need STREAM_TYPE_LIVE, but we don't currently serve live streams.

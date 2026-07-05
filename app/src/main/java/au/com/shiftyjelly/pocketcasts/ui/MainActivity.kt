@@ -171,7 +171,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.search.AddPodcastFragment
 import au.com.shiftyjelly.pocketcasts.search.SearchFragment
-import au.com.shiftyjelly.pocketcasts.servers.ServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.model.NetworkLoadableList.Companion.TRENDING
 import au.com.shiftyjelly.pocketcasts.settings.AppearanceSettingsFragment
 import au.com.shiftyjelly.pocketcasts.settings.ExportSettingsFragment
@@ -191,7 +190,6 @@ import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.utils.observeOnce
 import au.com.shiftyjelly.pocketcasts.view.LockableBottomSheetBehavior
-import au.com.shiftyjelly.pocketcasts.views.activity.WebViewActivity
 import au.com.shiftyjelly.pocketcasts.views.extensions.showAllowingStateLoss
 import au.com.shiftyjelly.pocketcasts.views.extensions.spring
 import au.com.shiftyjelly.pocketcasts.views.fragments.BaseDialogFragment
@@ -286,9 +284,6 @@ class MainActivity :
 
     @Inject
     lateinit var episodeManager: EpisodeManager
-
-    @Inject
-    lateinit var serviceManager: ServiceManager
 
     @Inject
     lateinit var theme: Theme
@@ -1857,12 +1852,9 @@ class MainActivity :
         episodeUuid ?: return
 
         // If a clip has both start and end we don't open it in the app.
-        // We do not have a capability of playing a section of an episode between some timestamps.
-        if (startTimestamp != null && endTimestamp != null) {
-            val url = "${Settings.SERVER_SHORT_URL}/episode/$episodeUuid?t=${startTimestamp.inWholeSeconds},${endTimestamp.inWholeSeconds}"
-            WebViewActivity.show(this, getString(LR.string.clip_title), url)
-            return
-        }
+        // PodHopper: clip links with a start and end used to open a Pocket Casts web player page.
+        // Open the episode locally at the start timestamp instead (the end of the clip is dropped,
+        // since the app cannot play a bounded section).
 
         launch(Dispatchers.Main.immediate) {
             val fragment = when (val localEpisode = withContext(Dispatchers.Default) { episodeManager.findEpisodeByUuid(episodeUuid) }) {
@@ -1882,19 +1874,16 @@ class MainActivity :
                 }
 
                 null -> {
-                    val dialog = android.app.ProgressDialog.show(this@MainActivity, getString(LR.string.loading), getString(LR.string.please_wait), true)
-                    val searchResult = serviceManager.getSharedItemDetails("/social/share/show/$episodeUuid").getOrNull()
-                    dialog.hide()
-                    searchResult?.episode?.let {
-                        EpisodeContainerFragment.newInstance(
-                            episodeUuid = it.uuid,
-                            source = source,
-                            podcastUuid = it.podcastUuid,
-                            forceDark = forceDark,
-                            timestamp = startTimestamp,
-                            autoPlay = autoPlay,
-                        )
-                    }
+                    // PodHopper: unknown episodes used to be resolved through the Pocket Casts
+                    // share server. Without it, an episode that is not stored locally cannot be
+                    // resolved, so show the standard failure alert.
+                    UiUtil.displayAlertError(
+                        this@MainActivity,
+                        getString(LR.string.podcast_share_open_fail_title),
+                        getString(LR.string.podcast_share_open_fail),
+                        null,
+                    )
+                    null
                 }
             }
             fragment?.showAllowingStateLoss(supportFragmentManager, "episode_card")
@@ -1905,81 +1894,37 @@ class MainActivity :
     private fun openPodcastUrl(url: String?) {
         url ?: return
 
+        // PodHopper: this url used to be sent to the Pocket Casts server for resolution. The deep
+        // links that land here (pcast, itpc, feed and Subscribe on Android links) carry RSS feed
+        // urls, so open them through the client feed engine instead. A url the feed engine cannot
+        // parse (for example an Apple Podcasts page link) shows the add-failed error.
         val dialog = android.app.ProgressDialog.show(this, getString(LR.string.loading), getString(LR.string.please_wait), true)
         lifecycleScope.launch {
-            val result = serviceManager
-                .searchForPodcasts(url)
-                .onFailure { error ->
-                    UiUtil.displayAlertError(
-                        context = this@MainActivity,
-                        message = error.message ?: getString(LR.string.podcast_add_failed),
-                        null,
-                    )
-                }
-                .getOrNull()
-
+            val podcastUuid = podcastManager.addFeedUrlAsUnsubscribed(url)
             UiUtil.hideProgressDialog(dialog)
-            if (result != null) {
-                val podcastUuid = result.searchResults.firstOrNull()?.uuid
-                if (podcastUuid != null) {
-                    openPodcastPage(podcastUuid)
-                }
+            if (podcastUuid != null) {
+                openPodcastPage(podcastUuid)
+            } else {
+                UiUtil.displayAlertError(
+                    context = this@MainActivity,
+                    message = getString(LR.string.podcast_add_failed),
+                    null,
+                )
             }
         }
     }
 
-    @Suppress("DEPRECATION")
     private fun openSharingUrl(deepLink: NativeShareDeepLink) {
-        // If a clip has both start and end we don't open it in the app.
-        // We do not have a capability of playing a section of an episode between some timestamps.
-        if (deepLink.startTimestamp != null && deepLink.endTimestamp != null) {
-            WebViewActivity.show(this, getString(LR.string.clip_title), deepLink.uri.toString())
-            return
-        }
-
-        val dialog = android.app.ProgressDialog.show(this, getString(LR.string.loading), getString(LR.string.please_wait), true)
-        lifecycleScope.launch {
-            val result = serviceManager
-                .getSharedItemDetails(deepLink.sharePath)
-                .onFailure { error ->
-                    Timber.e(error)
-                    UiUtil.displayAlertError(
-                        this@MainActivity,
-                        getString(LR.string.podcast_share_open_fail_title),
-                        getString(LR.string.podcast_share_open_fail),
-                        null,
-                    )
-                }
-                .getOrNull()
-
-            UiUtil.hideProgressDialog(dialog)
-            if (result != null) {
-                val podcastUuid = result.podcast.uuid
-                if (podcastUuid.isBlank()) {
-                    UiUtil.displayAlertError(
-                        this@MainActivity,
-                        getString(LR.string.podcast_share_open_fail_title),
-                        getString(LR.string.podcast_share_open_fail),
-                        null,
-                    )
-                    return@launch
-                }
-
-                val episode = result.episode
-                if (episode != null) {
-                    openEpisodeDialog(
-                        episodeUuid = episode.uuid,
-                        source = EpisodeViewSource.SHARE,
-                        podcastUuid = podcastUuid,
-                        forceDark = false,
-                        autoPlay = false,
-                        startTimestamp = deepLink.startTimestamp,
-                    )
-                } else {
-                    openPodcastPage(podcastUuid)
-                }
-            }
-        }
+        // PodHopper: Pocket Casts share links were resolved through the Pocket Casts share server,
+        // which this app no longer talks to. There is nothing local to resolve the share path
+        // against, so show the standard failure alert.
+        Timber.i("PodHopper: cannot open Pocket Casts share link ${deepLink.uri}")
+        UiUtil.displayAlertError(
+            this,
+            getString(LR.string.podcast_share_open_fail_title),
+            getString(LR.string.podcast_share_open_fail),
+            null,
+        )
     }
 
     @Suppress("DEPRECATION")

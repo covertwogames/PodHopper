@@ -632,7 +632,9 @@ class PodcastFragment : BaseFragment() {
             .addTextOption(
                 titleId = LR.string.podcast_refresh_artwork,
                 click = {
-                    coilManager.clearCache(viewModel.podcastUuid)
+                    // PodHopper: evict by the feed's artwork url; the uuid-keyed Pocket Casts CDN
+                    // urls are gone.
+                    coilManager.clearCache(viewModel.podcast.value?.thumbnailUrl)
                     successCallback()
                 },
             )

@@ -1,7 +1,5 @@
 package au.com.shiftyjelly.pocketcasts.ui.images
 
-import au.com.shiftyjelly.pocketcasts.repositories.images.PodcastImage
-import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import coil3.ImageLoader
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -9,11 +7,11 @@ import javax.inject.Singleton
 @Singleton
 class CoilManager @Inject constructor(val imageLoader: ImageLoader) {
 
-    fun clearCache(uuid: String) {
-        val urls = PodcastImage.getArtworkUrls(uuid = uuid, isWearOS = false)
-        for (url in urls) {
-            imageLoader.diskCache?.remove(url)
-            LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Removing $url from image cache.")
+    fun clearCache(artworkUrl: String?) {
+        // PodHopper: cache entries used to be evicted by rebuilding the Pocket Casts CDN urls for
+        // a podcast uuid. Artwork is keyed by the feed's own image url now, so evict that instead.
+        if (!artworkUrl.isNullOrBlank()) {
+            imageLoader.diskCache?.remove(artworkUrl)
         }
         // clear the whole image memory cache, as clearing individual images didn't work
         imageLoader.memoryCache?.clear()

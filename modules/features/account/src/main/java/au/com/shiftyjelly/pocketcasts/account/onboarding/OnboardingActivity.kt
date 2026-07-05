@@ -50,6 +50,20 @@ class OnboardingActivity : AppCompatActivity() {
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // PodHopper: this activity hosts the entire legacy Pocket Casts onboarding (account
+        // creation, sign in, forgot password, Plus upsell, winback and promo flows), all of which
+        // authenticate against api.pocketcasts.net. PodHopper accounts live in Supabase via
+        // PodHopperOnboardingActivity, and there is no Plus tier, so no flow that lands here is
+        // valid any more. Finish immediately before any screen or view model can spin up, which
+        // guarantees none of the Pocket Casts account calls can ever fire, no matter which of the
+        // many legacy entry points launched this intent.
+        finish()
+        return
+    }
+
+    @Suppress("unused", "UNUSED_PARAMETER")
+    private fun legacyOnCreate(savedInstanceState: Bundle?) {
         // Make content edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(window, false)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT

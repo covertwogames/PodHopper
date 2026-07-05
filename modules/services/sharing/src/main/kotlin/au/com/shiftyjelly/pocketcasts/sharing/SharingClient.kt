@@ -23,8 +23,6 @@ import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.Story
 import au.com.shiftyjelly.pocketcasts.repositories.images.PocketCastsImageRequestFactory
 import au.com.shiftyjelly.pocketcasts.sharing.BuildConfig.META_APP_ID
-import au.com.shiftyjelly.pocketcasts.sharing.BuildConfig.SERVER_SHORT_URL
-import au.com.shiftyjelly.pocketcasts.sharing.BuildConfig.WEB_BASE_HOST
 import au.com.shiftyjelly.pocketcasts.sharing.SocialPlatform.Instagram
 import au.com.shiftyjelly.pocketcasts.sharing.SocialPlatform.More
 import au.com.shiftyjelly.pocketcasts.sharing.SocialPlatform.PocketCasts
@@ -63,8 +61,11 @@ class SharingClient(
     private val listeners: Set<Listener>,
     private val displayPodcastCover: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
     private val showCustomCopyFeedback: Boolean = Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2,
-    private val hostUrl: String = SERVER_SHORT_URL,
-    private val webBasedHost: String = WEB_BASE_HOST,
+    // PodHopper: share links never point at Pocket Casts hosts. Content types below build their
+    // urls from the episode media url or the podcast feed url; anything that still consumes these
+    // host values (the dormant Plus-only referral and end-of-year flows) gets the PodHopper site.
+    private val hostUrl: String = "https://podhopper.app",
+    private val webBasedHost: String = "podhopper.app",
     private val metaAppId: String = META_APP_ID,
     private val shareStarter: ShareStarter = object : ShareStarter {
         override fun start(context: Context, intent: Intent) {
@@ -604,7 +605,8 @@ data class SharingRequest internal constructor(
             override val podcast: PodcastModel,
         ) : Data,
             Sociable {
-            override fun sharingUrl(host: String) = "$host/podcast/${podcast.uuid}"
+            // PodHopper: share the podcast's own RSS feed url, not a Pocket Casts short link.
+            override fun sharingUrl(host: String) = podcast.podcastUrl.orEmpty()
 
             override fun sharingTitle() = podcast.title
 
@@ -618,7 +620,8 @@ data class SharingRequest internal constructor(
             val episode: EpisodeModel,
         ) : Data,
             Sociable {
-            override fun sharingUrl(host: String) = "$host/episode/${episode.uuid}"
+            // PodHopper: share the episode's own media url, not a Pocket Casts short link.
+            override fun sharingUrl(host: String) = episode.downloadUrl.orEmpty()
 
             override fun sharingTitle() = episode.title
 
@@ -634,7 +637,9 @@ data class SharingRequest internal constructor(
             val type: TimestampType,
         ) : Data,
             Sociable {
-            override fun sharingUrl(host: String) = "$host/episode/${episode.uuid}?t=${position.inWholeSeconds}"
+            // PodHopper: share the episode's own media url; the Pocket Casts web player that
+            // honored the timestamp query no longer applies.
+            override fun sharingUrl(host: String) = episode.downloadUrl.orEmpty()
 
             override fun sharingTitle() = episode.title
 
@@ -658,7 +663,10 @@ data class SharingRequest internal constructor(
             val episode: EpisodeModel,
             val range: Clip.Range,
         ) : Data {
-            fun sharingUrl(host: String) = "$host/episode/${episode.uuid}?t=${range.start.toSecondsWithSingleMilli()},${range.end.toSecondsWithSingleMilli()}"
+            // PodHopper: share the episode's own media url; clip ranges relied on the Pocket
+            // Casts web player, which no longer applies.
+            @Suppress("UNUSED_PARAMETER")
+            fun sharingUrl(host: String) = episode.downloadUrl.orEmpty()
 
             fun sharingTitle() = episode.title
 

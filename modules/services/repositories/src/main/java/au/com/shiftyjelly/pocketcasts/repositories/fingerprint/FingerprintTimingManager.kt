@@ -7,7 +7,6 @@ import android.media.MediaFormat
 import android.os.SystemClock
 import androidx.annotation.VisibleForTesting
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTracker
-import au.com.shiftyjelly.pocketcasts.repositories.BuildConfig
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.ChapterManager
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
@@ -171,7 +170,6 @@ class FingerprintTimingManager @Inject constructor(
         }
 
         val episodeUuid = episode.uuid
-        val podcastUuid = episode.podcastOrSubstituteUuid
         // Fingerprint the progressive enclosure, not the HLS rendition; timings may drift if the renditions differ.
         val audioSource = episode.downloadedFilePath ?: episode.downloadUrl
 
@@ -187,7 +185,7 @@ class FingerprintTimingManager @Inject constructor(
             // Abort if a newer stop()/prepare() has started since we acquired the lock.
             if (gen != generation) return@launch
             startPlaybackProgressObserver(episodeUuid)
-            prepareForEpisode(episodeUuid, podcastUuid, audioSource, episode.isDownloaded, episode.duration)
+            prepareForEpisode(episodeUuid, audioSource, episode.isDownloaded, episode.duration)
         }
     }
 
@@ -368,7 +366,6 @@ class FingerprintTimingManager @Inject constructor(
 
     private suspend fun prepareForEpisode(
         episodeUuid: String,
-        podcastUuid: String,
         audioSource: String?,
         isDownloaded: Boolean,
         durationSec: Double,
@@ -418,30 +415,12 @@ class FingerprintTimingManager @Inject constructor(
             }
         }
 
-        // Fetch from server
-        _stateFlow.value = State.Preparing
-        Timber.d("FingerprintTimingManager: fetching reference from server for $episodeUuid")
-
-        val baseUrl = "${BuildConfig.SERVER_SHOW_NOTES_URLS}/generated_transcripts/"
-        val referenceData = referenceRetriever.fetchReferenceData(baseUrl, podcastUuid, episodeUuid)
-
-        if (referenceData == null) {
-            markUnavailable(reason = "no_reference", isStreaming = currentIsStreaming, episodeUuid = episodeUuid)
-            Timber.d("FingerprintTimingManager: no reference available for $episodeUuid")
-            return
-        }
-
-        val reference = ReferenceFingerprint.decode(referenceData)
-        if (reference == null) {
-            markUnavailable(reason = "reference_decode_failed", isStreaming = currentIsStreaming, episodeUuid = episodeUuid)
-            Timber.d("FingerprintTimingManager: failed to decode reference for $episodeUuid")
-            return
-        }
-
-        if (isDownloaded) {
-            referenceRetriever.saveReferenceData(referenceData, audioSource)
-        }
-        configureForReference(reference, referenceData, audioSource, episodeUuid)
+        // PodHopper: reference fingerprints used to be fetched from the Pocket Casts show-notes
+        // server (generated_transcripts). Feed episodes have no entry there and PodHopper makes no
+        // Pocket Casts calls, so without a disk-cached reference the mapping is unavailable and
+        // generated chapter alignment simply does not run.
+        markUnavailable(reason = "no_reference", isStreaming = currentIsStreaming, episodeUuid = episodeUuid)
+        Timber.d("FingerprintTimingManager: no local reference available for $episodeUuid")
     }
 
     private suspend fun configureForReference(

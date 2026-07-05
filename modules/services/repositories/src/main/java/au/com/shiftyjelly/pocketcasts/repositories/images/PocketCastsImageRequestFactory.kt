@@ -4,12 +4,9 @@ import android.content.Context
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
-import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.playback.EpisodeFileMetadata
-import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.extensions.dpToPx
 import coil3.imageLoader
-import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.crossfade
@@ -107,48 +104,38 @@ data class PocketCastsImageRequestFactory(
         is RequestType.FileOrUrl -> filePathOrUrl
     }
 
-    private fun RequestType.Podcast.data(context: Context) = podcastUuid?.let { podcastArtworkUrl(context, it) } ?: placeholderId
+    // PodHopper: a bare podcast uuid used to be turned into a Pocket Casts artwork CDN url, which
+    // has no entry for feed podcasts. Feed artwork flows through create(podcast)/FileOrUrl with
+    // the real feed image url; a uuid-only request falls straight to the placeholder drawable.
+    private fun RequestType.Podcast.data(context: Context) = placeholderId
 
-    private fun RequestType.PodcastEpisode.data(context: Context) = if (useEpisodeArtwork) {
-        episode.imageUrl ?: EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: episode.podcastArtworkUrl(context)
+    // PodHopper: episode rows used to fall back to the Pocket Casts artwork CDN keyed by the
+    // podcast uuid, which 404s for feed podcasts. Use the feed's episode image, then the artwork
+    // embedded in the downloaded file, then the placeholder drawable; never a Pocket Casts url.
+    private fun RequestType.PodcastEpisode.data(context: Context): Any = if (useEpisodeArtwork) {
+        episode.imageUrl ?: EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: placeholderId
     } else {
-        episode.podcastArtworkUrl(context)
+        EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: placeholderId
     }
 
-    private fun RequestType.UserEpisode.data() = if (useEpisodeArtwork) {
-        EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: episode.artworkUrl()
+    private fun RequestType.UserEpisode.data(): Any = if (useEpisodeArtwork) {
+        EpisodeFileMetadata.artworkCacheFile(context, episode.uuid).takeIf(File::exists) ?: episode.artworkUrl() ?: placeholderId
     } else {
-        episode.artworkUrl()
+        episode.artworkUrl() ?: placeholderId
     }
 
-    private fun PodcastEpisodeEntity.podcastArtworkUrl(context: Context) = podcastArtworkUrl(context, podcastUuid)
-
-    private fun UserEpisodeEntity.artworkUrl(): String {
-        val tintColorIndex = tintColorIndex
-        val artworkUrl = artworkUrl
+    // PodHopper: user episode tint placeholders used to be Pocket Casts static-server pngs. A
+    // user episode without its own artwork now falls to the local placeholder drawable instead.
+    private fun UserEpisodeEntity.artworkUrl(): String? {
         return if (tintColorIndex == 0 && artworkUrl != null) {
             artworkUrl
         } else {
-            val themeType = if (isDarkTheme) "dark" else "light"
-            val urlSize = when {
-                actualSize == null -> 960
-                actualSize > 280 -> 960
-                else -> 280
-            }
-            "${Settings.SERVER_STATIC_URL}/discover/images/artwork/$themeType/$urlSize/$tintColorIndex.png"
+            null
         }
     }
 
-    private fun podcastArtworkUrl(context: Context, podcastUuid: String): String {
-        return PodcastImage.getArtworkUrl(size = actualSize, uuid = podcastUuid, isWearOS = Util.isWearOs(context))
-    }
-
-    private fun RequestType.listener(context: Context, onSuccess: () -> Unit): ImageRequest.Listener? = when (this) {
-        is RequestType.PodcastEpisode -> RetryWithPodcastListener(episode.podcastArtworkUrl(context), onSuccess)
-
-        else -> object : ImageRequest.Listener {
-            override fun onSuccess(request: ImageRequest, result: SuccessResult) = onSuccess()
-        }
+    private fun RequestType.listener(context: Context, onSuccess: () -> Unit): ImageRequest.Listener? = object : ImageRequest.Listener {
+        override fun onSuccess(request: ImageRequest, result: SuccessResult) = onSuccess()
     }
 
     enum class PlaceholderType {
@@ -165,19 +152,4 @@ private sealed interface RequestType {
     data class PodcastEpisode(val episode: PodcastEpisodeEntity, val useEpisodeArtwork: Boolean) : RequestType
     data class UserEpisode(val episode: UserEpisodeEntity, val useEpisodeArtwork: Boolean) : RequestType
     data class FileOrUrl(val filePathOrUrl: String) : RequestType
-}
-
-private class RetryWithPodcastListener(
-    private val url: String,
-    private val onSuccess: () -> Unit,
-) : ImageRequest.Listener {
-    override fun onSuccess(request: ImageRequest, result: SuccessResult) = onSuccess()
-
-    override fun onError(request: ImageRequest, result: ErrorResult) {
-        val newRequest = request.newBuilder()
-            .data(url)
-            .listener(null)
-            .build()
-        request.context.imageLoader.enqueue(newRequest)
-    }
 }

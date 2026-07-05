@@ -12,9 +12,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.FolderManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.search.ImprovedSearchManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
-import au.com.shiftyjelly.pocketcasts.servers.ServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.discover.GlobalServerSearch
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import com.automattic.eventhorizon.EventHorizon
@@ -40,16 +38,13 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.rx2.asFlow
-import kotlinx.coroutines.rx2.await
 import timber.log.Timber
 
 class SearchHandler @Inject constructor(
-    val serviceManager: ServiceManager,
     val podcastManager: PodcastManager,
     val improvedSearchManager: ImprovedSearchManager,
     val userManager: UserManager,
     val settings: Settings,
-    private val cacheServiceManager: PodcastCacheServiceManager,
     private val eventHorizon: EventHorizon,
     folderManager: FolderManager,
 ) {
@@ -250,45 +245,11 @@ class SearchHandler @Inject constructor(
         }
         .map { it.term }
         .switchMap {
-            if (it.length <= 1) {
-                Observable.just(GlobalServerSearch())
-            } else {
-                eventHorizon.track(
-                    SearchPerformedEvent(
-                        source = source.analyticsValue,
-                    ),
-                )
-                loadingObservable.accept(true)
-
-                var globalSearch = GlobalServerSearch(searchTerm = it)
-                val podcastServerSearch = serviceManager
-                    .searchForPodcastsRx(it)
-                    .map { podcastSearch ->
-                        globalSearch = globalSearch.copy(podcastSearch = podcastSearch)
-                        globalSearch
-                    }
-                    .toObservable()
-
-                if (!it.startsWith("http")) {
-                    val episodesServerSearch = cacheServiceManager
-                        .searchEpisodes(it)
-                        .map { episodeSearch ->
-                            globalSearch = globalSearch.copy(episodeSearch = episodeSearch)
-                            globalSearch
-                        }
-
-                    podcastServerSearch.mergeWith(episodesServerSearch)
-                } else {
-                    podcastServerSearch
-                }
-                    .subscribeOn(Schedulers.io())
-                    .onErrorReturn { exception ->
-                        GlobalServerSearch(error = exception)
-                    }
-                    .doFinally {
-                        loadingObservable.accept(false)
-                    }
-            }
+            // PodHopper: this classic pipeline used to query the Pocket Casts podcast search and
+            // episode search servers. Its only remaining consumer is the legacy onboarding
+            // recommendations screen, so emit an empty server result and let local results carry
+            // the screen. The live search UI uses the iTunes-backed improved pipeline below.
+            Observable.just(GlobalServerSearch(searchTerm = it))
         }
 
     private val searchFlowable = Observables.combineLatest(
@@ -366,18 +327,11 @@ class SearchHandler @Inject constructor(
                 flow {
                     emit(SearchUiState.SearchOperation.Loading(searchTerm = query))
                     val subscribedUuids = podcastManager.findSubscribedUuids()
-                    if (query.startsWith("http")) {
-                        val podcastSearch = serviceManager
-                            .searchForPodcastsRx(query)
-                            .map { list -> list.searchResults.map { ImprovedSearchResultItem.PodcastItem(uuid = it.uuid, title = it.title, author = it.author, isFollowed = subscribedUuids.contains(it.uuid)) } }
-                            .await()
-                        eventHorizon.track(
-                            SearchPerformedEvent(
-                                source = source.analyticsValue,
-                            ),
-                        )
-                        emit(SearchUiState.SearchOperation.Success(searchTerm = query, results = SearchResults.Results(results = podcastSearch, filter = ResultsFilters.TOP_RESULTS)))
-                    } else {
+                    // PodHopper: queries that began with "http" used to be posted to the Pocket
+                    // Casts search server. Real pasted URLs are intercepted by the view model and
+                    // subscribed through the feed engine before reaching here, so every query that
+                    // arrives is treated as a plain text search against the iTunes directory.
+                    run {
                         val localResults = localPodcasts.map {
                             when (it) {
                                 is FolderItem.Folder -> ImprovedSearchResultItem.FolderItem(folder = it.folder, podcasts = it.podcasts)

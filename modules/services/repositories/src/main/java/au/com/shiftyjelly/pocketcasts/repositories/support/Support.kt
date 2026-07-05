@@ -81,7 +81,7 @@ class Support @Inject constructor(
         withContext(Dispatchers.IO) {
             intent.type = "message/rfc822"
             if (emailSupport) {
-                intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("support@pocketcasts.com"))
+                intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("info@covertwogames.com"))
             }
             intent.putExtra(
                 Intent.EXTRA_SUBJECT,
@@ -142,7 +142,7 @@ class Support @Inject constructor(
 
         withContext(Dispatchers.IO) {
             intent.type = "text/html"
-            intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("support@pocketcasts.com"))
+            intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("info@covertwogames.com"))
             intent.putExtra(
                 Intent.EXTRA_SUBJECT,
                 "$subject v${settings.getVersion()} ${getAccountType()}",

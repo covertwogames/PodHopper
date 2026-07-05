@@ -311,7 +311,8 @@ class StoriesActivity : ComponentActivity() {
         WebViewActivity.show(
             this,
             getString(LR.string.podcast_ratings_page_title),
-            "https://support.pocketcasts.com/knowledge-base/ratings/",
+            // PodHopper: never the Pocket Casts support site.
+            "https://podhopper.app/help",
         )
     }
 

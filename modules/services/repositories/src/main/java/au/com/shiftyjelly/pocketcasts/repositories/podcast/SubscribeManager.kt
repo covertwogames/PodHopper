@@ -14,14 +14,12 @@ import au.com.shiftyjelly.pocketcasts.models.type.EpisodesSortType
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadType
-import au.com.shiftyjelly.pocketcasts.repositories.images.PodcastImage
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.servers.cdn.ArtworkColors
 import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.sync.PodcastEpisodesResponse
 import au.com.shiftyjelly.pocketcasts.utils.Optional
-import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import coil3.imageLoader
 import coil3.request.CachePolicy
@@ -127,16 +125,17 @@ class SubscribeManager @Inject constructor(
 
     private fun cacheArtworkRxCompletable(podcast: Podcast) = rxCompletable {
         try {
-            val urls = PodcastImage.getArtworkUrls(uuid = podcast.uuid, isWearOS = Util.isWearOs(context))
-            urls.forEach { url ->
-                val request = ImageRequest.Builder(context)
-                    .data(url)
-                    .memoryCachePolicy(CachePolicy.DISABLED)
-                    .build()
-                val result = context.imageLoader.execute(request)
-                if (result is ErrorResult) {
-                    Timber.i("Could not cache artwork for podcast ${podcast.uuid} from $url. ${result.throwable.message}")
-                }
+            // PodHopper: this used to warm the cache with Pocket Casts CDN artwork urls keyed by
+            // the podcast uuid, which 404 for feed podcasts. Prefetch the feed's own artwork url
+            // instead, or nothing when the feed has no artwork.
+            val url = podcast.thumbnailUrl?.takeIf { it.isNotBlank() } ?: return@rxCompletable
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .memoryCachePolicy(CachePolicy.DISABLED)
+                .build()
+            val result = context.imageLoader.execute(request)
+            if (result is ErrorResult) {
+                Timber.i("Could not cache artwork for podcast ${podcast.uuid} from $url. ${result.throwable.message}")
             }
         } catch (e: Exception) {
             Timber.e(e, "Error caching artwork for podcast ${podcast.uuid}")
