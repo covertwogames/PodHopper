@@ -21,6 +21,33 @@
             android:title="@string/podhopper_auto_switch_player"
             android:summary="@string/podhopper_auto_switch_player_summary" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/podhopper_downloads_category">
+        <SwitchPreference
+            android:key="podhopperAutoDownload"
+            android:persistent="false"
+            android:title="@string/podhopper_auto_download_title"
+            android:summaryOn="@string/podhopper_auto_download_summary_on"
+            android:summaryOff="@string/podhopper_auto_download_summary_off" />
+        <ListPreference
+            android:key="podhopperAutoDownloadLimit"
+            android:persistent="false"
+            android:title="@string/podhopper_auto_download_limit_title"
+            android:entries="@array/podhopper_download_limit_entries"
+            android:entryValues="@array/podhopper_download_limit_values" />
+        <au.com.shiftyjelly.pocketcasts.StorageBarPreference
+            android:key="podhopperStorageBar"
+            android:persistent="false" />
+        <Preference
+            android:key="podhopperDeleteDownloads"
+            android:persistent="false"
+            android:title="@string/podhopper_delete_downloads_title"
+            android:summary="@string/podhopper_delete_downloads_summary" />
+        <Preference
+            android:key="podhopperUploadLogs"
+            android:persistent="false"
+            android:title="@string/podhopper_upload_logs_title"
+            android:summary="@string/podhopper_upload_logs_summary" />
+    </PreferenceCategory>
     <EditTextPreference
         android:id="@+id/edit_text_skip_forward"
         android:name="Skip Forward"

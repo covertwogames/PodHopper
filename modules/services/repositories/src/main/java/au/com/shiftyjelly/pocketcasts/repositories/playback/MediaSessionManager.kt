@@ -753,6 +753,18 @@ class MediaSessionManager(
     }
 
     @OptIn(UnstableApi::class)
+    /**
+     * PodHopper: re-publishes the custom action layout from outside this class. Used when the
+     * "jump to synced position" offer appears or clears, so the car's Now Playing screen adds
+     * or removes the action without waiting for the next metadata event. Safe from any thread.
+     */
+    fun refreshCustomLayout() {
+        if (!needsMedia3Session) return
+        scope.launch(Dispatchers.Main) {
+            updateMedia3CustomLayout()
+        }
+    }
+
     private fun updateMedia3CustomLayout() {
         val session = media3Session ?: return
         if (Util.isWearOs(context)) return
@@ -1532,6 +1544,10 @@ internal const val APP_ACTION_MARK_AS_PLAYED = "markAsPlayed"
 internal const val APP_ACTION_CHANGE_SPEED = "changeSpeed"
 internal const val APP_ACTION_ARCHIVE = "archive"
 internal const val APP_ACTION_PLAY_NEXT = "playNext"
+
+// PodHopper: offered when a newer cross-device position arrived after playback already
+// started from the local position (the pre-play pull had timed out). Tapping seeks there.
+internal const val APP_ACTION_JUMP_TO_SYNCED = "jumpToSyncedPosition"
 
 private val NOTHING_PLAYING: MediaMetadataCompat = MediaMetadataCompat.Builder()
     .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "")

@@ -632,6 +632,106 @@ class PodHopperPositionSync @Inject constructor(
         FAILED,
     }
 
+    /**
+     * PodHopper: what another device most recently did with [episode], for the late-correction
+     * path. When the pre-play pull timed out, playback starts from the local position and this is
+     * retried in the background. Three outcomes: [RemoteEpisodeState.InProgress] carries the
+     * other device's position (NOT applied here) so the player can offer a "jump to synced
+     * position" action; [RemoteEpisodeState.Completed] means the episode was finished elsewhere,
+     * and the player treats that as the completion it is (mark played, advance); null means
+     * signed out, offline, timed out, or no other-device row exists, in which case playback just
+     * continues locally.
+     */
+    suspend fun fetchRemoteEpisodeState(episode: BaseEpisode): RemoteEpisodeState? {
+        if (!supabaseClient.isLoggedIn()) {
+            return null
+        }
+        return try {
+            withTimeoutOrNull(PLAY_PULL_TIMEOUT_MS) {
+                withContext(Dispatchers.IO) {
+                    val installId = getOrCreateInstallId()
+                    val query = "select=position_sec,total_sec,completed,updated_at_ms" +
+                        "&episode_key=eq.${episode.uuid}" +
+                        "&device_id=neq.$installId" +
+                        "&order=updated_at_ms.desc" +
+                        "&limit=1"
+                    val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
+                    if (rows.length() == 0) {
+                        null
+                    } else {
+                        val row = rows.getJSONObject(0)
+                        val positionSec = row.optInt("position_sec", -1)
+                        val totalSec = row.optInt("total_sec", 0)
+                        val completed = row.optBoolean("completed", false)
+                        val isCompletion = completed || (totalSec > 0 && positionSec >= totalSec)
+                        when {
+                            isCompletion -> RemoteEpisodeState.Completed
+                            positionSec < 0 -> null
+                            else -> RemoteEpisodeState.InProgress(positionSec * 1000L)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late position fetch failed: ${e.message}")
+            null
+        }
+    }
+
+    sealed interface RemoteEpisodeState {
+        data class InProgress(val positionMs: Long) : RemoteEpisodeState
+        data object Completed : RemoteEpisodeState
+    }
+
+    /**
+     * PodHopper: the most recently played IN-PROGRESS episode from another device, resolved to a
+     * local episode but deliberately NOT adopted into the player. Used by the late-correction
+     * completion path: when the episode playing here turns out to be finished elsewhere, the
+     * player switches to whatever the other device moved on to, which is a deliberate,
+     * user-approved switch, so this skips the adopt guards (local-activity grace and
+     * freshest-write) that exist to stop UNWANTED yanks. The auto-switch setting is still
+     * respected: with it off, the car never follows the phone, and completion falls through to
+     * the normal advance-the-queue behavior. Same in-progress rule as the adopt path, so a
+     * completion can never come back as the thing to play next. If the episode's podcast is not
+     * on this device yet, it is fetched and added as not subscribed, same as the adopt path.
+     * Returns null when signed out, the setting is off, offline, timed out, or nothing
+     * in-progress exists.
+     */
+    suspend fun resolveLatestInProgressEpisode(): BaseEpisode? {
+        if (!supabaseClient.isLoggedIn()) {
+            return null
+        }
+        if (!settings.autoSwitchPlayerToCurrentPodcast.value) {
+            return null
+        }
+        return try {
+            withTimeoutOrNull(PLAY_PULL_TIMEOUT_MS) {
+                withContext(Dispatchers.IO) {
+                    val installId = getOrCreateInstallId()
+                    val query = "select=episode_key,feed_url,position_sec,total_sec,completed,updated_at_ms" +
+                        "&device_id=neq.$installId" +
+                        "&order=updated_at_ms.desc" +
+                        "&limit=$ADOPT_SCAN_LIMIT"
+                    val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
+                    val candidate = latestInProgressFrom(rows)
+                    if (candidate == null) {
+                        Log.i(LOG_TAG, "resolve-latest: no in-progress episode from another device")
+                        return@withContext null
+                    }
+                    var episode = episodeManager.findByUuid(candidate.episodeKey)
+                    if (episode == null && !candidate.feedUrl.isNullOrBlank()) {
+                        podcastManager.addFeedUrlAsUnsubscribed(candidate.feedUrl)
+                        episode = episodeManager.findByUuid(candidate.episodeKey)
+                    }
+                    episode
+                }
+            }
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper resolve-latest failed: ${e.message}")
+            null
+        }
+    }
+
     /** Applies every row in a page, parking those whose episode is not local yet. Returns the
      *  highest updated_at_ms seen, so the caller can advance the cursor past the whole page. */
     private suspend fun applyRows(rows: JSONArray): ApplyResult {

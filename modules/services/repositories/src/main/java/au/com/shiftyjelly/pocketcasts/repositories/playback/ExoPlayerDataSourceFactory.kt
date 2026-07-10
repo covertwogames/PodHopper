@@ -20,6 +20,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.mp3.Mp3Extractor
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.servers.di.Player
+import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
@@ -102,7 +103,12 @@ class ExoPlayerDataSourceFactory @Inject constructor(
             episodeLocation.isHlsStream -> HlsMediaSource.Factory(dataFactory)
             else -> ProgressiveMediaSource.Factory(dataFactory, extractorsFactory)
         }
-        if (FeatureFlag.isEnabled(Feature.LOAD_ERROR_HANDLING_POLICY)) {
+        // PodHopper: Android Automotive always gets the resilient retry policy. Car cellular
+        // connections drop and stall far more than phone networks, and the Media3 default
+        // policy turns many of those transient failures into instant fatal errors, which on
+        // AAOS tears down the Now Playing screen. Phone release builds keep the flag-gated
+        // default behavior, unchanged.
+        if (FeatureFlag.isEnabled(Feature.LOAD_ERROR_HANDLING_POLICY) || Util.isAutomotive(context)) {
             factory.setLoadErrorHandlingPolicy(PocketCastsLoadErrorHandlingPolicy())
         }
         return factory.createMediaSource(mediaItem)

@@ -31,6 +31,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+// PodHopper: how many times a 416 cache-race error may restart playback for one episode
+// before the error is surfaced normally. Two attempts covers the race window reopening
+// once after a reset without letting a broken stream loop.
+private const val MAX_CACHE_RECOVERY_ATTEMPTS = 2
+
 class SimplePlayer(
     private val settings: Settings,
     private val statsManager: StatsManager,
@@ -61,6 +66,15 @@ class SimplePlayer(
 
     @Volatile
     private var prepared = false
+
+    // PodHopper: bounded restart-after-416 recovery. The 416 comes from the known cache race
+    // (the CacheWorker writing an episode into the same SimpleCache the player streams from,
+    // see the upstream issue links in onPlayerError). Upstream's handler resets the cache but
+    // leaves the ExoPlayer dead in its error state, which on Android Automotive tears down the
+    // Now Playing screen and leaves the play button unresponsive. These fields bound how many
+    // times we restart playback per episode before giving up and surfacing a normal error.
+    private var cacheRecoveryAttempts = 0
+    private var cacheRecoveryEpisodeUuid: String? = null
 
     val exoPlayer: ExoPlayer?
         get() {
@@ -97,8 +111,17 @@ class SimplePlayer(
     }
 
     override fun handlePrepare() {
-        if (prepared) {
+        // PodHopper: "prepared" alone is not proof of a usable player. A fatal stream error
+        // leaves the ExoPlayer in an error state with this flag still true, so every play
+        // command was silently ignored until something happened to rebuild the player. Treat
+        // a null or errored ExoPlayer as not prepared and rebuild it; prepare() releases any
+        // previous instance itself, so calling it here is safe.
+        val current = player
+        if (prepared && current != null && current.playerError == null) {
             return
+        }
+        if (prepared) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Player was marked prepared but is unusable (released or errored), rebuilding")
         }
         prepare()
     }
@@ -250,14 +273,52 @@ class SimplePlayer(
                 // https://github.com/google/ExoPlayer/issues/10577
                 // Internal ref: p1730809737477079-slack-C02A333D8LQ
                 if ((error.cause as? InvalidResponseCodeException)?.responseCode == 416) {
-                    episodeLocation?.let {
+                    val location = episodeLocation
+                    if (location != null) {
+                        // PodHopper: track recovery attempts per episode so a genuinely broken
+                        // stream cannot restart forever. A new episode resets the budget.
+                        if (episodeUuid != cacheRecoveryEpisodeUuid) {
+                            cacheRecoveryEpisodeUuid = episodeUuid
+                            cacheRecoveryAttempts = 0
+                        }
+                        cacheRecoveryAttempts += 1
+
+                        // Position and play state must be captured before the reset tears the
+                        // player down, so the restart resumes where the error interrupted.
+                        val resumePositionMs = (player?.currentPosition?.toInt() ?: handleCurrentPositionMs()).coerceAtLeast(0)
+                        val resumePlayWhenReady = player?.playWhenReady ?: false
+
                         dataSourceFactory.resetEpisodeCaching(
-                            episodeLocation = it,
+                            episodeLocation = location,
                             onCachingReset = { episodeUuid -> onPlayerEvent(this@SimplePlayer, PlayerEvent.CachingReset(episodeUuid)) },
                             onCachingComplete = { episodeUuid -> onPlayerEvent(this@SimplePlayer, PlayerEvent.CachingComplete(episodeUuid)) },
                         )
+
+                        if (cacheRecoveryAttempts <= MAX_CACHE_RECOVERY_ATTEMPTS) {
+                            // PodHopper: upstream stopped here, leaving a dead player behind:
+                            // the session showed no content and play commands were swallowed.
+                            // Rebuild the player and resume so the 416 cache race costs a blip
+                            // instead of killing playback. handleSeekToTimeMs routes through
+                            // LocalPlayer's seek bookkeeping so the parent position stays true.
+                            LogBuffer.i(
+                                LogBuffer.TAG_PLAYBACK,
+                                "416 cache race: restarting playback at %.3f (attempt %d of %d)",
+                                resumePositionMs / 1000f,
+                                cacheRecoveryAttempts,
+                                MAX_CACHE_RECOVERY_ATTEMPTS,
+                            )
+                            handleStop()
+                            prepare()
+                            handleSeekToTimeMs(resumePositionMs)
+                            player?.playWhenReady = resumePlayWhenReady
+                            return
+                        }
+                        LogBuffer.e(LogBuffer.TAG_PLAYBACK, "416 cache race: recovery budget exhausted for episode $episodeUuid, surfacing error")
+                        // Fall through to the normal error path below.
+                    } else {
+                        // No episode location means nothing to reset or restart; fall through.
+                        LogBuffer.e(LogBuffer.TAG_PLAYBACK, "416 received with no episode location, surfacing error")
                     }
-                    return
                 }
                 LogBuffer.e(LogBuffer.TAG_PLAYBACK, error, "Play failed.")
                 val event = PlayerEvent.PlayerError(error.message ?: "", error)

@@ -5,9 +5,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
+import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.FeedParser
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.SubscribeManager
+import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -49,6 +52,7 @@ class PodHopperSubscriptionSync @Inject constructor(
     private val feedParser: FeedParser,
     private val subscribeManager: SubscribeManager,
     private val podcastManager: Lazy<PodcastManager>,
+    private val settings: Settings,
     @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) {
@@ -256,6 +260,20 @@ class PodHopperSubscriptionSync @Inject constructor(
                     continue
                 }
                 manager.subscribeToFeedUrl(feedUrl)
+                // PodHopper: car only. When the car's auto-download toggle is on, a podcast
+                // subscribed on the phone must download on the car too, so flag it here the
+                // moment the inbound sync adds it. Gated on automotive so the phone's inbound
+                // sync behavior is unchanged.
+                if (Util.isAutomotive(context) &&
+                    settings.autoDownloadNewEpisodes.value == Podcast.AUTO_DOWNLOAD_NEW_EPISODES
+                ) {
+                    val uuid = feedParser.podcastUuidForFeed(feedUrl)
+                    manager.findPodcastByUuid(uuid)?.let { podcast ->
+                        if (!podcast.isAutoDownloadNewEpisodes) {
+                            manager.updateAutoDownloadStatusBlocking(podcast, Podcast.AUTO_DOWNLOAD_NEW_EPISODES)
+                        }
+                    }
+                }
             }
             // Apply remote removes, skipping feeds we just re-subscribed to locally.
             for (feedUrl in remoteRemoved) {

@@ -610,6 +610,10 @@ interface Settings {
     val podhopperEmail: UserSetting<String>
     val podhopperRefreshToken: UserSetting<String>
 
+    // PodHopper: whether the one-time Android Automotive download defaults (allow cellular, no
+    // charging constraint) have been applied on this device. Never set on the phone.
+    val podhopperCarDownloadDefaultsApplied: UserSetting<Boolean>
+
     val lastEoySyncTimestamp: UserSetting<Instant>
 
     val useRealTimeForPlaybackRemaingTime: UserSetting<Boolean>

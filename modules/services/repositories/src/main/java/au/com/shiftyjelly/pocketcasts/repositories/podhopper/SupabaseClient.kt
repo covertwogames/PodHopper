@@ -1,7 +1,11 @@
 package au.com.shiftyjelly.pocketcasts.repositories.podhopper
 
+import android.content.Context
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.servers.di.Raw
+import au.com.shiftyjelly.pocketcasts.utils.Util
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -28,8 +32,28 @@ import org.json.JSONObject
 class SupabaseClient @Inject constructor(
     @Raw private val httpClient: OkHttpClient,
     private val settings: Settings,
+    @ApplicationContext private val context: Context,
 ) {
     private val jsonType = "application/json; charset=utf-8".toMediaType()
+
+    // PodHopper: on Android Automotive every Supabase call is hard time-bounded. Car cellular
+    // stalls in ways that leave a socket open indefinitely, and these calls sit on paths that
+    // hold playback locks, so an unbounded call froze the play button for minutes. The derived
+    // client copies the @Raw client (newBuilder shares the connection pool but mutates nothing
+    // on the original, so every other client in the app is untouched) and adds a 10 second
+    // whole-call ceiling. Phone builds keep the @Raw client exactly as before, because the
+    // coroutine-level timeouts around these calls behave acceptably on phone networks and the
+    // phone has years of production behavior we are deliberately not changing.
+    private val callClient: OkHttpClient = if (Util.isAutomotive(context)) {
+        httpClient.newBuilder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .writeTimeout(8, TimeUnit.SECONDS)
+            .callTimeout(10, TimeUnit.SECONDS)
+            .build()
+    } else {
+        httpClient
+    }
 
     private var cachedAccessToken: String? = null
     private var cachedUserId: String? = null
@@ -233,7 +257,7 @@ class SupabaseClient @Inject constructor(
             .addHeader("Authorization", "Bearer " + PodHopperConfig.SUPABASE_ANON_KEY)
             .post(body.toString().toRequestBody(jsonType))
             .build()
-        httpClient.newCall(request).execute().use { response ->
+        callClient.newCall(request).execute().use { response ->
             val responseBody = response.body.string()
             if (!response.isSuccessful) {
                 throw SupabaseException("PodHopper pairing request failed: HTTP ${response.code} $responseBody")
@@ -281,7 +305,7 @@ class SupabaseClient @Inject constructor(
             .addHeader("apikey", PodHopperConfig.SUPABASE_ANON_KEY)
             .post(body.toString().toRequestBody(jsonType))
             .build()
-        httpClient.newCall(request).execute().use { response ->
+        callClient.newCall(request).execute().use { response ->
             val responseBody = response.body.string()
             val code = response.code
             if (code == 400 || code == 401 || code == 403) {
@@ -304,7 +328,7 @@ class SupabaseClient @Inject constructor(
     }
 
     private fun executeExpectingSuccess(request: Request, retryOnAuthError: Boolean): String {
-        httpClient.newCall(request).execute().use { response ->
+        callClient.newCall(request).execute().use { response ->
             val responseBody = response.body.string()
             if (response.code == 401 && retryOnAuthError) {
                 clearSessionCache()
@@ -322,8 +346,40 @@ class SupabaseClient @Inject constructor(
         }
     }
 
+    /**
+     * PodHopper: uploads a diagnostic log snapshot to the private "diagnostics" Storage bucket,
+     * named by object path (e.g. "carDeviceName/2026-07-09T18-30-00.log"). The car has no logcat,
+     * so this is how playback diagnostics get off the head unit. Authenticated as the signed-in
+     * user; the bucket's insert policy requires an authenticated role. Uses a longer dedicated
+     * timeout than the sync calls because a log file is bigger than a sync row, but stays bounded
+     * so a dead connection cannot hold the caller. Blocking; call off the main thread. Throws on
+     * failure so the caller can decide whether to retry later.
+     */
+    fun uploadDiagnostics(objectPath: String, bytes: ByteArray) {
+        val token = ensureSession()
+        val request = Request.Builder()
+            .url(PodHopperConfig.SUPABASE_URL + "/storage/v1/object/" + DIAGNOSTICS_BUCKET + "/" + objectPath)
+            .addHeader("apikey", PodHopperConfig.SUPABASE_ANON_KEY)
+            .addHeader("Authorization", "Bearer $token")
+            .addHeader("x-upsert", "true")
+            .post(bytes.toRequestBody("text/plain; charset=utf-8".toMediaType()))
+            .build()
+        val uploadClient = callClient.newBuilder()
+            .callTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+        uploadClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                val responseBody = response.body.string()
+                throw SupabaseException("PodHopper diagnostics upload failed: HTTP ${response.code} $responseBody")
+            }
+        }
+    }
+
     private companion object {
         const val TOKEN_SAFETY_MARGIN_MS = 60 * 1000L
+        const val DIAGNOSTICS_BUCKET = "diagnostics"
     }
 }
 

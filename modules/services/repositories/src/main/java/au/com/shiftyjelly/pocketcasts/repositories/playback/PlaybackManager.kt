@@ -116,6 +116,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -174,6 +175,14 @@ open class PlaybackManager @Inject constructor(
         private const val MAX_TIME_WITHOUT_FOCUS_FOR_RESUME_MINUTES = 30
         private const val MAX_TIME_WITHOUT_FOCUS_FOR_RESUME = (MAX_TIME_WITHOUT_FOCUS_FOR_RESUME_MINUTES * 60 * 1000).toLong()
         private const val PAUSE_TIMER_DELAY = ((MAX_TIME_WITHOUT_FOCUS_FOR_RESUME_MINUTES + 1) * 60 * 1000).toLong()
+
+        // PodHopper: late-correction offer tuning. The retry waits for playback to settle, the
+        // offer only fires when the remote position is meaningfully ahead, and the button
+        // removes itself if ignored.
+        private const val PENDING_SYNC_FETCH_ATTEMPTS = 2
+        private const val PENDING_SYNC_FETCH_DELAY_MS = 5_000L
+        private const val PENDING_SYNC_MIN_AHEAD_MS = 30_000L
+        private const val PENDING_SYNC_OFFER_WINDOW_MS = 60_000L
     }
 
     private var notificationPermissionChecker: NotificationPermissionChecker? = null
@@ -2107,6 +2116,11 @@ open class PlaybackManager @Inject constructor(
         // keep track of the last played episode so we can auto select the next episode for Android Automotive
         lastPlayedEpisodeUuid = episode.uuid
 
+        // PodHopper: a pending "jump to synced position" offer belongs to one episode only.
+        if (pendingSyncedPositionMs != null && pendingSyncedEpisodeUuid != episode.uuid) {
+            clearPendingSyncedPosition()
+        }
+
         // podcast start from
         if (episode is PodcastEpisode) {
             // Auto subscribe to played podcasts (used in Automotive)
@@ -2319,6 +2333,123 @@ open class PlaybackManager @Inject constructor(
         podHopperPositionSync.reconcileNowPlaying()
     }
 
+    // PodHopper: late-correction offer. When the pre-play position pull times out, playback
+    // starts locally and this state carries a newer position found by the background retry.
+    // The car's Now Playing screen shows a "Newer playback position found. Jump to synced
+    // position?" action while this is set; tapping it seeks. Cleared on jump, on episode
+    // change, or after the offer window expires. Everything here is a no-op unless the
+    // failed-pull path armed it, so normal playback never touches this.
+    @Volatile
+    private var pendingSyncedPositionMs: Long? = null
+
+    @Volatile
+    private var pendingSyncedEpisodeUuid: String? = null
+
+    private var pendingSyncedOfferJob: Job? = null
+
+    /** The offered synced position for the current episode, or null when there is no offer. */
+    fun pendingSyncedPositionMs(): Long? {
+        val pending = pendingSyncedPositionMs ?: return null
+        if (getCurrentEpisode()?.uuid != pendingSyncedEpisodeUuid) {
+            return null
+        }
+        return pending
+    }
+
+    /** Seeks to the offered synced position, then clears the offer. Safe to call when none is set. */
+    fun jumpToSyncedPosition() {
+        val pending = pendingSyncedPositionMs() ?: return
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Jumping to synced position %.3f", pending / 1000f)
+        clearPendingSyncedPosition()
+        seekToTimeMs(pending.toInt())
+    }
+
+    private fun clearPendingSyncedPosition() {
+        pendingSyncedPositionMs = null
+        pendingSyncedEpisodeUuid = null
+        pendingSyncedOfferJob?.cancel()
+        pendingSyncedOfferJob = null
+        mediaSessionManager.refreshCustomLayout()
+    }
+
+    private fun offerSyncedPositionWhenAvailable(episode: BaseEpisode) {
+        pendingSyncedOfferJob?.cancel()
+        pendingSyncedOfferJob = launch {
+            // Two quiet retries after playback has settled. Each fetch is time-bounded inside
+            // the sync class, so this never holds anything: it is a background lookup only.
+            var remoteState: PodHopperPositionSync.RemoteEpisodeState? = null
+            for (attempt in 1..PENDING_SYNC_FETCH_ATTEMPTS) {
+                delay(PENDING_SYNC_FETCH_DELAY_MS)
+                if (getCurrentEpisode()?.uuid != episode.uuid) {
+                    return@launch
+                }
+                remoteState = podHopperPositionSync.fetchRemoteEpisodeState(episode)
+                if (remoteState != null) {
+                    break
+                }
+            }
+            val state = remoteState ?: return@launch
+            if (getCurrentEpisode()?.uuid != episode.uuid) {
+                return@launch
+            }
+            when (state) {
+                is PodHopperPositionSync.RemoteEpisodeState.Completed -> {
+                    handleRemoteCompletionDuringPlayback(episode)
+                }
+
+                is PodHopperPositionSync.RemoteEpisodeState.InProgress -> {
+                    val remote = state.positionMs
+                    val localMs = getCurrentTimeMs(episode)
+                    if (remote < localMs + PENDING_SYNC_MIN_AHEAD_MS) {
+                        // Not meaningfully ahead of where the listener already is; no offer.
+                        return@launch
+                    }
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Offering synced position %.3f (local %.3f)", remote / 1000f, localMs / 1000f)
+                    pendingSyncedPositionMs = remote
+                    pendingSyncedEpisodeUuid = episode.uuid
+                    mediaSessionManager.refreshCustomLayout()
+
+                    // The offer removes itself if ignored, so a stale jump button never lingers.
+                    delay(PENDING_SYNC_OFFER_WINDOW_MS)
+                    if (pendingSyncedEpisodeUuid == episode.uuid) {
+                        clearPendingSyncedPosition()
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * PodHopper: the late fetch discovered the episode playing right now was already finished on
+     * another device. Treat it as the completion it is. If the other device has since started a
+     * different episode (and the auto-switch setting is on), switch to that episode at its synced
+     * position FIRST, then mark this one played: switching first makes the removal of the old
+     * episode a silent queue operation instead of a playback interruption. With nothing newer
+     * elsewhere (or auto-switch off), marking the playing episode as played pauses it, removes it
+     * from Up Next, and auto-loads the next episode playing, exactly the natural end-of-episode
+     * flow. The mark-as-played runs the real local completion (Up Next removal, auto-archive per
+     * podcast settings) and its completion push is an idempotent refresh of an already-completed
+     * row.
+     */
+    private suspend fun handleRemoteCompletionDuringPlayback(episode: BaseEpisode) {
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Episode ${episode.uuid} was completed on another device, applying completion")
+        val resolved = podHopperPositionSync.resolveLatestInProgressEpisode()
+        if (resolved != null && resolved.uuid != episode.uuid) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Another device moved on to ${resolved.uuid}, switching to it at its synced position")
+            // Pull and store the synced position before the switch so the load reads it even if
+            // the in-play pull inside play() times out on a weak connection.
+            podHopperPositionSync.applyRemotePositionBeforePlay(resolved)
+            playNowSuspend(episode = resolved, sourceView = SourceView.AUTO_PLAY)
+            withContext(Dispatchers.IO) {
+                episodeManager.markAsPlayedBlocking(episode, this@PlaybackManager, podcastManager)
+            }
+        } else {
+            withContext(Dispatchers.IO) {
+                episodeManager.markAsPlayedBlocking(episode, this@PlaybackManager, podcastManager)
+            }
+        }
+    }
+
     private suspend fun play(
         sourceView: SourceView = SourceView.UNKNOWN,
         posUpdatedOnPlayerReset: Boolean = false,
@@ -2371,6 +2502,10 @@ open class PlaybackManager @Inject constructor(
         val podHopperPullResult = podHopperPositionSync.applyRemotePositionBeforePlay(episode)
         if (podHopperPullResult == PodHopperPositionSync.PlayPullResult.FAILED) {
             showToast("Couldn't sync playback position from the cloud. Playing from this device.")
+            // PodHopper: the pull timed out, so playback starts from the local position rather
+            // than blocking. Retry in the background; if a meaningfully newer position turns up,
+            // offer it as a Now Playing action instead of moving the scrubber under the listener.
+            offerSyncedPositionWhenAvailable(episode)
         }
 
         val currentTimeMs = resumptionHelper.adjustedStartTimeMsFor(episode)
