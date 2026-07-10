@@ -284,9 +284,12 @@ class SimplePlayer(
                         cacheRecoveryAttempts += 1
 
                         // Position and play state must be captured before the reset tears the
-                        // player down, so the restart resumes where the error interrupted.
-                        val resumePositionMs = (player?.currentPosition?.toInt() ?: handleCurrentPositionMs()).coerceAtLeast(0)
-                        val resumePlayWhenReady = player?.playWhenReady ?: false
+                        // player down, so the restart resumes where the error interrupted. NOTE:
+                        // "player" in this listener is prepare()'s local, the exact ExoPlayer
+                        // instance that errored, which is what we want to capture from.
+                        val erroredPlayer = player
+                        val resumePositionMs = erroredPlayer.currentPosition.toInt().coerceAtLeast(0)
+                        val resumePlayWhenReady = erroredPlayer.playWhenReady
 
                         dataSourceFactory.resetEpisodeCaching(
                             episodeLocation = location,
@@ -310,7 +313,9 @@ class SimplePlayer(
                             handleStop()
                             prepare()
                             handleSeekToTimeMs(resumePositionMs)
-                            player?.playWhenReady = resumePlayWhenReady
+                            // The class field now holds the rebuilt player; the closure's
+                            // "player" is still the old released instance, so target the field.
+                            this@SimplePlayer.player?.playWhenReady = resumePlayWhenReady
                             return
                         }
                         LogBuffer.e(LogBuffer.TAG_PLAYBACK, "416 cache race: recovery budget exhausted for episode $episodeUuid, surfacing error")

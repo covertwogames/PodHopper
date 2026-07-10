@@ -11,7 +11,6 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
-import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -49,7 +48,7 @@ class PodHopperCarDiagnostics @Inject constructor(
     private var started = false
 
     // Timestamps of recent STOPPED/ERROR transitions, pruned to the detection window.
-    private val recentFailures = ArrayDeque<Long>()
+    private val recentFailures = kotlin.collections.ArrayDeque<Long>()
 
     @Volatile
     private var lastAutoUploadMs = 0L
@@ -82,7 +81,7 @@ class PodHopperCarDiagnostics @Inject constructor(
         val now = System.currentTimeMillis()
         synchronized(recentFailures) {
             recentFailures.addLast(now)
-            while (recentFailures.isNotEmpty() && now - recentFailures.peekFirst() > BURST_WINDOW_MS) {
+            while (recentFailures.isNotEmpty() && now - recentFailures.first() > BURST_WINDOW_MS) {
                 recentFailures.removeFirst()
             }
             if (recentFailures.size < BURST_THRESHOLD) {
