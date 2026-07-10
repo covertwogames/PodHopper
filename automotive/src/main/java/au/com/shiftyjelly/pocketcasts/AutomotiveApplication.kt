@@ -23,6 +23,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
+import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDiagnostics
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDownloadCleanupWorker
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
@@ -65,6 +66,8 @@ class AutomotiveApplication :
 
     @Inject lateinit var podHopperCarDiagnostics: PodHopperCarDiagnostics
 
+    @Inject lateinit var notificationHelper: NotificationHelper
+
     @Inject lateinit var downloadStatusObserver: DownloadStatusObserver
 
     @Inject lateinit var userEpisodeManager: UserEpisodeManager
@@ -97,6 +100,15 @@ class AutomotiveApplication :
         // singleton the loadInto extension and compose surfaces resolve, so uuid-addressed
         // artwork resolves to feed thumbnails on the car exactly as it does on the phone.
         SingletonImageLoader.setSafe { coilImageLoader }
+
+        // PodHopper: create the app's notification channels on the car, the same call the phone
+        // application has always made and this application class never did. Without it, the
+        // download worker's startForeground notification references a channel that does not
+        // exist, and Android kills the process with CannotPostForegroundServiceNotificationException
+        // ("Bad notification for startForeground"), which surfaced as playback stopping every
+        // ~25 seconds while Up Next auto-download retried. Verified from the crash stacks in the
+        // 2026-07-10 car diagnostics upload. Channel creation is idempotent.
+        notificationHelper.setupNotificationChannels()
 
         setupFeatureFlags()
 
@@ -165,6 +177,22 @@ class AutomotiveApplication :
         // PodHopper: playback diagnostics watcher. The car has no logcat, so bursts of playback
         // failures upload a log snapshot to Supabase Storage for offline analysis.
         podHopperCarDiagnostics.start()
+
+        // PodHopper: the car has no logcat, so a fatal crash normally dies without a trace and
+        // can only be inferred from timing patterns in the log. This wrapper writes the crash
+        // stack into LogBuffer (a synchronous, flushed file write) in the process's final
+        // moment, then delegates to the previously installed handler so crash reporting and the
+        // system's normal death handling still run. Installed last in onCreate so it wraps every
+        // handler registered above.
+        val previousUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                LogBuffer.e(LogBuffer.TAG_CRASH, throwable, "FATAL crash on thread ${thread.name}")
+            } catch (ignored: Throwable) {
+                // Never let diagnostics interfere with crash handling.
+            }
+            previousUncaughtHandler?.uncaughtException(thread, throwable)
+        }
     }
 
     override fun onTerminate() {
