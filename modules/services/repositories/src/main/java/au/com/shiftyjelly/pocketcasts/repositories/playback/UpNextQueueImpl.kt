@@ -337,6 +337,9 @@ class UpNextQueueImpl @Inject constructor(
             } else {
                 saveChangesBlocking(UpNextAction.Remove(episode))
             }
+        } else {
+            // PodHopper: this used to be a silent no-op, which let queue-state problems hide.
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Up Next remove requested for ${episode.uuid} but the in-memory queue does not contain it")
         }
     }
 

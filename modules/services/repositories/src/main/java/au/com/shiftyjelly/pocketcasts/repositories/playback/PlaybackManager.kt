@@ -277,6 +277,21 @@ open class PlaybackManager @Inject constructor(
     fun setup() {
         // load an initial playback state
         upNextQueue.setupBlocking()
+
+        // PodHopper: self-heal. If the queue's current episode is already marked completed in
+        // the database (the residue of an interrupted or deadlocked mark-as-played, which froze
+        // the player on every subsequent launch), clear it and advance so the player recovers
+        // on its own instead of requiring the user to wipe app storage. Status is re-read from
+        // the database because the queue's cached copy can be a stale snapshot.
+        launch {
+            val current = upNextQueue.currentEpisode ?: return@launch
+            val fresh = episodeManager.findEpisodeByUuid(current.uuid) ?: return@launch
+            if (fresh.playingStatus == EpisodePlayingStatus.COMPLETED) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Self-heal: current Up Next episode ${fresh.uuid} is already completed, advancing past it")
+                upNextQueue.removeEpisode(fresh, shouldShuffleUpNext = false)
+                loadCurrentEpisode(play = false, sourceView = SourceView.AUTO_PLAY)
+            }
+        }
         mediaSessionManager.startObserving()
         val playbackManagerNetworkWatcher = playbackManagerNetworkWatcherFactory.create(::onSwitchedToMeteredConnection)
 
@@ -1557,6 +1572,38 @@ open class PlaybackManager @Inject constructor(
         val isBuffering = state.isBuffering
         val positionMs = state.positionMs.toLong()
         mediaSessionManager.updateCastState(isPlaying, isBuffering, positionMs)
+    }
+
+    /**
+     * PodHopper: routes a "mark as played" of the CURRENTLY loaded episode through the same
+     * completion flow that runs when an episode finishes naturally. The legacy mark-as-played
+     * choreography (async queue removal, blocking status writes, and a player stop spread
+     * across three threads and two locks) could deadlock and permanently freeze the player;
+     * onCompletion does the identical work (status, queue removal, cross-device push, archive,
+     * advance or shut down) as one ordered sequence on one worker and is exercised on every
+     * naturally finished episode. Returns false when [episode] is not the currently loaded
+     * episode, in which case the caller handles it as a plain library mark-as-played with no
+     * playback interplay.
+     */
+    fun completeCurrentEpisodeIfLoaded(episode: BaseEpisode): Boolean {
+        if (upNextQueue.currentEpisode?.uuid != episode.uuid) {
+            return false
+        }
+        launch {
+            if (getCurrentEpisode()?.uuid == episode.uuid) {
+                onCompletion(episode.uuid)
+            }
+            // Safety net for the tiny window where the current episode changed between the
+            // check above and onCompletion running (whose own internal guard then makes it a
+            // no-op): the episode must never end up unmarked. When it is no longer current,
+            // this re-entry takes the plain non-current path.
+            val fresh = episodeManager.findEpisodeByUuid(episode.uuid)
+            if (fresh != null && fresh.playingStatus != EpisodePlayingStatus.COMPLETED) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Completion of ${episode.uuid} raced an episode change, marking played directly")
+                episodeManager.markAsPlayedBlocking(fresh, this@PlaybackManager, podcastManager)
+            }
+        }
+        return true
     }
 
     private suspend fun onCompletion(episodeUUID: String?) {

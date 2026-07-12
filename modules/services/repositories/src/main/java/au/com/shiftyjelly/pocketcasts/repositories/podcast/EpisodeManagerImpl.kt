@@ -498,6 +498,16 @@ class EpisodeManagerImpl @Inject constructor(
             return
         }
 
+        // PodHopper: the currently loaded episode is routed through the natural completion flow
+        // instead of the choreography below, which could deadlock against its own async removal
+        // and freeze the player permanently (seen on phone and car, 2026-07-12 diagnostics).
+        // The completion flow performs the same work in one ordered sequence, including the
+        // cross-device push, and every caller of this function inherits the safe path: the UI
+        // buttons, the car's media action, notifications, and the incoming completion sync.
+        if (playbackManager.completeCurrentEpisodeIfLoaded(episode)) {
+            return
+        }
+
         playbackManager.removeEpisode(episode, source = SourceView.UNKNOWN, userInitiated = false, shouldShuffleUpNext = shouldShuffleUpNext)
 
         episode.playingStatus = EpisodePlayingStatus.COMPLETED
