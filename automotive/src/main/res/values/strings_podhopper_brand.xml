@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    PodHopper brand string overrides for the Android Automotive build.
+
+    This is a copy of app/src/main/res/values/strings_podhopper_brand.xml. The overrides live in
+    the app modules, not the shared localization module, so each app build must carry its own
+    copy. Without this file the car falls back to the upstream Pocket Casts wording for any
+    shared string it displays: the notification channel descriptions the car creates ("Shows
+    while Pocket Casts is playing audio") were surfacing in the head unit's app notification
+    settings. Keep this file in sync with the phone copy.
+-->
+<resources>
+    <string name="settings_about_share_with_friends_message">Hey! Here is a link to download PodHopper. I\'m really enjoying it and thought you might too. \nhttps://podhopper.app</string>
+    <string name="settings_playback_resumption_summary">If on, PodHopper will go back a little in episodes you resume so you can catch up more comfortably.</string>
+    <string name="settings_refresh_artwork_message">PodHopper is now refreshing all your podcast images, this will happen in the background and may take a little time.</string>
+    <string name="settings_use_episode_artwork_details">Some shows have custom artwork for certain episodes. Enable this option and PodHopper will display them instead of the show’s artwork.</string>
+    <string name="settings_storage_fix_downloads_description">Attempt to restore any downloaded files if they are missing in the PodHopper app.</string>
+    <string name="settings_advanced_prioritize_seek_accuracy_summary">Prioritizing seek accuracy can significantly slow down seek responsiveness and cause PodHopper to consume more data.</string>
+    <string name="notifications_settings_turn_on_push_message">To get notifications from PodHopper, you\'ll need to turn them on in your device settings.</string>
+    <string name="settings_status_service_hosts_help">The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock this domain to download podcasts. Please note PodHopper doesn’t host or choose where podcasts are hosted, that’s up to the author of the show and is out of our control.</string>
+    <string name="settings_status_service_hosts_summary">Podcast authors host episode files in various hosting providers not managed by PodHopper.</string>
+    <string name="banner_ad_plus_prompt">Say goodbye to banner ads and more with PodHopper Plus</string>
+    <string name="end_of_year_stories_subscribe_to_plus">Subscribe to PodHopper Plus for extended stats, bookmarks, folders, chapter selection, and more ways to dig into your listening&#160;habits</string>
+    <string name="eoy_story_stories_subscribe_to_plus_button_label">Get PodHopper Plus</string>
+    <string name="error_storage_permission">Denied! PodHopper can\'t play this file, please check your storage permissions.</string>
+    <string name="get_pocket_casts_plus">Get PodHopper Plus</string>
+    <string name="log_in_watch_from_phone_instructions_1">Log into PodHopper on a paired Android phone.</string>
+    <string name="log_in_watch_from_phone_instructions_2">The next time you open PodHopper on your watch and have a network connection, you will be logged in.</string>
+    <string name="log_in_watch_from_phone_instructions_3">If you are having trouble, make sure your phone is running the same version of PodHopper as your watch (%s)</string>
+    <string name="notification_channel_description_download">Shows while PodHopper is downloading episodes</string>
+    <string name="notification_channel_description_new_features_and_tips">Shows notifications about new features, updates, and handy tips to help you optimize your PodHopper experience</string>
+    <string name="notification_channel_description_offers">Shows notifications about exclusive offers, discounts, and promotions to help you make the most of your PodHopper experience</string>
+    <string name="notification_channel_description_playback">Shows while PodHopper is playing audio</string>
+    <string name="notification_import_message">Switching from another app? Bring all your favorite shows to PodHopper.</string>
+    <string name="notification_prompt_message">Notifications are the best way to keep track of new episodes, get recommendations of new shows and tips about PodHopper.</string>
+    <string name="onboarding_can_import_from_opml">PodHopper can import podcasts from OPML files, so if your current app can export an OPML file, you can follow these steps:</string>
+    <string name="onboarding_import_from_other_apps_step_2">Use your phone\’s \“Share\” menu to send the file to PodHopper. Alternatively, import the file from PodHopper\’ \“Import &amp; export OPML\” settings menu.</string>
+    <string name="onboarding_intro_carousel_pc_user">PodHopper user</string>
+    <string name="onboarding_patron_feature_special_icons_title">Special PodHopper app icons</string>
+    <string name="onboarding_plus_feature_gratitude_title">The undying gratitude of everyone here at PodHopper</string>
+    <string name="onboarding_recommendations_make_pocket_casts_yours">Make PodHopper yours by selecting your favorite podcasts or import them from another podcast player. You can always do this later.</string>
+    <string name="onboarding_upgrade_app_icons">Special PodHopper app icons</string>
+    <string name="onboarding_upgrade_gratitude">The undying gratitude of everyone here at PodHopper</string>
+    <string name="plus_learn_more_about_plus">Learn more about PodHopper Plus</string>
+    <string name="plus_trial_finished">PodHopper Plus Trial Finished</string>
+    <string name="plus_trial_finished_continue">Upgrade your account anytime to continue using PodHopper Plus</string>
+    <string name="plus_trial_finished_locked">Access to PodHopper Plus features will be locked</string>
+    <string name="plus_upgrade_to_pocket_casts_plus">Upgrade to PodHopper Plus</string>
+    <string name="pocket_casts_add_to_up_next">PodHopper Add To Up Next</string>
+    <string name="pocket_casts_champion" translatable="false">PodHopper Champion</string>
+    <string name="pocket_casts_champion_dialog_title">You’re a true champion of PodHopper!</string>
+    <string name="pocket_casts_control_playback">PodHopper Control Playback</string>
+    <string name="pocket_casts_logo">PodHopper logo</string>
+    <string name="pocket_casts_patron" translatable="false">PodHopper Patron</string>
+    <string name="pocket_casts_patron_badge">PodHopper Patron badge</string>
+    <string name="pocket_casts_play_filter">PodHopper Play Playlist</string>
+    <string name="pocket_casts_plus" translatable="false">PodHopper Plus</string>
+    <string name="pocket_casts_plus_badge">PodHopper Plus badge</string>
+    <string name="pocket_casts_query_filter_episodes">PodHopper Query Playlist Episodes</string>
+    <string name="pocket_casts_query_filters">PodHopper Query Playlists</string>
+    <string name="pocket_casts_query_podcast_episodes">PodHopper Query Podcast Episodes</string>
+    <string name="pocket_casts_query_podcasts">PodHopper Query Podcasts</string>
+    <string name="pocket_casts_query_up_next_episodes">PodHopper Query Up Next Episodes</string>
+    <string name="profile_already_have_account">Already have a PodHopper account?</string>
+    <string name="profile_feature_requires">This feature requires PodHopper Plus</string>
+    <string name="profile_feature_try_trial">Try PodHopper Plus free for %s</string>
+    <string name="profile_files_empty_summary">Want to listen to your own files?\nTap the + button to open them in PodHopper, and they&#x2019;ll appear here.</string>
+    <string name="profile_get_plus">Get PodHopper Plus to unlock this feature, plus lots more!</string>
+    <string name="profile_help_support">Help support PodHopper by upgrading your account</string>
+    <string name="profile_license_agreement">PodHopper values your privacy. This Privacy Policy explains what information we collect about you and why, what we may do with that information and how we handle it. It applies to the iOS and Android PodHopper apps, and the PodHopper web service with associated macOS and Windows apps (jointly and severally, the Service). By using the Service, you agree to this Privacy Policy. If you turn on push notifications in the app, we store the push token Apple provides us in order to deliver those push notifications to your device. If you buy the web app we store a transaction id for your purchase. If you choose not to create an account, and don&#x2019;t use push notifications, no data is stored about you on our servers. PodHopper web service also uses cookies and like technologies to keep you logged in. Should you choose to generate a support request from within the Service, we may generate an attachment containing additional data to assist in addressing your support request which you&#x2019;re welcome to view prior to submission.</string>
+    <string name="profile_plus_thankyou">The PodHopper Web Player is now part of PodHopper Plus. As a thank you for your support, we&#x2019;ve upgraded your account to PodHopper Plus for %s.</string>
+    <string name="profile_pocket_casts_account">PodHopper Account</string>
+    <string name="profile_pocket_casts_newsletter">PodHopper newsletter</string>
+    <string name="profile_promo_create_pocket_casts_account">Create a PodHopper Account</string>
+    <string name="profile_promo_sign_in_or_create_summary">A PodHopper account is required for PodHopper Plus. This ensures seamless listening across all your devices.\n\nCreate an account or sign in to redeem your access to PodHopper Plus.</string>
+    <string name="profile_promo_sign_up_for_plus">Sign up for PodHopper Plus</string>
+    <string name="profile_sonos_linking_failed_summary">Unable to link PodHopper account at this time. Please try again later.</string>
+    <string name="profile_sonos_need_account">You need to have a PodHopper account before you can connect with Sonos.</string>
+    <string name="profile_sonos_title">PodHopper And Sonos</string>
+    <string name="profile_sub_cancel_hint1">Access to PodHopper Plus features will be locked</string>
+    <string name="profile_sub_cancel_hint2">All files uploaded to your PodHopper account will be deleted</string>
+    <string name="profile_sub_from_android">It looks like you subscribed to PodHopper Plus from an Android device</string>
+    <string name="profile_sub_from_web">It looks like you subscribed to PodHopper Plus from the web</string>
+    <string name="profile_welcome_to_free">Welcome to PodHopper!</string>
+    <string name="profile_welcome_to_plus">Welcome to PodHopper Plus!</string>
+    <string name="rate_pocket_casts">Rate PodHopper</string>
+    <string name="server_promo_already_plus">You are already a PodHopper Plus subscriber, there\'s no need to redeem any codes.</string>
+    <string name="server_user_delete_account_with_sub_failed">Your account has an active PodHopper Plus subscription. Please cancel this first before deleting your account.</string>
+    <string name="settings_forums">PodHopper Forums</string>
+    <string name="settings_forums_description">Please go to PodHopper\' forums (%1$s) where our support team can help you.</string>
+    <string name="settings_get_plus_and_more">Get PodHopper Plus to unlock this feature and more!</string>
+    <string name="settings_help_contact_support_no_phone_connection">Please pair your watch with a phone that has PodHopper installed to view your logs or contact support</string>
+    <string name="settings_help_contact_support_wear_requires_nearby_phone">Please pair your watch with a phone that has PodHopper installed before proceeding.</string>
+    <string name="settings_import_file_summary">If you have podcasts in another app or service, PodHopper can import them from an OPML file.</string>
+    <string name="settings_notification_offers">PodHopper Offers</string>
+    <string name="settings_opml_email_body"><![CDATA[Hi, <br/><br/>Please find attached your freshly exported podcast list in an OPML file. <br/><br/>PodHopper Team]]></string>
+    <string name="settings_opml_email_subject">PodHopper - Backup of Podcast List</string>
+    <string name="settings_privacy_crash_link_summary">Allow us to link your PodHopper account to crash reports.</string>
+    <string name="settings_storage_background_refresh_off">PodHopper will only refresh when you open the app.\n\nEpisode notifications and auto downloads will only happen when you open the app.</string>
+    <string name="settings_storage_background_refresh_off_watch">PodHopper will only sync your account when you open the app.</string>
+    <string name="settings_storage_background_refresh_on">PodHopper will periodically check for new episodes and auto downloads in the background.</string>
+    <string name="settings_storage_background_refresh_on_watch">PodHopper will periodically sync your account in the background.</string>
+    <string name="skip_chapters_plus_prompt">Preselect chapters and more with PodHopper Plus</string>
+    <string name="supporter_paid_type_exclusive">Become a supporter for premium content, unique to PodHopper</string>
+    <string name="supporter_paid_type_noads_exclusive">Become a supporter for ad-free content, unique to PodHopper</string>
+    <string name="tracking_consent_dialog_title">Allow "PodHopper" to track your activity across other companies\' apps and websites?</string>
+    <string name="tv_onboarding_welcome">Welcome to PodHopper</string>
+    <string name="tv_onboarding_welcome_tv">Welcome to PodHopper TV</string>
+    <string name="winback_cancel_subscription_header_description_installment">Cancelling ends your PodHopper subscription.\nYour Google Play payment plan will continue.</string>
+    <string name="winback_cancel_subscription_perk_files">All files uploaded to your PodHopper account will be deleted (but downloaded files on your mobile devices will remain).</string>
+    <string name="winback_cancel_subscription_perk_plus">Access to PodHopper Plus features will be locked after this date.</string>
+    <string name="winback_offer_free_offer_description">Enjoy one month of PodHopper Plus on us! The offer will be added to your current subscription.</string>
+    <string name="winback_offer_free_offer_installment_description">Lock in a year of PodHopper Plus at half price with 12 monthly payments of %1$s. Your discounted installment plan begins after your current plan ends.</string>
+    <string name="winback_offer_free_offer_yearly_description">Pay %1$s now to lock in a year of PodHopper Plus at half price. Your discounted year begins after your current plan ends.</string>
+    <!-- PodHopper: the upstream value pointed at support.pocketcasts.com. -->
+    <string name="settings_battery_learn_more_url" translatable="false">https://podhopper.app/help</string>
+</resources>
