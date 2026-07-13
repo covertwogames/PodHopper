@@ -118,7 +118,6 @@ dependencies {
     implementation(projects.modules.features.search)
     implementation(projects.modules.features.settings)
     implementation(projects.modules.features.shared)
-    implementation(projects.modules.features.taskerplugin)
     implementation(projects.modules.features.widgets)
     implementation(projects.modules.services.analytics)
     implementation(projects.modules.services.compose)
