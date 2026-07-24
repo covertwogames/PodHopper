@@ -134,6 +134,12 @@ class AutomotiveApplication :
             withContext(Dispatchers.Default) {
                 playbackManager.setup()
                 RefreshPodcastsTask.runNow(this@AutomotiveApplication, applicationScope)
+                // PodHopper: schedule the PERIODIC feed refresh on the car. Only the phone ever
+                // called scheduleOrCancel, so the car refreshed solely when its process or media
+                // service was created, and AAOS keeps processes warm across drives, so feeds went
+                // days without refreshing (observed: "last refresh 2 days ago", 2026-07-23). The
+                // schedule honors the same refresh-frequency setting as the phone (default 1h).
+                RefreshPodcastsTask.scheduleOrCancel(this@AutomotiveApplication, settings)
             }
 
             VersionMigrationsWorker.performMigrations(

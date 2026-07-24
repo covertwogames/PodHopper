@@ -22,6 +22,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.download.UpdateEpisodeDetailsTask
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackErrorClassifier
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperEpisodeStatusBus
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlayerEvent
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
@@ -312,6 +313,10 @@ class EpisodeManagerImpl @Inject constructor(
         episode.playingStatus = status
         if (episode is PodcastEpisode) {
             episodeDao.updatePlayingStatusBlocking(status, System.currentTimeMillis(), episode.uuid)
+            // PodHopper: tell the car's media browser this podcast's episode lists changed, so
+            // cached lists redraw instead of showing a finished episode as unplayed (the stale
+            // row that baited replays on 2026-07-23).
+            PodHopperEpisodeStatusBus.notifyStatusChanged(episode.podcastUuid)
         } else {
             userEpisodeDao.updatePlayingStatusBlocking(status, System.currentTimeMillis(), episode.uuid)
         }
@@ -513,6 +518,12 @@ class EpisodeManagerImpl @Inject constructor(
         episode.playingStatus = EpisodePlayingStatus.COMPLETED
 
         updatePlayingStatusBlocking(episode, EpisodePlayingStatus.COMPLETED)
+
+        // PodHopper: mirror the natural completion flow, the position parks at the end so lists
+        // and other devices read the episode as finished even from position alone.
+        if (episode.durationMs > 0) {
+            updatePlayedUpToBlocking(episode, episode.durationMs / 1000.0, forceUpdate = true)
+        }
 
         // Auto archive after playing
         archivePlayedEpisode(episode, playbackManager, podcastManager, sync = true)

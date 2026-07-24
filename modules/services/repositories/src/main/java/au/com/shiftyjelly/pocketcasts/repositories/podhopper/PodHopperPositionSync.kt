@@ -79,14 +79,34 @@ class PodHopperPositionSync @Inject constructor(
 
     // Episodes the sync is applying remotely right now. The push hooks consult this so the local
     // changes a remote apply makes (a mark-as-played in particular) are not echoed back as a push.
-    private val applyingUuids: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    // PodHopper: uuid -> epoch ms until which completion pushes for that episode are suppressed.
+    // A plain set with try/finally removal had a hole: markAsPlayedBlocking is partly
+    // asynchronous (the currently loaded episode completes via a launched coroutine), so the
+    // guard was released before the completion flow's pushCompletion ran, and a completion
+    // applied FROM sync was re-broadcast as a fresh push with a new timestamp. Two devices then
+    // ping-ponged one completion between them (observed for 35 minutes on 2026-07-23). A time
+    // window outlives the async hop; entries expire on read.
+    private val applyingUuids: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
+    private val applyEchoSuppressMs = 60_000L
+
+    // PodHopper circuit breaker state: per-episode timestamps of recent sync applies.
+    private val applyHistory = ConcurrentHashMap<String, MutableList<Long>>()
+    private val applyBreakerWindowMs = 3_600_000L
+    private val applyBreakerMaxApplies = 6
 
     init {
         observeSignIn()
     }
 
     /** True while the sync is applying a remote change to this episode. Push hooks skip when true. */
-    fun isApplyingRemote(uuid: String): Boolean = applyingUuids.contains(uuid)
+    fun isApplyingRemote(uuid: String): Boolean {
+        val until = applyingUuids[uuid] ?: return false
+        if (System.currentTimeMillis() > until) {
+            applyingUuids.remove(uuid)
+            return false
+        }
+        return true
+    }
 
     /**
      * Pulls the latest cross-device positions the instant sign-in completes, so resume points are
@@ -355,12 +375,17 @@ class PodHopperPositionSync @Inject constructor(
     private suspend fun reconcileCompletionsBlocking() {
         withContext(Dispatchers.IO) {
             try {
-                val installId = getOrCreateInstallId()
                 var cursor = prefs().getLong(PREF_COMPLETIONS_CURSOR, 0L)
                 while (true) {
+                    // PodHopper: deliberately NOT filtered by device_id. The shared row's author
+                    // is whichever device wrote it last, and the echo bug (2026-07-23) proved a
+                    // device can author a completion row while its own local state stays
+                    // unfinished; a device filter then hides that completion from the one device
+                    // that needs it, forever (the phone sat at "7 minutes left" while its own
+                    // completed row rested on the server). Applying an own-device row is
+                    // idempotent: the local completed check below skips episodes already done.
                     val query = "select=episode_key,position_sec,total_sec,updated_at_ms" +
                         "&completed=is.true" +
-                        "&device_id=neq.$installId" +
                         "&updated_at_ms=gt.$cursor" +
                         "&order=updated_at_ms.asc" +
                         "&limit=${PodHopperConfig.PULL_PAGE_LIMIT}"
@@ -766,6 +791,23 @@ class PodHopperPositionSync @Inject constructor(
     }
 
     private fun applyOne(episode: BaseEpisode, positionSec: Int, totalSec: Int, completed: Boolean) {
+        // PodHopper circuit breaker: sync never legitimately needs to change one episode's state
+        // more than a handful of times an hour. A finish applies once, a race maybe twice;
+        // anything past the cap is a malfunction (like the 2026-07-23 completion storm), so
+        // further applies are refused and logged loudly instead of running unbounded. The tally
+        // is in-memory only and resets with the process; the refusal costs nothing real, and the
+        // log line names the broken episode for the next diagnostics upload.
+        val breakerNow = System.currentTimeMillis()
+        val history = applyHistory.computeIfAbsent(episode.uuid) { mutableListOf() }
+        synchronized(history) {
+            history.removeAll { breakerNow - it > applyBreakerWindowMs }
+            if (history.size >= applyBreakerMaxApplies) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Circuit breaker: episode ${episode.uuid} hit the sync apply limit of $applyBreakerMaxApplies per hour, skipping this apply")
+                return
+            }
+            history.add(breakerNow)
+        }
+
         // Freshest writer wins: this row is another device's write to the episode's single shared row,
         // so it is the latest state by the database's own clock. The one thing we will not stomp is the
         // episode this device is actively playing right now; its position reconciles on the next play.
@@ -779,12 +821,8 @@ class PodHopperPositionSync @Inject constructor(
             // A real local completion: removes from Up Next and auto-archives per the podcast's
             // settings, so finishing elsewhere removes it here. Guarded so this apply is not echoed
             // back to the backend as a fresh completion push.
-            applyingUuids.add(episode.uuid)
-            try {
-                episodeManager.markAsPlayedBlocking(episode, manager, podcastManager)
-            } finally {
-                applyingUuids.remove(episode.uuid)
-            }
+            applyingUuids[episode.uuid] = System.currentTimeMillis() + applyEchoSuppressMs
+            episodeManager.markAsPlayedBlocking(episode, manager, podcastManager)
         } else if (positionSec >= 0) {
             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
             if (episode.playingStatus == EpisodePlayingStatus.NOT_PLAYED) {

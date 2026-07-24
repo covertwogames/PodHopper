@@ -1649,6 +1649,14 @@ open class PlaybackManager @Inject constructor(
             // mark as played
             episodeManager.updatePlayingStatusBlocking(episode, EpisodePlayingStatus.COMPLETED)
 
+            // PodHopper: a finished episode also parks its position at the very end, so any
+            // surface that derives "time remaining" from position (episode lists, other devices,
+            // iOS) agrees it is done, and a completion whose flag is ever lost or regressed still
+            // reads as finished, because a position at or past the duration re-completes on apply.
+            if (episode.durationMs > 0) {
+                episodeManager.updatePlayedUpToBlocking(episode, episode.durationMs / 1000.0, forceUpdate = true)
+            }
+
             // PodHopper: push the completion across devices so finishing here removes it elsewhere too.
             podHopperPositionSync.pushCompletion(episode)
 

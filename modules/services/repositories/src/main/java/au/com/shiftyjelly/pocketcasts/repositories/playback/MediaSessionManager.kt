@@ -42,6 +42,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.auto.AutoConverter
 import au.com.shiftyjelly.pocketcasts.repositories.playback.auto.PackageValidator
 import au.com.shiftyjelly.pocketcasts.repositories.playback.auto.asAlbumArtContentUri
 import au.com.shiftyjelly.pocketcasts.repositories.playlist.PlaylistManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperEpisodeStatusBus
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.utils.Optional
@@ -61,6 +62,7 @@ import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,9 +73,11 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.asObservable
 import kotlinx.coroutines.sync.Mutex
@@ -750,6 +754,53 @@ class MediaSessionManager(
                 .catch { Timber.e(it, "Error observing PodHopper sign-in changes") }
                 .launchIn(scope)
         }
+
+        // PodHopper: invalidate cached browse lists when an episode's played status changes.
+        // Android Auto and AAOS cache each browse node until told it changed; without this, a
+        // finished episode kept showing as unplayed in the car's lists, and that stale row baited
+        // repeated replays of a completed episode on 2026-07-23. Emissions are batched briefly so
+        // a bulk mark-played invalidates once; then the changed podcasts' own nodes, every filter
+        // node (the car's "new episodes" style lists are filters), and the top-level lists are
+        // notified per connected controller (the media3 #644 workaround used above).
+        val pendingStatusPodcasts = mutableSetOf<String>()
+        val statusNotifyScheduled = AtomicBoolean(false)
+        PodHopperEpisodeStatusBus.changes
+            .onEach { podcastUuid ->
+                synchronized(pendingStatusPodcasts) { pendingStatusPodcasts.add(podcastUuid) }
+                if (statusNotifyScheduled.compareAndSet(false, true)) {
+                    scope.launch {
+                        delay(750)
+                        val toNotify: Set<String>
+                        synchronized(pendingStatusPodcasts) {
+                            toNotify = pendingStatusPodcasts.toSet()
+                            pendingStatusPodcasts.clear()
+                        }
+                        statusNotifyScheduled.set(false)
+                        val filterUuids = try {
+                            playlistManager.playlistPreviewsFlow().first().map { it.uuid }
+                        } catch (e: Exception) {
+                            Timber.e(e, "Could not load filter uuids for browse invalidation")
+                            emptyList()
+                        }
+                        withContext(Dispatchers.Main) {
+                            media3Session?.let { session ->
+                                session.connectedControllers.forEach { controller ->
+                                    toNotify.forEach { uuid ->
+                                        session.notifyChildrenChanged(controller, uuid, Int.MAX_VALUE, null)
+                                    }
+                                    filterUuids.forEach { uuid ->
+                                        session.notifyChildrenChanged(controller, uuid, Int.MAX_VALUE, null)
+                                    }
+                                    session.notifyChildrenChanged(controller, PODCASTS_ROOT, Int.MAX_VALUE, null)
+                                    session.notifyChildrenChanged(controller, MEDIA_ID_ROOT, Int.MAX_VALUE, null)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .catch { Timber.e(it, "Error observing episode status changes") }
+            .launchIn(scope)
     }
 
     @OptIn(UnstableApi::class)
