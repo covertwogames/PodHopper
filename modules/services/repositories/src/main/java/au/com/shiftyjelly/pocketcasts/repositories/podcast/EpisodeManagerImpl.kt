@@ -454,6 +454,13 @@ class EpisodeManagerImpl @Inject constructor(
         updatePlayedUpToBlocking(episode, 0.0, false)
         updatePlayingStatusBlocking(episode, EpisodePlayingStatus.NOT_PLAYED)
         unarchiveBlocking(episode)
+
+        // PodHopper: un-marking is a two-way fact and must reach the other devices. This is the
+        // single choke point for every un-mark, whether the user asked for it or queueing and
+        // replaying a finished episode reset it, and in all of those cases this device's state has
+        // genuinely changed. Leaving the backend saying "finished" would let the next pull undo it.
+        // No-op when this un-mark is itself a remote apply (the echo guard inside the push).
+        podHopperPositionSync.get().pushPlayedState(episode, completed = false)
     }
 
     private fun downloadEpisodesFileDetails(episodes: List<PodcastEpisode>) {
@@ -462,12 +469,17 @@ class EpisodeManagerImpl @Inject constructor(
 
     override suspend fun markAllAsPlayed(episodes: List<BaseEpisode>, playbackManager: PlaybackManager, podcastManager: PodcastManager) {
         val justEpisodes = episodes.filterIsInstance<PodcastEpisode>()
-        justEpisodes.chunked(500).forEach { episodeDao.updateAllPlayingStatus(it.map { it.uuid }, System.currentTimeMillis(), EpisodePlayingStatus.COMPLETED) }
+        justEpisodes.chunked(500).forEach { episodeDao.markAllPlayed(it.map { it.uuid }, System.currentTimeMillis()) }
         archiveAllPlayedEpisodes(justEpisodes, playbackManager, podcastManager)
 
         justEpisodes.forEach { playbackManager.removeEpisode(episodeToRemove = it, source = SourceView.UNKNOWN, userInitiated = false) }
 
         userEpisodeManager.markAllAsPlayed(episodes.filterIsInstance<UserEpisode>(), playbackManager)
+
+        // PodHopper: this path writes the database directly instead of going through
+        // markAsPlayedBlocking, so it never pushed and a bulk mark-as-played reached no other
+        // device. Pushed in chunks; the podcast episodes are the ones this path actually changed.
+        podHopperPositionSync.get().pushPlayedState(justEpisodes, completed = true)
     }
 
     override fun markAsUnplayed(episodes: List<BaseEpisode>) {
@@ -480,6 +492,9 @@ class EpisodeManagerImpl @Inject constructor(
 
             val justUserEpisodes = episodes.filterIsInstance<UserEpisode>()
             userEpisodeManager.markAllAsUnplayed(justUserEpisodes)
+
+            // PodHopper: same gap as bulk mark-as-played, in the other direction.
+            podHopperPositionSync.get().pushPlayedState(justEpisodes, completed = false)
         }
     }
 

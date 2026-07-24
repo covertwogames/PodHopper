@@ -533,6 +533,12 @@ abstract class EpisodeDao {
     @Query("UPDATE podcast_episodes SET playing_status = :playingStatus, playing_status_modified = :modified, played_up_to = 0, played_up_to_modified = :modified WHERE uuid IN (:episodesUUIDs)")
     abstract suspend fun markAllUnplayed(episodesUUIDs: List<String>, modified: Long, playingStatus: EpisodePlayingStatus = EpisodePlayingStatus.NOT_PLAYED)
 
+    // PodHopper: bulk mark-as-played parks the position at the episode's duration, mirroring the
+    // single-episode path. updateAllPlayingStatus leaves played_up_to untouched, which left bulk
+    // marked episodes reporting time remaining while showing as finished.
+    @Query("UPDATE podcast_episodes SET playing_status = :playingStatus, playing_status_modified = :modified, played_up_to = duration, played_up_to_modified = :modified WHERE uuid IN (:episodesUUIDs)")
+    abstract suspend fun markAllPlayed(episodesUUIDs: List<String>, modified: Long, playingStatus: EpisodePlayingStatus = EpisodePlayingStatus.COMPLETED)
+
     @Query(
         """
         SELECT 

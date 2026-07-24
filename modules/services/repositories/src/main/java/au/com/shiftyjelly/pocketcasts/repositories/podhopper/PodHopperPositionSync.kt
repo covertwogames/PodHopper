@@ -192,43 +192,70 @@ class PodHopperPositionSync @Inject constructor(
     }
 
     /**
-     * Push an explicit completion. Called on natural finish and on manual mark-as-played. Skipped
-     * when this completion is itself the result of a remote apply (the echo guard), so a synced
-     * completion is not bounced straight back to the backend.
+     * Push an explicit completion. Called on natural finish and on manual mark-as-played.
      */
-    fun pushCompletion(episode: BaseEpisode) {
+    fun pushCompletion(episode: BaseEpisode) = pushPlayedState(listOf(episode), completed = true)
+
+    /** Push a played/unplayed state change for a single episode. */
+    fun pushPlayedState(episode: BaseEpisode, completed: Boolean) = pushPlayedState(listOf(episode), completed)
+
+    /**
+     * Push a played/unplayed state change for one or more episodes.
+     *
+     * Played state is a two-way fact. Before this, only "finished" was ever sent: un-marking an
+     * episode, and both bulk operations, changed local state and told no one, so the shared row
+     * kept saying finished and a later pull could undo the user's action. Every path that changes
+     * played state now writes the row, so local state and the backend agree in both directions.
+     *
+     * Episodes currently being applied FROM sync are filtered out by the echo guard, so a synced
+     * change is never bounced back. Rows are sent in chunks, and a failed chunk does not abandon
+     * the rest: whatever lands, lands, and the completions reconcile picks up stragglers later.
+     */
+    fun pushPlayedState(episodes: List<BaseEpisode>, completed: Boolean) {
         if (!supabaseClient.isLoggedIn()) {
             return
         }
-        if (isApplyingRemote(episode.uuid)) {
+        val targets = episodes.filterNot { isApplyingRemote(it.uuid) }
+        if (targets.isEmpty()) {
             return
         }
-        val durationMs = episode.durationMs
-        val totalSec = if (durationMs > 0) durationMs / 1000 else episode.playedUpToMs / 1000
-        val episodeKey = episode.uuid
-        val episodeUrl = episode.downloadUrl
         val now = System.currentTimeMillis()
-        // A completion is local activity too: keep the adopt guard's clock current.
+        // A played-state change is local activity too: keep the adopt guard's clock current.
         stampLocalActivity(now)
 
         applicationScope.launch(Dispatchers.IO) {
-            try {
-                val userId = supabaseClient.getUserId() ?: return@launch
-                val feedUrl = feedUrlForEpisode(episode)
-                val row = JSONObject()
-                row.put("user_id", userId)
-                row.put("episode_key", episodeKey)
-                row.put("episode_url", episodeUrl ?: JSONObject.NULL)
-                row.put("position_sec", totalSec)
-                row.put("total_sec", totalSec)
-                row.put("completed", true)
-                row.put("feed_url", feedUrl ?: JSONObject.NULL)
-                row.put("device_id", getOrCreateInstallId())
-                row.put("device_name", Build.MODEL)
-                row.put("updated_at_ms", now)
-                supabaseClient.upsert(TABLE_PLAYBACK_STATE, "user_id,episode_key", JSONArray().put(row))
+            val userId = try {
+                supabaseClient.getUserId()
             } catch (e: Exception) {
-                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper completion push failed, will retry on next finish: ${e.message}")
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper played-state push could not resolve the user: ${e.message}")
+                null
+            } ?: return@launch
+            val installId = getOrCreateInstallId()
+            targets.chunked(PUSH_CHUNK_SIZE).forEach { chunk ->
+                try {
+                    val rows = JSONArray()
+                    chunk.forEach { episode ->
+                        val durationMs = episode.durationMs
+                        val totalSec = if (durationMs > 0) durationMs / 1000 else episode.playedUpToMs / 1000
+                        val row = JSONObject()
+                        row.put("user_id", userId)
+                        row.put("episode_key", episode.uuid)
+                        row.put("episode_url", episode.downloadUrl ?: JSONObject.NULL)
+                        // A finish parks the position at the end; an un-mark rewinds it to the start,
+                        // mirroring what the local write does, so position alone reads correctly.
+                        row.put("position_sec", if (completed) totalSec else 0)
+                        row.put("total_sec", totalSec)
+                        row.put("completed", completed)
+                        row.put("feed_url", feedUrlForEpisode(episode) ?: JSONObject.NULL)
+                        row.put("device_id", installId)
+                        row.put("device_name", Build.MODEL)
+                        row.put("updated_at_ms", now)
+                        rows.put(row)
+                    }
+                    supabaseClient.upsert(TABLE_PLAYBACK_STATE, "user_id,episode_key", rows)
+                } catch (e: Exception) {
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper played-state push chunk failed (completed=$completed): ${e.message}")
+                }
             }
         }
     }
@@ -411,7 +438,7 @@ class PodHopperPositionSync @Inject constructor(
                             // refreshed here yet is parked, not dropped, and applied once it exists.
                             parkRow(episodeKey, row.optInt("position_sec", -1), row.optInt("total_sec", 0), completed = true, remoteTs = updatedAtMs)
                         } else if (episode.playingStatus != EpisodePlayingStatus.COMPLETED) {
-                            applyOne(episode, row.optInt("position_sec", -1), row.optInt("total_sec", 0), completed = true)
+                            applyOne(episode, row.optInt("position_sec", -1), row.optInt("total_sec", 0), completed = true, remoteTs = updatedAtMs)
                         }
                     }
                     if (maxTs > cursor) {
@@ -787,10 +814,10 @@ class PodHopperPositionSync @Inject constructor(
             parkRow(episodeKey, positionSec, totalSec, completed, remoteTs)
             return
         }
-        applyOne(episode, positionSec, totalSec, completed)
+        applyOne(episode, positionSec, totalSec, completed, remoteTs)
     }
 
-    private fun applyOne(episode: BaseEpisode, positionSec: Int, totalSec: Int, completed: Boolean) {
+    private fun applyOne(episode: BaseEpisode, positionSec: Int, totalSec: Int, completed: Boolean, remoteTs: Long) {
         // PodHopper circuit breaker: sync never legitimately needs to change one episode's state
         // more than a handful of times an hour. A finish applies once, a race maybe twice;
         // anything past the cap is a malfunction (like the 2026-07-23 completion storm), so
@@ -816,6 +843,16 @@ class PodHopperPositionSync @Inject constructor(
             return
         }
 
+        // Freshest writer wins applies to played state in both directions now that un-marking is
+        // pushed, so a row can no longer be trusted purely because it exists: if this device changed
+        // the played status more recently than this row was written, the local change is the newer
+        // fact and the row is stale. Without this, an un-mark made while offline (or whose push
+        // failed) would be undone by the next pull, which is the regression this guard exists for.
+        val localStatusTs = episode.playingStatusModified ?: 0L
+        if (remoteTs > 0L && localStatusTs > remoteTs) {
+            return
+        }
+
         val isCompletion = completed || (totalSec > 0 && positionSec >= totalSec)
         if (isCompletion) {
             // A real local completion: removes from Up Next and auto-archives per the podcast's
@@ -823,11 +860,23 @@ class PodHopperPositionSync @Inject constructor(
             // back to the backend as a fresh completion push.
             applyingUuids[episode.uuid] = System.currentTimeMillis() + applyEchoSuppressMs
             episodeManager.markAsPlayedBlocking(episode, manager, podcastManager)
+        } else if (episode.playingStatus == EpisodePlayingStatus.COMPLETED) {
+            // The row explicitly says not finished while this device has it finished: another device
+            // un-marked it. Regressing a completion is deliberate here and only reachable past the
+            // staleness guard above. markAsNotPlayed also unarchives, so an episode auto-archived on
+            // finish comes back into the lists. Echo-guarded, since un-marking now pushes too.
+            applyingUuids[episode.uuid] = System.currentTimeMillis() + applyEchoSuppressMs
+            episodeManager.markAsNotPlayedBlocking(episode)
+            if (positionSec > 0) {
+                episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
+                episodeManager.updatePlayingStatusBlocking(episode, EpisodePlayingStatus.IN_PROGRESS)
+            }
         } else if (positionSec >= 0) {
             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
-            if (episode.playingStatus == EpisodePlayingStatus.NOT_PLAYED) {
+            if (positionSec > 0 && episode.playingStatus == EpisodePlayingStatus.NOT_PLAYED) {
                 // Keep status and position consistent: a synced mid-episode position is in progress,
-                // not "not played".
+                // not "not played". Position zero is not progress, so it must not invent one; un-mark
+                // rows carry position zero and would otherwise flip an unplayed episode to in-progress.
                 episodeManager.updatePlayingStatusBlocking(episode, EpisodePlayingStatus.IN_PROGRESS)
             }
         }
@@ -875,6 +924,7 @@ class PodHopperPositionSync @Inject constructor(
                 positionSec = entry.optInt("p", -1),
                 totalSec = entry.optInt("t", 0),
                 completed = entry.optBoolean("c", false),
+                remoteTs = entry.optLong("u", 0L),
             )
             parked.remove(episodeKey)
             changed = true
@@ -952,6 +1002,9 @@ class PodHopperPositionSync @Inject constructor(
     }
 
     companion object {
+        // Rows per upsert when a bulk played-state change is pushed. Bulk mark-as-played over a
+        // whole podcast can be hundreds of episodes; one request each would be slow and fragile.
+        private const val PUSH_CHUNK_SIZE = 100
         private const val LOG_TAG = "PodHopperSync"
         private const val TABLE_PLAYBACK_STATE = "playback_state"
         private const val PREF_NAME = "podhopper_position_sync"
