@@ -89,6 +89,10 @@ class PodHopperPositionSync @Inject constructor(
     private val applyingUuids: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private val applyEchoSuppressMs = 60_000L
 
+    // Guards read-modify-write of the retry outbox, which is written from every push path and
+    // drained from the sync path, on different threads.
+    private val outboxLock = Any()
+
     // PodHopper circuit breaker state: per-episode timestamps of recent sync applies.
     private val applyHistory = ConcurrentHashMap<String, MutableList<Long>>()
     private val applyBreakerWindowMs = 3_600_000L
@@ -148,29 +152,17 @@ class PodHopperPositionSync @Inject constructor(
         }
         lastPushAttemptMs = now
 
-        val episodeKey = episode.uuid
-        val episodeUrl = episode.downloadUrl
         val positionSec = positionMs / 1000
         val totalSec = durationMs / 1000
 
         applicationScope.launch(Dispatchers.IO) {
-            try {
-                val userId = supabaseClient.getUserId() ?: return@launch
-                val feedUrl = feedUrlForEpisode(episode)
-                val row = JSONObject()
-                row.put("user_id", userId)
-                row.put("episode_key", episodeKey)
-                row.put("episode_url", episodeUrl ?: JSONObject.NULL)
-                row.put("position_sec", positionSec)
-                row.put("total_sec", totalSec)
-                row.put("feed_url", feedUrl ?: JSONObject.NULL)
-                row.put("device_id", getOrCreateInstallId())
-                row.put("device_name", Build.MODEL)
-                row.put("updated_at_ms", now)
-                supabaseClient.upsert(TABLE_PLAYBACK_STATE, "user_id,episode_key", JSONArray().put(row))
+            val row = try {
+                buildRow(episode, positionSec, totalSec, completed = null, updatedAtMs = now)
             } catch (e: Exception) {
-                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position push failed, will retry next cycle: ${e.message}")
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position push could not build the row: ${e.message}")
+                return@launch
             }
+            sendOrQueue(listOf(row), "position")
         }
     }
 
@@ -224,39 +216,19 @@ class PodHopperPositionSync @Inject constructor(
         stampLocalActivity(now)
 
         applicationScope.launch(Dispatchers.IO) {
-            val userId = try {
-                supabaseClient.getUserId()
-            } catch (e: Exception) {
-                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper played-state push could not resolve the user: ${e.message}")
-                null
-            } ?: return@launch
-            val installId = getOrCreateInstallId()
-            targets.chunked(PUSH_CHUNK_SIZE).forEach { chunk ->
+            val rows = targets.mapNotNull { episode ->
+                val durationMs = episode.durationMs
+                val totalSec = if (durationMs > 0) durationMs / 1000 else episode.playedUpToMs / 1000
                 try {
-                    val rows = JSONArray()
-                    chunk.forEach { episode ->
-                        val durationMs = episode.durationMs
-                        val totalSec = if (durationMs > 0) durationMs / 1000 else episode.playedUpToMs / 1000
-                        val row = JSONObject()
-                        row.put("user_id", userId)
-                        row.put("episode_key", episode.uuid)
-                        row.put("episode_url", episode.downloadUrl ?: JSONObject.NULL)
-                        // A finish parks the position at the end; an un-mark rewinds it to the start,
-                        // mirroring what the local write does, so position alone reads correctly.
-                        row.put("position_sec", if (completed) totalSec else 0)
-                        row.put("total_sec", totalSec)
-                        row.put("completed", completed)
-                        row.put("feed_url", feedUrlForEpisode(episode) ?: JSONObject.NULL)
-                        row.put("device_id", installId)
-                        row.put("device_name", Build.MODEL)
-                        row.put("updated_at_ms", now)
-                        rows.put(row)
-                    }
-                    supabaseClient.upsert(TABLE_PLAYBACK_STATE, "user_id,episode_key", rows)
+                    // A finish parks the position at the end; an un-mark rewinds it to the start,
+                    // mirroring what the local write does, so position alone reads correctly.
+                    buildRow(episode, if (completed) totalSec else 0, totalSec, completed, now)
                 } catch (e: Exception) {
-                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper played-state push chunk failed (completed=$completed): ${e.message}")
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper played-state push could not build a row for ${episode.uuid}: ${e.message}")
+                    null
                 }
             }
+            sendOrQueue(rows, "played-state (completed=$completed)")
         }
     }
 
@@ -351,6 +323,18 @@ class PodHopperPositionSync @Inject constructor(
             } catch (e: Exception) {
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position pull failed: ${e.message}")
             }
+        }
+
+        // Read before overwriting. The queue is drained AFTER the pull, never before: a device that
+        // played offline holds queued positions that are newer by timestamp than anything on the
+        // backend, so draining first would overwrite another device's position and then pull back
+        // the row it had just replaced, finding nothing new. Draining second means this device sees
+        // where the others got to before publishing where it got to. Isolated, because the retry
+        // queue is an addition to sync and must never stop the pull from happening.
+        try {
+            drainOutboxBlocking()
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper outbox drain failed after the pull: ${e.message}")
         }
     }
 
@@ -840,6 +824,15 @@ class PodHopperPositionSync @Inject constructor(
         // episode this device is actively playing right now; its position reconciles on the next play.
         val manager = playbackManager.get()
         if (episode.uuid == manager.getCurrentEpisode()?.uuid && manager.isPlaying()) {
+            // Do not write the database under live playback, but do not throw the position away
+            // either, which is what used to happen: the car boots offline, resumes from its own
+            // stale position, gets signal mid-drive, and the newer position arrived here and was
+            // silently dropped. Hand it to the player instead, which jumps to it when playback has
+            // only just started and otherwise offers it as a Now Playing action. Completions keep
+            // the previous behaviour and settle on the next load.
+            if (!completed && positionSec > 0) {
+                manager.offerOrJumpToSyncedPosition(episode, positionSec * 1000L)
+            }
             return
         }
 
@@ -880,6 +873,228 @@ class PodHopperPositionSync @Inject constructor(
                 episodeManager.updatePlayingStatusBlocking(episode, EpisodePlayingStatus.IN_PROGRESS)
             }
         }
+    }
+
+    /**
+     * Builds one playback_state row from local data only, deliberately WITHOUT user_id.
+     *
+     * Resolving the user id refreshes the Supabase session over the network, which throws while
+     * offline and yields nothing at all after a process restart, so a row that needed the id up
+     * front could not even be built to queue. The id is stamped at send time instead, when the
+     * device is by definition online. Everything else here is local: the episode, the podcast's
+     * feed url, this install's id, and the caller's timestamp.
+     *
+     * [completed] omits the column entirely when null, which is what position samples need: the
+     * backend's merge-duplicates upsert leaves omitted columns untouched, so a position sample can
+     * never un-complete an episode another flow just finished.
+     */
+    private fun buildRow(episode: BaseEpisode, positionSec: Int, totalSec: Int, completed: Boolean?, updatedAtMs: Long): JSONObject {
+        val row = JSONObject()
+        row.put("episode_key", episode.uuid)
+        row.put("episode_url", episode.downloadUrl ?: JSONObject.NULL)
+        row.put("position_sec", positionSec)
+        row.put("total_sec", totalSec)
+        if (completed != null) {
+            row.put("completed", completed)
+        }
+        row.put("feed_url", feedUrlForEpisode(episode) ?: JSONObject.NULL)
+        row.put("device_id", getOrCreateInstallId())
+        row.put("device_name", Build.MODEL)
+        row.put("updated_at_ms", updatedAtMs)
+        return row
+    }
+
+    /**
+     * Sends rows now, and queues whatever does not make it for the next sync.
+     *
+     * Every push used to be fire and forget: a failed send was logged and dropped, and nothing
+     * retried it, so anything done offline that was a one-time event (finishing an episode,
+     * un-marking one, a bulk mark) never reached the backend at all. Only the episode being played
+     * recovered, and only by accident, because its next position sample pushed again. Failures now
+     * land in a durable outbox that the next sync drains.
+     */
+    private fun sendOrQueue(rows: List<JSONObject>, label: String) {
+        if (rows.isEmpty()) {
+            return
+        }
+        val userId = try {
+            supabaseClient.getUserId()
+        } catch (e: Exception) {
+            null
+        }
+        if (userId == null) {
+            enqueueOutbox(rows)
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper $label push has no session, queued ${rows.size} row(s) for the next sync")
+            return
+        }
+        rows.chunked(PUSH_CHUNK_SIZE).forEach { chunk ->
+            try {
+                val array = JSONArray()
+                chunk.forEach { array.put(JSONObject(it.toString()).put("user_id", userId)) }
+                supabaseClient.upsert(TABLE_PLAYBACK_STATE, "user_id,episode_key", array)
+            } catch (e: Exception) {
+                enqueueOutbox(chunk)
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper $label push failed, queued ${chunk.size} row(s) for the next sync: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Adds rows to the durable outbox, keyed by episode.
+     *
+     * One entry per episode: a later row for the same episode is merged over the earlier one rather
+     * than replacing it, so a position sample that omits the completed column does not discard an
+     * explicit completed value queued moments earlier. An older row never overwrites a newer one.
+     */
+    private fun enqueueOutbox(rows: List<JSONObject>) {
+        if (rows.isEmpty()) {
+            return
+        }
+        synchronized(outboxLock) {
+            try {
+                val outbox = readOutbox()
+                rows.forEach { row ->
+                    val key = row.optString("episode_key")
+                    if (key.isEmpty()) {
+                        return@forEach
+                    }
+                    val incomingTs = row.optLong("updated_at_ms", 0L)
+                    val existing = outbox.optJSONObject(key)
+                    if (existing == null) {
+                        outbox.put(key, row)
+                        return@forEach
+                    }
+                    if (incomingTs < existing.optLong("updated_at_ms", 0L)) {
+                        return@forEach
+                    }
+                    val merged = JSONObject(existing.toString())
+                    row.keys().forEach { field -> merged.put(field, row.get(field)) }
+                    outbox.put(key, merged)
+                }
+
+                // Bound it the same way parked rows are bounded: drop the oldest by timestamp.
+                if (outbox.length() > MAX_OUTBOX) {
+                    val keys = outbox.keys().asSequence().toList()
+                    val oldestFirst = keys.sortedBy { outbox.getJSONObject(it).optLong("updated_at_ms", 0L) }
+                    oldestFirst.take(outbox.length() - MAX_OUTBOX).forEach { outbox.remove(it) }
+                }
+                writeOutbox(outbox)
+            } catch (e: Exception) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper could not queue rows for retry: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Sends everything the outbox is holding, oldest first.
+     *
+     * Queued rows keep the timestamp of the moment the user acted, not of the retry, so ordering
+     * against other devices stays honest. The backend upsert is unconditional though, so a queued
+     * row would happily overwrite a newer write from another device: finishing an episode offline
+     * on the phone and then replaying it in the car would re-complete it when the phone reconnected.
+     * Each queued row is therefore checked against the backend's current timestamp first and
+     * dropped when the backend is already newer. A row that fails to send stays queued.
+     */
+    private suspend fun drainOutboxBlocking() {
+        if (!supabaseClient.isLoggedIn()) {
+            return
+        }
+        val snapshot = withContext(Dispatchers.IO) {
+            synchronized(outboxLock) {
+                val outbox = try {
+                    readOutbox()
+                } catch (e: Exception) {
+                    JSONObject()
+                }
+                outbox.keys().asSequence().toList().mapNotNull { key -> outbox.optJSONObject(key)?.let { key to it } }
+            }
+        }
+        if (snapshot.isEmpty()) {
+            return
+        }
+
+        withContext(Dispatchers.IO) {
+            val serverTimestamps = mutableMapOf<String, Long>()
+            try {
+                snapshot.map { it.first }.chunked(OUTBOX_CHECK_CHUNK_SIZE).forEach { chunk ->
+                    val query = "select=episode_key,updated_at_ms&episode_key=in.(${chunk.joinToString(",")})"
+                    val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
+                    for (i in 0 until rows.length()) {
+                        val row = rows.getJSONObject(i)
+                        serverTimestamps[row.optString("episode_key")] = row.optLong("updated_at_ms", 0L)
+                    }
+                }
+            } catch (e: Exception) {
+                // Still offline, or the backend is unhappy. Everything stays queued for next time.
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper outbox drain could not read current state, keeping ${snapshot.size} row(s) queued: ${e.message}")
+                return@withContext
+            }
+
+            val staleKeys = snapshot
+                .filter { (key, row) -> (serverTimestamps[key] ?: 0L) >= row.optLong("updated_at_ms", 0L) }
+                .map { it.first }
+                .toSet()
+            val toSend = snapshot.filterNot { staleKeys.contains(it.first) }
+            if (staleKeys.isNotEmpty()) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper outbox drain dropped ${staleKeys.size} row(s) another device has already superseded")
+                removeFromOutbox(staleKeys.toList())
+            }
+            if (toSend.isEmpty()) {
+                return@withContext
+            }
+
+            val userId = try {
+                supabaseClient.getUserId()
+            } catch (e: Exception) {
+                null
+            } ?: return@withContext
+
+            var sent = 0
+            toSend.sortedBy { it.second.optLong("updated_at_ms", 0L) }
+                .chunked(PUSH_CHUNK_SIZE)
+                .forEach { chunk ->
+                    try {
+                        val array = JSONArray()
+                        chunk.forEach { array.put(JSONObject(it.second.toString()).put("user_id", userId)) }
+                        supabaseClient.upsert(TABLE_PLAYBACK_STATE, "user_id,episode_key", array)
+                        removeFromOutbox(chunk.map { it.first })
+                        sent += chunk.size
+                    } catch (e: Exception) {
+                        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper outbox drain chunk failed, staying queued: ${e.message}")
+                    }
+                }
+            if (sent > 0) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper outbox drain sent $sent queued row(s)")
+            }
+        }
+    }
+
+    private fun removeFromOutbox(keys: List<String>) {
+        if (keys.isEmpty()) {
+            return
+        }
+        synchronized(outboxLock) {
+            try {
+                val outbox = readOutbox()
+                keys.forEach { outbox.remove(it) }
+                writeOutbox(outbox)
+            } catch (e: Exception) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper could not update the retry queue: ${e.message}")
+            }
+        }
+    }
+
+    private fun readOutbox(): JSONObject {
+        val raw = prefs().getString(PREF_OUTBOX, null) ?: return JSONObject()
+        return try {
+            JSONObject(raw)
+        } catch (e: Exception) {
+            JSONObject()
+        }
+    }
+
+    private fun writeOutbox(outbox: JSONObject) {
+        prefs().edit().putString(PREF_OUTBOX, outbox.toString()).apply()
     }
 
     private fun parkRow(episodeKey: String, positionSec: Int, totalSec: Int, completed: Boolean, remoteTs: Long) {
@@ -995,6 +1210,7 @@ class PodHopperPositionSync @Inject constructor(
         prefs().edit()
             .remove(PREF_LAST_PULL_MS)
             .remove(PREF_PARKED)
+            .remove(PREF_OUTBOX)
             .remove(PREF_LAST_LOCAL_ACTIVITY_MS)
             .remove(PREF_COMPLETIONS_CURSOR)
             .remove(PREF_LAST_FULL_SYNC_MS)
@@ -1011,6 +1227,7 @@ class PodHopperPositionSync @Inject constructor(
         private const val PREF_INSTALL_ID = "install_id"
         private const val PREF_LAST_PULL_MS = "last_pull_ms"
         private const val PREF_PARKED = "parked_rows"
+        private const val PREF_OUTBOX = "outbox_rows"
         private const val PREF_LAST_LOCAL_ACTIVITY_MS = "last_local_activity_ms"
         private const val PREF_COMPLETIONS_CURSOR = "completions_cursor"
         private const val PREF_LAST_FULL_SYNC_MS = "last_full_sync_ms"
@@ -1023,5 +1240,9 @@ class PodHopperPositionSync @Inject constructor(
         private const val ADOPT_SCAN_LIMIT = 10
         private const val FIRST_SYNC_SENTINEL = -1L
         private const val MAX_PARKED = 500
+        private const val MAX_OUTBOX = 500
+        // Episode keys per "what does the backend have now" query when draining the outbox. Keeps
+        // the request url comfortably short.
+        private const val OUTBOX_CHECK_CHUNK_SIZE = 50
     }
 }

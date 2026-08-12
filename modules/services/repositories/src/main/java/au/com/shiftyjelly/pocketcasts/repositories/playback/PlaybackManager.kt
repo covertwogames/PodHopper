@@ -182,6 +182,11 @@ open class PlaybackManager @Inject constructor(
         private const val PENDING_SYNC_FETCH_ATTEMPTS = 2
         private const val PENDING_SYNC_FETCH_DELAY_MS = 5_000L
         private const val PENDING_SYNC_MIN_AHEAD_MS = 30_000L
+
+        // How long after playback starts a newer synced position is taken automatically instead of
+        // offered. Covers the car booting offline and resuming from its own stale position, without
+        // ever moving the scrubber under someone who has settled into listening.
+        private const val AUTO_JUMP_WINDOW_MS = 90_000L
         private const val PENDING_SYNC_OFFER_WINDOW_MS = 60_000L
     }
 
@@ -1040,6 +1045,9 @@ open class PlaybackManager @Inject constructor(
         val episode = getCurrentEpisode()
         if (episode != null) {
             episode.playedUpToMs = positionMs
+            // PodHopper: every seek passes through here, so this is where "the position has been
+            // moved deliberately for this episode" is recorded.
+            userSeekedEpisodeUuid = episode.uuid
         }
 
         if (player == null) {
@@ -2395,6 +2403,17 @@ open class PlaybackManager @Inject constructor(
     // change, or after the offer window expires. Everything here is a no-op unless the
     // failed-pull path armed it, so normal playback never touches this.
     @Volatile
+    // PodHopper: when the current playback session started, and for which episode. An auto-jump to
+    // a synced position is only allowed in the first moments of a session, when the listener has no
+    // investment in the current spot; later, the position is offered rather than taken.
+    private var playbackStartedAtMs: Long? = null
+    private var playbackStartedEpisodeUuid: String? = null
+
+    // PodHopper: the episode the listener has seeked within since it loaded. Set by every seek,
+    // including an auto-jump, which is what bounds auto-jumping to once per episode load and stops
+    // two devices playing the same episode from bouncing each other back and forth.
+    private var userSeekedEpisodeUuid: String? = null
+
     private var pendingSyncedPositionMs: Long? = null
 
     @Volatile
@@ -2425,6 +2444,48 @@ open class PlaybackManager @Inject constructor(
         pendingSyncedOfferJob?.cancel()
         pendingSyncedOfferJob = null
         mediaSessionManager.refreshCustomLayout()
+    }
+
+    /**
+     * PodHopper: a sync pull found a newer cross-device position for the episode playing right now.
+     *
+     * The sync layer will not write the database under live playback, and it used to discard the
+     * position entirely, so a car that booted offline and resumed from its own stale position kept
+     * that position for the whole drive even once it was back online. The position comes here
+     * instead.
+     *
+     * Taken automatically only inside [AUTO_JUMP_WINDOW_MS] of the session starting and only when
+     * the listener has not seeked since the episode loaded: at that point the starting position was
+     * chosen by the app, not the listener, and correcting it is what they would want. Past that, or
+     * once they have moved the position themselves, it is offered as a Now Playing action instead,
+     * because taking someone out of an episode they have settled into is worse than not correcting
+     * it. The jump itself counts as a seek, so this can fire at most once per episode load.
+     */
+    fun offerOrJumpToSyncedPosition(episode: BaseEpisode, remotePositionMs: Long) {
+        launch {
+            val current = getCurrentEpisode() ?: return@launch
+            if (current.uuid != episode.uuid || !isPlaying()) {
+                return@launch
+            }
+            val localMs = getCurrentTimeMs(current)
+            if (remotePositionMs < localMs + PENDING_SYNC_MIN_AHEAD_MS) {
+                // Not meaningfully ahead of where the listener already is; nothing worth doing.
+                return@launch
+            }
+            val startedAt = playbackStartedAtMs.takeIf { playbackStartedEpisodeUuid == episode.uuid }
+            val withinAutoJumpWindow = startedAt != null && System.currentTimeMillis() - startedAt <= AUTO_JUMP_WINDOW_MS
+            val listenerHasSeeked = userSeekedEpisodeUuid == episode.uuid
+            if (withinAutoJumpWindow && !listenerHasSeeked) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Jumping to synced position %.3f (local %.3f), playback had just started", remotePositionMs / 1000f, localMs / 1000f)
+                clearPendingSyncedPosition()
+                seekToTimeMsSuspend(remotePositionMs.toInt())
+            } else {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Offering synced position %.3f (local %.3f) from the background sync", remotePositionMs / 1000f, localMs / 1000f)
+                pendingSyncedPositionMs = remotePositionMs
+                pendingSyncedEpisodeUuid = episode.uuid
+                mediaSessionManager.refreshCustomLayout()
+            }
+        }
     }
 
     private fun offerSyncedPositionWhenAvailable(episode: BaseEpisode) {
@@ -2583,6 +2644,11 @@ open class PlaybackManager @Inject constructor(
             player?.seekToTimeMs(currentTimeMs)
         }
         player?.play(currentTimeMs)
+        // PodHopper: start of a playback session, used to decide whether a synced position that
+        // arrives shortly afterwards is taken automatically or merely offered.
+        playbackStartedAtMs = System.currentTimeMillis()
+        playbackStartedEpisodeUuid = episode.uuid
+        userSeekedEpisodeUuid = null
 
         // SimplePlayer creates its ExoPlayer lazily in prepare(), which is called
         // inside play(). Now that the ExoPlayer exists, install it into the Media3
