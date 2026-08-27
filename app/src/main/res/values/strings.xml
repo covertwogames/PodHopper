@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+        PodHopper: Digital Asset Links for app link verification. This pointed at the upstream
+        project's domain, which verified their site against this app. Pointing it at PodHopper's
+        own domain means only PodHopper's site can claim these links.
+    -->
     <string name="asset_statements" translatable="false">
 [{
-  \"include\": \"https://pocketcasts.com/.well-known/assetlinks.json\"
+  \"include\": \"https://podhopper.app/.well-known/assetlinks.json\"
 }]
 </string>
 </resources>

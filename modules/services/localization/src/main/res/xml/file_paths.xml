@@ -1,6 +1,13 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <files-path name="localfiles" path="email/"/>
-    <files-path name="internalpodcasts" path="PocketCasts/podcasts" />
-    <external-files-path name="externalpodcasts" path="PocketCasts/podcasts" />
+    <!--
+        PodHopper: these must track the app's storage folder, which was renamed from the upstream
+        name. The legacy entries stay so that an install whose in-place folder rename did not run
+        (or failed) can still share files that are physically still under the old folder.
+    -->
+    <files-path name="internalpodcasts" path="PodHopper/podcasts" />
+    <external-files-path name="externalpodcasts" path="PodHopper/podcasts" />
+    <files-path name="internalpodcastslegacy" path="PocketCasts/podcasts" />
+    <external-files-path name="externalpodcastslegacy" path="PocketCasts/podcasts" />
     <cache-path name="podcasts_cache" path="." />
 </paths>

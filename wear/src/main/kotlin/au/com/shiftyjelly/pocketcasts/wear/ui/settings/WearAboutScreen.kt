@@ -36,7 +36,7 @@ fun WearAboutScreen(
         ) {
             item {
                 Image(
-                    painter = painterResource(IR.drawable.about_logo_pocketcasts),
+                    painter = painterResource(IR.drawable.podhopper_lockup_stacked_ondark),
                     contentDescription = stringResource(LR.string.settings_app_icon),
                 )
             }
