@@ -80,6 +80,13 @@ interface EpisodeManager {
     fun updateAllEpisodeStatusBlocking(episodeStatus: EpisodeDownloadStatus)
 
     fun markAsNotPlayedBlocking(episode: BaseEpisode?)
+
+    /**
+     * PodHopper: makes recently failed automatic downloads eligible again, and returns how many
+     * were cleared. Only clears the failure flag: whether anything is then downloaded is still
+     * decided by the auto download selector and the user's own settings.
+     */
+    suspend fun clearRetryableDownloadErrors(): Int
     suspend fun markAllAsPlayed(episodes: List<BaseEpisode>, playbackManager: PlaybackManager, podcastManager: PodcastManager)
     fun markedAsPlayedExternally(episode: PodcastEpisode, playbackManager: PlaybackManager, podcastManager: PodcastManager)
     fun markAsPlayedAsync(episode: BaseEpisode?, playbackManager: PlaybackManager, podcastManager: PodcastManager, shouldShuffleUpNext: Boolean = false)

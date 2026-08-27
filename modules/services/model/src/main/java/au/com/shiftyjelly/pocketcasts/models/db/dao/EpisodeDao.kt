@@ -252,6 +252,44 @@ abstract class EpisodeDao {
     @Query("UPDATE podcast_episodes SET downloaded_error_details = NULL, episode_status = :episodeStatusNotDownloaded WHERE episode_status = :episodeStatusFailed")
     abstract fun clearAllDownloadErrorsBlocking(episodeStatusNotDownloaded: EpisodeDownloadStatus, episodeStatusFailed: EpisodeDownloadStatus)
 
+    /**
+     * PodHopper: clears the failed-download flag on episodes that deserve another automatic
+     * attempt, so the ordinary auto download pass can pick them up again.
+     *
+     * A failed automatic download was permanent: the enqueue path skips any episode whose download
+     * previously failed, with no expiry, so one bad moment (a VPN, hotel wifi, a flaky connection)
+     * disqualified that episode from auto download forever. Clearing the flag is all that is
+     * needed; the normal selector and the user's own limits and constraints then decide whether the
+     * episode actually downloads, exactly as they would for any other candidate.
+     *
+     * Bounded on both sides. Older than [attemptedBefore] so a failure that just happened is left
+     * alone and the worker's own retries are not fought, and newer than [attemptedAfter] so an
+     * episode that is genuinely gone stops being retried instead of cycling forever. Episodes that
+     * are archived, finished, or set to be skipped are left alone, matching the eligibility rules
+     * the auto download selector applies anyway.
+     */
+    @Query(
+        """
+        UPDATE podcast_episodes
+        SET downloaded_error_details = NULL, episode_status = :episodeStatusNotDownloaded
+        WHERE episode_status = :episodeStatusFailed
+          AND archived = 0
+          AND playing_status != :playingStatusCompleted
+          AND auto_download_status != :autoDownloadStatusIgnore
+          AND last_download_attempt_date IS NOT NULL
+          AND last_download_attempt_date > :attemptedAfter
+          AND last_download_attempt_date < :attemptedBefore
+        """,
+    )
+    abstract suspend fun clearRetryableDownloadErrors(
+        attemptedAfter: Long,
+        attemptedBefore: Long,
+        episodeStatusNotDownloaded: EpisodeDownloadStatus = EpisodeDownloadStatus.DownloadNotRequested,
+        episodeStatusFailed: EpisodeDownloadStatus = EpisodeDownloadStatus.DownloadFailed,
+        playingStatusCompleted: EpisodePlayingStatus = EpisodePlayingStatus.COMPLETED,
+        autoDownloadStatusIgnore: Int = BaseEpisode.AUTO_DOWNLOAD_STATUS_IGNORE,
+    ): Int
+
     @Query("SELECT * FROM podcast_episodes WHERE podcast_id = :podcastUuid ORDER BY published_date DESC, added_date DESC LIMIT 1")
     abstract fun findLatestBlocking(podcastUuid: String): PodcastEpisode?
 

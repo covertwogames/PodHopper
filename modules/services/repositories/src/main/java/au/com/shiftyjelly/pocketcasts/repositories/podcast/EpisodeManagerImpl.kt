@@ -28,6 +28,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlayerEvent
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.utils.Network
 import au.com.shiftyjelly.pocketcasts.utils.days
+import au.com.shiftyjelly.pocketcasts.utils.hours
 import au.com.shiftyjelly.pocketcasts.utils.extensions.anyMessageContains
 import au.com.shiftyjelly.pocketcasts.utils.extensions.escapeLike
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
@@ -447,6 +448,18 @@ class EpisodeManagerImpl @Inject constructor(
             episode.isStarred = !it.isStarred
             starEpisode(episode = episode, starred = episode.isStarred, sourceView = sourceView)
         }
+    }
+
+    override suspend fun clearRetryableDownloadErrors(): Int {
+        // PodHopper: bounds for retrying failed automatic downloads. The cooldown keeps this from
+        // fighting the download worker's own immediate retries, and the window stops an episode
+        // that is genuinely gone from being retried forever. The window matches the cutoff the app
+        // already uses elsewhere when showing recently failed downloads.
+        val now = System.currentTimeMillis()
+        return episodeDao.clearRetryableDownloadErrors(
+            attemptedAfter = now - 7.days(),
+            attemptedBefore = now - 1.hours(),
+        )
     }
 
     override fun markAsNotPlayedBlocking(episode: BaseEpisode?) {

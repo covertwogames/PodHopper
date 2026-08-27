@@ -236,6 +236,17 @@ class RefreshPodcastsThread(
                 LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Auto download skipped: the car streams only")
             } else {
                 val episodes = runBlocking {
+                    // PodHopper: give recently failed automatic downloads another chance before
+                    // choosing what to download. The enqueue path skips any episode whose download
+                    // previously failed and never expires that, so one bad moment (a VPN, hotel
+                    // wifi, a dropped connection) disqualified an episode from auto download for
+                    // good. Clearing the flag is the whole fix: the selector below and the user's
+                    // own limits and constraints still decide what actually downloads, so nothing
+                    // is queued here that would not have been queued anyway.
+                    val cleared = episodeManager.clearRetryableDownloadErrors()
+                    if (cleared > 0) {
+                        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Auto download: cleared $cleared recently failed download(s) to retry")
+                    }
                     autoDownloadProvider.getAll(addedEpisodes.episodeUuidsAdded)
                 }
                 downloadQueue.enqueueAll(episodes, DownloadType.Automatic(bypassAutoDownloadStatus = false), SourceView.AUTO_DOWNLOAD)
