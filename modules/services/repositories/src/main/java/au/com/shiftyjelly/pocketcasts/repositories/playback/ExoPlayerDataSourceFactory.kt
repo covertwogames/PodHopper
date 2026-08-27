@@ -42,6 +42,11 @@ class ExoPlayerDataSourceFactory @Inject constructor(
     private val crashLogging: CrashLogging,
 ) {
     private val cache = runCatching {
+        // PodHopper: the streaming cache used to live in a folder named after the upstream project.
+        // Deliberately NOT migrated: this is a cache, so the cheapest correct move is to delete the
+        // old folder and let the new one refill on demand. Renaming it instead would leave the
+        // cache index (held in a separate database) pointing at paths that no longer exist.
+        File(context.cacheDir, LEGACY_CACHE_DIR_NAME).takeIf(File::exists)?.deleteRecursively()
         val cacheDir = File(context.cacheDir, CACHE_DIR_NAME)
         val size = settings.getExoPlayerCacheEntirePlayingEpisodeSizeInMB() * 1024 * 1024L
         val evictor = LeastRecentlyUsedCacheEvictor(size)
@@ -169,6 +174,7 @@ class ExoPlayerDataSourceFactory @Inject constructor(
         .build()
 
     private companion object {
-        const val CACHE_DIR_NAME = "pocketcasts-exoplayer-cache"
+        const val CACHE_DIR_NAME = "podhopper-exoplayer-cache"
+        const val LEGACY_CACHE_DIR_NAME = "pocketcasts-exoplayer-cache"
     }
 }

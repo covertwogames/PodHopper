@@ -41,7 +41,12 @@ object InterceptorModule {
     private val crashLoggingInterceptor = CrashLoggingOkHttpInterceptorProvider
         .createInstance(object : RequestFormatter {
             override fun formatRequestUrl(request: Request): FormattedUrl {
-                return request.url.host.takeIf { it.contains("pocketcasts") } ?: "filtered"
+                // PodHopper: crash breadcrumbs record the host only for our own backends, so
+                // podcast feed and media hosts never leak into a crash report. The filter still
+                // named the upstream project's domain, which PodHopper never calls, so every
+                // request was reported as "filtered" and the breadcrumb was useless.
+                val host = request.url.host
+                return host.takeIf { it.contains("podhopper") || it.contains("supabase") } ?: "filtered"
             }
         })
 

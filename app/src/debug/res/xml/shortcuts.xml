@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    PodHopper: android:targetPackage must be the APPLICATION ID, not the source namespace. It was
+    left as the upstream application id, which PodHopper does not use, so every launcher shortcut
+    pointed at a package that is not installed and silently failed.
+
+    There is no way to inject the application id into a resource file, so this lives in the app
+    module with one copy per build type that changes it. Keep these in sync if the id ever changes.
+    Variant: debug
+-->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
 
     <shortcut android:icon="@drawable/shortcut_grid" android:enabled="true" android:shortcutId="shortcut-podcasts" android:shortcutShortLabel="@string/podcasts">
-        <intent android:targetPackage="au.com.shiftyjelly.pocketcasts.debug"
+        <intent android:targetPackage="com.covertwogames.podhopper.debug"
                 android:targetClass="au.com.shiftyjelly.pocketcasts.ui.MainActivity"
                 android:action="android.intent.action.VIEW">
             <extra android:name="launch-page" android:value="podcasts" />
@@ -10,7 +19,7 @@
     </shortcut>
 
     <shortcut android:icon="@drawable/shortcut_search" android:enabled="true" android:shortcutId="shortcut-search" android:shortcutShortLabel="@string/search">
-        <intent android:targetPackage="au.com.shiftyjelly.pocketcasts.debug"
+        <intent android:targetPackage="com.covertwogames.podhopper.debug"
                 android:targetClass="au.com.shiftyjelly.pocketcasts.ui.MainActivity"
                 android:action="android.intent.action.VIEW">
             <extra android:name="launch-page" android:value="search" />
@@ -18,7 +27,7 @@
     </shortcut>
 
     <shortcut android:icon="@drawable/shortcut_upnext" android:enabled="true" android:shortcutId="shortcut-up-next" android:shortcutShortLabel="@string/up_next">
-        <intent android:targetPackage="au.com.shiftyjelly.pocketcasts.debug"
+        <intent android:targetPackage="com.covertwogames.podhopper.debug"
                 android:targetClass="au.com.shiftyjelly.pocketcasts.ui.MainActivity"
                 android:action="android.intent.action.VIEW">
             <extra android:name="launch-page" android:value="upnext" />

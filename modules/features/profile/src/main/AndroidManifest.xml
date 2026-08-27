@@ -31,18 +31,13 @@
         <activity
             android:name="au.com.shiftyjelly.pocketcasts.account.AccountActivity"
             android:windowSoftInputMode="adjustResize" />
-        <service
-            android:name=".accountmanager.PocketCastsAuthenticatorService"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
-        </service>
+        <!--
+            PodHopper: the Android account authenticator was removed. Sign-in moved to PodHopper's
+            own backend and no account is ever created through AccountManager, but registering the
+            authenticator still published an account type named after the upstream project, which
+            any app on the device could enumerate. The sync code that reads AccountManager is
+            unchanged and simply finds no accounts, exactly as it did before.
+        -->
     </application>
 
 </manifest>
