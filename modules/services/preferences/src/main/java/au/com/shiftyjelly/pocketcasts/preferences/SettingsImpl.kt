@@ -1608,11 +1608,6 @@ class SettingsImpl @Inject constructor(
         sharedPrefs = sharedPreferences,
     )
 
-    override val podhopperCarDownloadDefaultsApplied = UserSetting.BoolPref(
-        sharedPrefKey = "podhopperCarDownloadDefaultsApplied",
-        defaultValue = false,
-        sharedPrefs = sharedPreferences,
-    )
 
     override val showReferralWelcome = UserSetting.BoolPref(
         sharedPrefKey = "showReferralWelcome",

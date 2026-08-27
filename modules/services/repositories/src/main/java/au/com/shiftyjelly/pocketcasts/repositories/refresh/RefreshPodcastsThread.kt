@@ -226,10 +226,20 @@ class RefreshPodcastsThread(
             for (uuid in addedEpisodes.episodeUuidsAdded) {
                 LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "New podcast episode received: $uuid")
             }
-            val episodes = runBlocking {
-                autoDownloadProvider.getAll(addedEpisodes.episodeUuidsAdded)
+            // PodHopper: the car is streaming only. Android Automotive's Car Watchdog meters the
+            // bytes an app writes to flash each day and disables apps that exceed their allowance,
+            // removing them from the launcher, and speculative downloads are exactly the
+            // discretionary writes that would spend that allowance on episodes nobody plays. The
+            // block is here rather than only in the car's settings so that a per-podcast flag left
+            // behind by an earlier build cannot start downloads on its own.
+            if (Util.isAutomotive(context)) {
+                LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Auto download skipped: the car streams only")
+            } else {
+                val episodes = runBlocking {
+                    autoDownloadProvider.getAll(addedEpisodes.episodeUuidsAdded)
+                }
+                downloadQueue.enqueueAll(episodes, DownloadType.Automatic(bypassAutoDownloadStatus = false), SourceView.AUTO_DOWNLOAD)
             }
-            downloadQueue.enqueueAll(episodes, DownloadType.Automatic(bypassAutoDownloadStatus = false), SourceView.AUTO_DOWNLOAD)
         }
         LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - auto download check - $autoDownloadDuration")
 

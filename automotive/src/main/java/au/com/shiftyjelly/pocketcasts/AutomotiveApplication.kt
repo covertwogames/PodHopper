@@ -14,7 +14,6 @@ import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsController
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.ExperimentProvider
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
 import au.com.shiftyjelly.pocketcasts.crashlogging.InitializeRemoteLogging
-import au.com.shiftyjelly.pocketcasts.models.type.AutoDownloadLimitSetting
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserver
 import au.com.shiftyjelly.pocketcasts.repositories.jobs.VersionMigrationsWorker
@@ -25,7 +24,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDiagnostics
-import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDownloadCleanupWorker
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
@@ -168,17 +166,6 @@ class AutomotiveApplication :
         // unmetered-only and charge-only, both of which mean "never" on a head unit whose only
         // network is cellular and whose power state is not a phone battery. Applied once so a
         // user change in settings is never overwritten on a later launch.
-        if (!settings.podhopperCarDownloadDefaultsApplied.value) {
-            settings.autoDownloadUnmeteredOnly.set(false, updateModifiedAt = false)
-            settings.autoDownloadOnlyWhenCharging.set(false, updateModifiedAt = false)
-            settings.autoDownloadLimit.set(AutoDownloadLimitSetting.THREE_LATEST_EPISODE, updateModifiedAt = false)
-            settings.podhopperCarDownloadDefaultsApplied.set(true, updateModifiedAt = false)
-            Log.i(Settings.LOG_TAG_AUTO, "Applied car download defaults (cellular allowed, no charging constraint)")
-        }
-
-        // PodHopper: daily rotation of downloaded episodes (completed or older than 30 days),
-        // keeping head unit storage bounded. Car only; the phone never schedules this worker.
-        PodHopperCarDownloadCleanupWorker.schedulePeriodicWork(this)
 
         // PodHopper: playback diagnostics watcher. The car has no logcat, so bursts of playback
         // failures upload a log snapshot to Supabase Storage for offline analysis.

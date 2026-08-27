@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    PodHopper strings for the Android Automotive settings screen.
+
+    The car is streaming only: auto download, the keep limit, the storage bar and the delete
+    downloads action were removed, so their strings went with them. What remains is the manual
+    diagnostics log upload.
+-->
+<resources>
+    <string name="podhopper_upload_logs_title">Upload diagnostic logs</string>
+    <string name="podhopper_upload_logs_summary">Sends PodHopper\'s playback logs for troubleshooting</string>
+    <string name="podhopper_upload_logs_uploading">Uploading…</string>
+    <string name="podhopper_upload_logs_done">Logs uploaded</string>
+    <string name="podhopper_upload_logs_failed">Upload failed. Check sign-in and connection.</string>
+</resources>

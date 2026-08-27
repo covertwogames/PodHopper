@@ -73,7 +73,19 @@ open class FileStorage @Inject constructor(
     }
 
     fun getOrCreateStorageDir(): File? = getOrCreateBaseStorageDir()?.let { dir ->
-        File(dir, "PocketCasts" + File.separator).also(File::mkdirs)
+        val root = File(dir, DIR_ROOT + File.separator)
+        if (!root.exists()) {
+            // PodHopper: installs created before the rename keep everything under the old folder.
+            // Renaming is instant and atomic on the same volume, so the files are not copied, and
+            // it runs once because the new folder exists afterwards. If it fails, fall through and
+            // create the new folder anyway: old downloads keep playing from their stored absolute
+            // paths and only new files land in the new folder.
+            val legacy = File(dir, LEGACY_DIR_ROOT)
+            if (legacy.exists() && legacy.isDirectory && !legacy.renameTo(root)) {
+                LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Could not rename the legacy storage folder to $DIR_ROOT, leaving it in place")
+            }
+        }
+        root.also(File::mkdirs)
     }
 
     fun getOrCreateBaseStorageDir(): File? = settings.getStorageChoice()?.let(::getOrCreateBaseStorageDir)
@@ -162,12 +174,13 @@ open class FileStorage @Inject constructor(
 
     suspend fun moveStorage(oldDir: File, newDir: File, episodesManager: EpisodeManager) {
         try {
-            val oldPocketCastsDir = File(oldDir, "PocketCasts")
+            val oldPocketCastsDir = File(oldDir, DIR_ROOT).takeIf(File::exists)
+                ?: File(oldDir, LEGACY_DIR_ROOT)
             if (oldPocketCastsDir.exists() && oldPocketCastsDir.isDirectory) {
                 LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Pocket casts directory exists")
 
                 newDir.mkdirs()
-                val newPocketCastsDir = File(newDir, "PocketCasts")
+                val newPocketCastsDir = File(newDir, DIR_ROOT)
                 val episodesDir = getOrCreateDir(newPocketCastsDir, DIR_EPISODES)
 
                 // Check existing media and mark those episodes as downloaded
@@ -267,7 +280,10 @@ open class FileStorage @Inject constructor(
 
     private fun Sequence<String>.toExistingDirs() = mapNotNull { dirPath -> File(dirPath).takeIf(::isFileReadable) }
 
-    private fun Sequence<File>.toExistingPocketCastsDirs() = mapNotNull { parentDir -> File(parentDir, "PocketCasts").takeIf(::isFileReadable) }
+    private fun Sequence<File>.toExistingPocketCastsDirs() = flatMap { parentDir ->
+        // Both names: a device may still hold files under the pre-rename folder.
+        sequenceOf(File(parentDir, DIR_ROOT), File(parentDir, LEGACY_DIR_ROOT)).filter(::isFileReadable)
+    }
 
     private fun Sequence<File>.toExistingEpisodesDirs() = mapNotNull { parentDir -> File(parentDir, DIR_EPISODES).takeIf(::isFileReadable) }
 
@@ -301,6 +317,11 @@ open class FileStorage @Inject constructor(
     }
 
     private companion object {
+        // PodHopper: the app's folder inside the chosen storage location. Renamed from the
+        // upstream name; LEGACY_DIR_ROOT is kept so installs created before the rename are
+        // migrated in getOrCreateStorageDir and still found by the recovery scan.
+        const val DIR_ROOT = "PodHopper"
+        const val LEGACY_DIR_ROOT = "PocketCasts"
         const val DIR_EPISODES = "podcasts"
         const val DIR_CUSTOM_EPISODES = "custom_episodes"
         const val DIR_TEMP_EPISODES = "downloadTmp"
