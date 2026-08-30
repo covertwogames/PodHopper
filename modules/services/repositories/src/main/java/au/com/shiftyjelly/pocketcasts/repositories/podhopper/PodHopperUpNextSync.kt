@@ -138,9 +138,22 @@ class PodHopperUpNextSync @Inject constructor(
         // would be silently replaced by an older remote queue purely because of call order. The
         // stamp is set when a local change is found to be unpushed and cleared once it lands, so
         // it is only ever set while this device is genuinely ahead of the backend.
+        //
+        // Only a device that has already reconciled may make that claim, and it is the same marker
+        // the push gates on, so the two rules cannot disagree. Without that condition they locked
+        // against each other: a device whose queue changes on its own (the car inserts an episode
+        // the moment autoplay starts) always had an unpublished change, so it always refused the
+        // backend's queue, and because it never accepted one it never counted as reconciled and so
+        // was never allowed to publish either. It sat between the two rules forever.
+        //
+        // Deferring is also the right answer on its own terms: claiming to be newer than a queue
+        // this device has never seen is not a judgement it is in any position to make, and letting
+        // it win would mean a freshly installed device publishing an autoplay queue of one episode
+        // over a queue the user had arranged elsewhere.
+        val hasReconciled = prefs().getString(PREF_SIGNATURE, null) != null
         val remoteTs = remote.optLong("updated_at_ms", 0L)
         val localChangeMs = prefs().getLong(PREF_LOCAL_CHANGE_MS, 0L)
-        if (localChangeMs > 0L && remoteTs > 0L && localChangeMs > remoteTs) {
+        if (hasReconciled && localChangeMs > 0L && remoteTs > 0L && localChangeMs > remoteTs) {
             LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next: keeping this device's newer queue, the backend copy is older")
             return
         }
