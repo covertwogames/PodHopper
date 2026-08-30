@@ -16,6 +16,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadType
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.sync.UpNextSyncWorker
+import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.Relay
@@ -439,6 +440,14 @@ class UpNextQueueImpl @Inject constructor(
     }
 
     private fun downloadIfPossible(episodes: Collection<BaseEpisode>, isUserInitiated: Boolean) {
+        // PodHopper: the car streams only. Android Automotive's Car Watchdog meters the bytes an
+        // app writes to flash each day and disables apps that exceed their allowance. Auto download
+        // is blocked in the refresh path for that reason, but this is a second, independent door
+        // into the download queue, so it has to be closed too or queueing an episode would start a
+        // download in the car regardless.
+        if (Util.isAutomotive(application)) {
+            return
+        }
         if (settings.autoDownloadUpNext.value) {
             val uuids = episodes.map(BaseEpisode::uuid)
             val type = DownloadType.Automatic(bypassAutoDownloadStatus = isUserInitiated)

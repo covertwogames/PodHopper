@@ -232,6 +232,20 @@ class BrowseTreeProvider @Inject constructor(
             .build()
         rootItems.add(downloadsItem)
 
+        // PodHopper: Up Next was missing from the Android Auto menu too, for the same reason as
+        // the car: the node existed but nothing offered it.
+        val upNextMetadata = MediaMetadata.Builder()
+            .setTitle(context.getString(LR.string.up_next))
+            .setArtworkUri(AutoConverter.getBitmapUri(drawable = IR.drawable.ic_upnext, context = context))
+            .setIsBrowsable(true)
+            .setIsPlayable(false)
+            .build()
+        val upNextItem = MediaItem.Builder()
+            .setMediaId(UP_NEXT_ROOT)
+            .setMediaMetadata(upNextMetadata)
+            .build()
+        rootItems.add(upNextItem)
+
         val filesMetadata = MediaMetadata.Builder()
             .setTitle(context.getString(LR.string.profile_navigation_files))
             .setArtworkUri(AutoConverter.getFilesBitmapUri(context))
@@ -445,11 +459,17 @@ class BrowseTreeProvider @Inject constructor(
         val discoverItem = buildListMediaItem(context, id = DISCOVER_ROOT, title = LR.string.discover, drawable = IR.drawable.auto_tab_discover)
         val profileItem = buildListMediaItem(context, id = PROFILE_ROOT, title = LR.string.profile, drawable = IR.drawable.auto_tab_profile, extras = extrasContentAsList)
 
+        // PodHopper: Up Next was unreachable in the car. The browse node and its list builder
+        // already existed and were handled, but no root menu ever offered the entry, so there was
+        // no way to see the queue or what would play next. It sits after Podcasts because the queue
+        // is what a driver checks most often after their shows.
+        val upNextItem = buildListMediaItem(context, id = UP_NEXT_ROOT, title = LR.string.up_next, drawable = IR.drawable.ic_upnext, extras = extrasContentAsList)
+
         // PodHopper: always land on Podcasts first. Upstream showed Discover first when no
         // subscriptions were present, but right after car sign-in the subscription sync has not
         // finished yet, so countSubscribed() is momentarily 0 and the car would open on Discover.
         // Podcasts is the expected home tab, so it always leads.
-        return listOf(podcastsItem, filtersItem, discoverItem, profileItem)
+        return listOf(podcastsItem, upNextItem, filtersItem, discoverItem, profileItem)
     }
 
     private suspend fun loadFiltersRoot(context: Context): List<MediaItem> {
