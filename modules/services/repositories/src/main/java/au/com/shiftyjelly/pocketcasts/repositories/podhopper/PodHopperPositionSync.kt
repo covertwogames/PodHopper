@@ -66,6 +66,7 @@ class PodHopperPositionSync @Inject constructor(
     private val episodeManager: EpisodeManager,
     private val podcastManager: PodcastManager,
     private val playbackManager: Lazy<PlaybackManager>,
+    private val upNextSync: Lazy<PodHopperUpNextSync>,
     private val settings: Settings,
     @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
@@ -358,6 +359,14 @@ class PodHopperPositionSync @Inject constructor(
         prefs().edit().putLong(PREF_LAST_FULL_SYNC_MS, now).apply()
         pullLatestPositionsBlocking(adoptCurrentEpisode = false)
         reconcileCompletionsBlocking()
+
+        // PodHopper: the Up Next queue rides the same cycle. Isolated, because the queue is an
+        // addition to sync and a failure in it must not affect positions or completions.
+        try {
+            upNextSync.get().syncBlocking()
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next sync failed: ${e.message}")
+        }
     }
 
     /** Fire-and-forget [fullSyncBlocking], for callers that cannot suspend (the refresh pipeline). */
@@ -1207,6 +1216,7 @@ class PodHopperPositionSync @Inject constructor(
      * Does not touch any episode, podcast, or playback data on the device.
      */
     fun clearLocalSyncState() {
+        upNextSync.get().clearLocalState()
         prefs().edit()
             .remove(PREF_LAST_PULL_MS)
             .remove(PREF_PARKED)
