@@ -16,10 +16,12 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadType
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.sync.UpNextSyncWorker
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperUpNextSync
 import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.jakewharton.rxrelay2.Relay
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
@@ -43,6 +45,7 @@ class UpNextQueueImpl @Inject constructor(
     private val episodeManager: EpisodeManager,
     private val syncManager: SyncManager,
     private val downloadQueue: DownloadQueue,
+    private val podHopperUpNextSync: Lazy<PodHopperUpNextSync>,
     @ApplicationContext private val application: Context,
 ) : UpNextQueue,
     CoroutineScope {
@@ -456,6 +459,17 @@ class UpNextQueueImpl @Inject constructor(
     }
 
     private fun sendToServerBlocking() {
+        // PodHopper: this runs on the debounced observer set up in setupBlocking, which is exactly
+        // the right moment to publish the queue, so it drives the PodHopper push. The Pocket Casts
+        // path below is dead (its change log is only written while signed in to Pocket Casts, which
+        // never happens here) and is left alone rather than removed.
+        //
+        // Push only, never a pull: pulling here could apply a remote queue on top of an edit the
+        // user is still making. The signature check inside makes an unchanged queue free, and it
+        // also makes this safe to call on every emission, including the one caused by applying a
+        // remote queue, which by definition already matches its own signature.
+        podHopperUpNextSync.get().pushIfChanged()
+
         val changes: List<UpNextChange> = upNextChangeDao.findAllBlocking()
         if (changes.isEmpty()) {
             return

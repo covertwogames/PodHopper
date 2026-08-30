@@ -16,6 +16,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -116,7 +117,31 @@ class PodHopperUpNextSync @Inject constructor(
         val remote = withContext(Dispatchers.IO) {
             val rows = supabaseClient.select(TABLE_UP_NEXT_QUEUE, "select=episodes,updated_at_ms,device_id&limit=1")
             if (rows.length() == 0) null else rows.getJSONObject(0)
-        } ?: return
+        }
+
+        if (remote == null) {
+            // No queue on the backend yet. This still counts as a reconcile: the device asked and
+            // was told there is nothing, which is exactly the state it is safe to publish from.
+            // Recording an empty signature is what lets the first device create the row at all;
+            // returning without recording deadlocked the feature, because the push waits for a
+            // reconcile and no reconcile could complete against a table with no row in it.
+            if (prefs().getString(PREF_SIGNATURE, null) == null) {
+                prefs().edit().putString(PREF_SIGNATURE, "").apply()
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next: no queue on the backend yet, this device may publish its own")
+            }
+            return
+        }
+
+        // Freshest change wins, and the pull runs first, so without this an unpushed local edit
+        // would be silently replaced by an older remote queue purely because of call order. The
+        // stamp is set when a local change is found to be unpushed and cleared once it lands, so
+        // it is only ever set while this device is genuinely ahead of the backend.
+        val remoteTs = remote.optLong("updated_at_ms", 0L)
+        val localChangeMs = prefs().getLong(PREF_LOCAL_CHANGE_MS, 0L)
+        if (localChangeMs > 0L && remoteTs > 0L && localChangeMs > remoteTs) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next: keeping this device's newer queue, the backend copy is older")
+            return
+        }
 
         val remoteEntries = parseEntries(remote.optJSONArray("episodes"))
         val remoteSignature = remoteEntries.joinToString(",") { it.uuid }
@@ -157,6 +182,25 @@ class PodHopperUpNextSync @Inject constructor(
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pulled: ${resolved.size} episode(s) applied$heldNote")
     }
 
+    /**
+     * Push only, for the queue's own change trigger, so an edit reaches the other devices in
+     * seconds rather than waiting for the next sync cycle. Deliberately never pulls: a pull during
+     * an edit could apply a remote queue on top of what the user is in the middle of arranging.
+     * Cheap when nothing changed, because the signature check short circuits before any network.
+     */
+    fun pushIfChanged() {
+        if (!supabaseClient.isLoggedIn()) {
+            return
+        }
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                pushIfChangedBlocking()
+            } catch (e: Exception) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next change push failed, the next sync retries: ${e.message}")
+            }
+        }
+    }
+
     private suspend fun pushIfChangedBlocking() {
         val storedSignature = prefs().getString(PREF_SIGNATURE, null)
         if (storedSignature == null) {
@@ -171,6 +215,10 @@ class PodHopperUpNextSync @Inject constructor(
             return
         }
 
+        // This device's queue has moved on and the backend does not know yet. Recording when keeps
+        // a later pull from overwriting it with an older remote copy.
+        prefs().edit().putLong(PREF_LOCAL_CHANGE_MS, System.currentTimeMillis()).apply()
+
         val payload = JSONArray()
         merged.forEach { payload.put(it.toJson()) }
 
@@ -183,7 +231,8 @@ class PodHopperUpNextSync @Inject constructor(
                 .put("device_name", Build.MODEL)
                 .put("updated_at_ms", System.currentTimeMillis())
             supabaseClient.upsert(TABLE_UP_NEXT_QUEUE, "user_id", JSONArray().put(row))
-            prefs().edit().putString(PREF_SIGNATURE, signature).apply()
+            // Published, so this device is no longer ahead of the backend.
+            prefs().edit().putString(PREF_SIGNATURE, signature).remove(PREF_LOCAL_CHANGE_MS).apply()
             LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pushed ${merged.size} entry(s)")
         }
     }
@@ -249,6 +298,7 @@ class PodHopperUpNextSync @Inject constructor(
         prefs().edit()
             .remove(PREF_SIGNATURE)
             .remove(PREF_HELD)
+            .remove(PREF_LOCAL_CHANGE_MS)
             .apply()
     }
 
@@ -256,6 +306,7 @@ class PodHopperUpNextSync @Inject constructor(
         private const val PREFS_NAME = "podhopper_upnext_sync"
         private const val PREF_SIGNATURE = "queue_signature"
         private const val PREF_HELD = "queue_held"
+        private const val PREF_LOCAL_CHANGE_MS = "queue_local_change_ms"
         private const val PREF_INSTALL_ID = "install_id"
         private const val TABLE_UP_NEXT_QUEUE = "up_next_queue"
     }
