@@ -144,9 +144,15 @@ class PodHopperUpNextSync @Inject constructor(
         }
 
         val remoteEntries = parseEntries(remote.optJSONArray("episodes"))
+        // Two different facts, tracked separately. PREF_REMOTE_SIGNATURE is the queue this device
+        // last received, and answers "is there anything new to apply". PREF_SIGNATURE is what this
+        // device's own queue settled to, and answers "is there anything of ours to publish". They
+        // legitimately differ whenever the apply preserved a different playing episode or held an
+        // entry, so one value cannot serve both questions.
         val remoteSignature = remoteEntries.joinToString(",") { it.uuid }
-        if (remoteSignature == prefs().getString(PREF_SIGNATURE, null)) {
-            // Already reconciled against this exact queue; nothing to apply and nothing to send.
+        if (remoteSignature == prefs().getString(PREF_REMOTE_SIGNATURE, null)) {
+            // Already applied this exact queue; re-applying would rewrite the database and re-emit
+            // a queue change for no reason.
             return
         }
 
@@ -173,10 +179,20 @@ class PodHopperUpNextSync @Inject constructor(
             manager.upNextQueue.importServerChangesBlocking(resolved, manager)
         }
 
+        // Record what this device's queue actually became, not what arrived. The apply path keeps
+        // whatever is playing here at the head, so a device playing a different episode ends up
+        // with a legitimately different order, and held entries mean the local list can differ
+        // again. Storing the received order instead would leave the signature permanently at odds
+        // with reality: the next push would publish this device's reordering, the other device
+        // would move its own playing episode back to the top and publish that, and the two would
+        // rewrite the queue past each other on every cycle without either being wrong. Recording
+        // the local result keeps that reordering local, which is what it is.
         prefs().edit()
-            .putString(PREF_SIGNATURE, remoteSignature)
             .putString(PREF_HELD, if (held.length() == 0) null else held.toString())
+            .putString(PREF_REMOTE_SIGNATURE, remoteSignature)
             .apply()
+        val settled = mergedQueueForPush().joinToString(",") { it.uuid }
+        prefs().edit().putString(PREF_SIGNATURE, settled).apply()
 
         val heldNote = if (held.length() > 0) ", ${held.length()} entry(s) held until their episodes arrive" else ""
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pulled: ${resolved.size} episode(s) applied$heldNote")
@@ -232,7 +248,14 @@ class PodHopperUpNextSync @Inject constructor(
                 .put("updated_at_ms", System.currentTimeMillis())
             supabaseClient.upsert(TABLE_UP_NEXT_QUEUE, "user_id", JSONArray().put(row))
             // Published, so this device is no longer ahead of the backend.
-            prefs().edit().putString(PREF_SIGNATURE, signature).remove(PREF_LOCAL_CHANGE_MS).apply()
+            // The backend now holds exactly this list, so it is both what we published and what we
+            // would next receive. Recording both stops the next pull from treating our own write as
+            // new and re-applying it.
+            prefs().edit()
+                .putString(PREF_SIGNATURE, signature)
+                .putString(PREF_REMOTE_SIGNATURE, signature)
+                .remove(PREF_LOCAL_CHANGE_MS)
+                .apply()
             LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pushed ${merged.size} entry(s)")
         }
     }
@@ -298,6 +321,7 @@ class PodHopperUpNextSync @Inject constructor(
         prefs().edit()
             .remove(PREF_SIGNATURE)
             .remove(PREF_HELD)
+            .remove(PREF_REMOTE_SIGNATURE)
             .remove(PREF_LOCAL_CHANGE_MS)
             .apply()
     }
@@ -305,6 +329,7 @@ class PodHopperUpNextSync @Inject constructor(
     companion object {
         private const val PREFS_NAME = "podhopper_upnext_sync"
         private const val PREF_SIGNATURE = "queue_signature"
+        private const val PREF_REMOTE_SIGNATURE = "queue_remote_signature"
         private const val PREF_HELD = "queue_held"
         private const val PREF_LOCAL_CHANGE_MS = "queue_local_change_ms"
         private const val PREF_INSTALL_ID = "install_id"
