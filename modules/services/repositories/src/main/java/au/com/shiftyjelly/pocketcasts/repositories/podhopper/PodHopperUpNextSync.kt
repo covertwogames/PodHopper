@@ -199,6 +199,23 @@ class PodHopperUpNextSync @Inject constructor(
     }
 
     /**
+     * Records that this device's queue just changed locally.
+     *
+     * Called from the queue's own mutation point rather than from the push, because the stamp means
+     * "when this device's queue last changed" and the push may not run for seconds, or at all if
+     * the process is backgrounded first. Reordering a queue and pocketing the phone is ordinary
+     * behaviour, and stamping at push time left exactly that case unprotected: no stamp was written,
+     * so the next pull discarded the edit.
+     *
+     * Applying a remote queue must never come through here. It is not a local change, and treating
+     * it as one would make the device claim to be ahead of the backend and start refusing the very
+     * updates it just accepted.
+     */
+    fun noteLocalChange() {
+        prefs().edit().putLong(PREF_LOCAL_CHANGE_MS, System.currentTimeMillis()).apply()
+    }
+
+    /**
      * Push only, for the queue's own change trigger, so an edit reaches the other devices in
      * seconds rather than waiting for the next sync cycle. Deliberately never pulls: a pull during
      * an edit could apply a remote queue on top of what the user is in the middle of arranging.
@@ -228,12 +245,13 @@ class PodHopperUpNextSync @Inject constructor(
         val merged = mergedQueueForPush()
         val signature = merged.joinToString(",") { it.uuid }
         if (signature == storedSignature) {
+            // Nothing of ours to publish, so this device is not ahead of the backend and must not
+            // keep claiming to be. Clearing here as well as on success matters: a stamp left behind
+            // by a failed push would otherwise survive forever once the queue was edited back to
+            // match, and this device would silently refuse every remote queue from then on.
+            prefs().edit().remove(PREF_LOCAL_CHANGE_MS).apply()
             return
         }
-
-        // This device's queue has moved on and the backend does not know yet. Recording when keeps
-        // a later pull from overwriting it with an older remote copy.
-        prefs().edit().putLong(PREF_LOCAL_CHANGE_MS, System.currentTimeMillis()).apply()
 
         val payload = JSONArray()
         merged.forEach { payload.put(it.toJson()) }

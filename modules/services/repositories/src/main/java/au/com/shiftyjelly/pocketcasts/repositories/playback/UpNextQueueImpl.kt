@@ -161,6 +161,19 @@ class UpNextQueueImpl @Inject constructor(
             }
         }
 
+        // PodHopper: record the moment the queue changed, here at the single point every mutation
+        // passes through. The stamp is what stops a later pull from discarding an edit the backend
+        // has not seen yet, so it has to exist from the instant of the edit: recording it in the
+        // push instead left the ordinary case unprotected, because the push is debounced and never
+        // runs if the app is backgrounded first.
+        //
+        // Import is deliberately excluded. It is the remote apply, not a local edit, and stamping
+        // it would make this device claim to be ahead of the backend and start refusing the very
+        // queues it just accepted.
+        if (action !is UpNextAction.Import) {
+            podHopperUpNextSync.get().noteLocalChange()
+        }
+
         // save changes to sync to the server
         if (syncManager.isLoggedIn()) {
             when (action) {
