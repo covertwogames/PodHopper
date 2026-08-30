@@ -98,7 +98,9 @@ class PodHopperUpNextSync @Inject constructor(
      * local queue overwrites a real one.
      */
     suspend fun syncBlocking() {
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next sync entered")
         if (!supabaseClient.isLoggedIn()) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next sync stopped: not signed in")
             return
         }
         try {
@@ -150,7 +152,9 @@ class PodHopperUpNextSync @Inject constructor(
         // legitimately differ whenever the apply preserved a different playing episode or held an
         // entry, so one value cannot serve both questions.
         val remoteSignature = remoteEntries.joinToString(",") { it.uuid }
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pull found ${remoteEntries.size} entry(s) on the backend")
         if (remoteSignature == prefs().getString(PREF_REMOTE_SIGNATURE, null)) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pull: already applied this queue")
             // Already applied this exact queue; re-applying would rewrite the database and re-emit
             // a queue change for no reason.
             return
@@ -237,6 +241,7 @@ class PodHopperUpNextSync @Inject constructor(
     private suspend fun pushIfChangedBlocking() {
         val storedSignature = prefs().getString(PREF_SIGNATURE, null)
         if (storedSignature == null) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next push held back: this device has not reconciled with the backend yet")
             // Never reconciled with the backend on this install. Publishing now would push whatever
             // this device happens to hold, which right after a fresh install is nothing at all.
             return

@@ -354,6 +354,8 @@ class PodHopperPositionSync @Inject constructor(
         val now = System.currentTimeMillis()
         val last = prefs().getLong(PREF_LAST_FULL_SYNC_MS, 0L)
         if (!force && now - last < FULL_SYNC_MIN_INTERVAL_MS) {
+            // Diagnostic: distinguishes "the cycle never ran" from "the cycle ran and skipped".
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper full sync skipped, throttled (${(now - last) / 1000}s since the last one)")
             return
         }
         prefs().edit().putLong(PREF_LAST_FULL_SYNC_MS, now).apply()
@@ -362,6 +364,7 @@ class PodHopperPositionSync @Inject constructor(
 
         // PodHopper: the Up Next queue rides the same cycle. Isolated, because the queue is an
         // addition to sync and a failure in it must not affect positions or completions.
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper full sync reached the Up Next step")
         try {
             upNextSync.get().syncBlocking()
         } catch (e: Exception) {
