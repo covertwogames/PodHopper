@@ -1,5 +1,7 @@
 package au.com.shiftyjelly.pocketcasts.models.db
 
+import dagger.Lazy
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperUpNextSync
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -13,7 +15,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.model.AutoPlaySource
 import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextQueue
 import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextQueueImpl
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
-import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import com.squareup.moshi.Moshi
 import java.util.Date
 import java.util.UUID
@@ -42,9 +43,10 @@ class UpNextQueueTest {
             on { lastAutoPlaySource } doReturn UserSetting.Mock(AutoPlaySource.Predefined.None, mock())
             on { trackingAutoPlaySource } doReturn UserSetting.Mock(AutoPlaySource.Predefined.None, mock())
         }
-        val syncManager = mock<SyncManager> {}
+        val upNextSync = mock<PodHopperUpNextSync> {}
+        val lazySync = mock<Lazy<PodHopperUpNextSync>> { on { get() } doReturn upNextSync }
 
-        upNextQueue = UpNextQueueImpl(appDatabase, settings, episodeManager, syncManager, mock(), context)
+        upNextQueue = UpNextQueueImpl(appDatabase, settings, episodeManager, mock(), lazySync, context)
         upNextQueue.setupBlocking()
     }
 

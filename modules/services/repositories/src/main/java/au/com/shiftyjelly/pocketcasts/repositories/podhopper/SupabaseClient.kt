@@ -149,6 +149,18 @@ class SupabaseClient @Inject constructor(
         executeExpectingSuccess(request, retryOnAuthError = true)
     }
 
+    /**
+     * Calls a Postgres function through PostgREST. The function runs as the signed-in user, so
+     * row level security applies to everything it touches. Returns the raw JSON body.
+     */
+    fun rpc(function: String, params: JSONObject): String {
+        val url = PodHopperConfig.SUPABASE_URL + "/rest/v1/rpc/" + function
+        val request = restRequestBuilder(url)
+            .post(params.toString().toRequestBody(jsonType))
+            .build()
+        return executeExpectingSuccess(request, retryOnAuthError = true)
+    }
+
     fun select(table: String, query: String): JSONArray {
         val url = PodHopperConfig.SUPABASE_URL + "/rest/v1/" + table + "?" + query
         val request = restRequestBuilder(url).get().build()

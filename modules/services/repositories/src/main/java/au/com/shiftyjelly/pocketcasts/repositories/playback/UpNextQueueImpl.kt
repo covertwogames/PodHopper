@@ -6,7 +6,6 @@ import au.com.shiftyjelly.pocketcasts.models.db.AppDatabase
 import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
-import au.com.shiftyjelly.pocketcasts.models.entity.UpNextChange
 import au.com.shiftyjelly.pocketcasts.models.entity.toUpNextEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.UpNextSortType
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -14,8 +13,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.model.AutoPlaySource
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadType
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
-import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
-import au.com.shiftyjelly.pocketcasts.repositories.sync.UpNextSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperUpNextSync
 import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
@@ -43,7 +40,6 @@ class UpNextQueueImpl @Inject constructor(
     private val appDatabase: AppDatabase,
     private val settings: Settings,
     private val episodeManager: EpisodeManager,
-    private val syncManager: SyncManager,
     private val downloadQueue: DownloadQueue,
     private val podHopperUpNextSync: Lazy<PodHopperUpNextSync>,
     @ApplicationContext private val application: Context,
@@ -74,8 +70,8 @@ class UpNextQueueImpl @Inject constructor(
         get() = changesObservable.blockingFirst() is UpNextQueue.State.Empty
 
     sealed class UpNextAction(val _onAdd: (() -> Unit)?) {
-        data class PlayNow(val episode: BaseEpisode, val onAdd: (() -> Unit)? = null) : UpNextAction(onAdd)
-        data class PlayNext(val episode: BaseEpisode, val onAdd: (() -> Unit)? = null) : UpNextAction(onAdd)
+        data class PlayNow(val episode: BaseEpisode, val onAdd: (() -> Unit)? = null, val logChange: Boolean = true) : UpNextAction(onAdd)
+        data class PlayNext(val episode: BaseEpisode, val onAdd: (() -> Unit)? = null, val logChange: Boolean = true) : UpNextAction(onAdd)
         data class PlayLast(val episode: BaseEpisode, val onAdd: (() -> Unit)? = null) : UpNextAction(onAdd)
         data class ReplaceAll(val episodes: List<BaseEpisode>) : UpNextAction({})
         data class Rearrange(val episodes: List<BaseEpisode>, val onAdd: (() -> Unit)? = null) : UpNextAction(onAdd)
@@ -83,6 +79,10 @@ class UpNextQueueImpl @Inject constructor(
         data class RemoveAndShuffle(val episode: BaseEpisode, val onAdd: (() -> Unit)? = null) : UpNextAction(onAdd)
         data class Import(val episodes: List<BaseEpisode>, val onAdd: (() -> Unit)? = null) : UpNextAction(onAdd)
         object ClearAll : UpNextAction(null)
+
+        // PodHopper: the same database operation as ClearAll, but never recorded as an action.
+        // For local housekeeping that must not be mistaken for the user clearing their queue.
+        object ClearAllLocal : UpNextAction(null)
         object ClearAllIncludingChanges : UpNextAction(null)
         object ClearUpNext : UpNextAction(null)
     }
@@ -154,6 +154,7 @@ class UpNextQueueImpl @Inject constructor(
             is UpNextAction.ClearUpNext -> upNextDao.deleteAllNotCurrentBlocking()
 
             is UpNextAction.ClearAll -> upNextDao.deleteAllBlocking()
+            is UpNextAction.ClearAllLocal -> upNextDao.deleteAllBlocking()
 
             is UpNextAction.ClearAllIncludingChanges -> {
                 upNextDao.deleteAllBlocking()
@@ -161,24 +162,19 @@ class UpNextQueueImpl @Inject constructor(
             }
         }
 
-        // PodHopper: record the moment the queue changed, here at the single point every mutation
-        // passes through. The stamp is what stops a later pull from discarding an edit the backend
-        // has not seen yet, so it has to exist from the instant of the edit: recording it in the
-        // push instead left the ordinary case unprotected, because the push is debounced and never
-        // runs if the app is backgrounded first.
-        //
-        // Import is deliberately excluded. It is the remote apply, not a local edit, and stamping
-        // it would make this device claim to be ahead of the backend and start refusing the very
-        // queues it just accepted.
-        if (action !is UpNextAction.Import) {
-            podHopperUpNextSync.get().noteLocalChange()
-        }
-
-        // save changes to sync to the server
-        if (syncManager.isLoggedIn()) {
+        // PodHopper: the queue syncs as ACTIONS, not as a list. Each mutation here is recorded in
+        // the change log and later sent to the backend, which applies it to the one true queue and
+        // hands back the result. A device that did nothing has nothing to send, so it can never
+        // publish an empty queue over a real one; a device acting on a stale queue has its action
+        // applied on top of the current one rather than replacing it. Import is the remote apply
+        // and is intentionally absent from the list below.
+        if (podHopperUpNextSync.get().isSignedIn()) {
             when (action) {
-                is UpNextAction.PlayNow -> upNextChangeDao.savePlayNowBlocking(action.episode)
-                is UpNextAction.PlayNext -> upNextChangeDao.savePlayNextBlocking(action.episode)
+                // PodHopper: adopting an episode another device is playing (isUserInitiated = false)
+                // mirrors that device rather than deciding anything, so it is not recorded. Recorded,
+                // it could re-queue an episode the other device had just finished.
+                is UpNextAction.PlayNow -> if (action.logChange) upNextChangeDao.savePlayNowBlocking(action.episode)
+                is UpNextAction.PlayNext -> if (action.logChange) upNextChangeDao.savePlayNextBlocking(action.episode)
                 is UpNextAction.PlayLast -> upNextChangeDao.savePlayLastBlocking(action.episode)
                 is UpNextAction.ReplaceAll -> upNextChangeDao.saveReplace(action.episodes.map(BaseEpisode::uuid))
                 is UpNextAction.Remove -> upNextChangeDao.saveRemoveBlocking(action.episode)
@@ -217,9 +213,13 @@ class UpNextQueueImpl @Inject constructor(
             automaticUpNextSource?.let {
                 settings.lastAutoPlaySource.set(value = it, updateModifiedAt = true)
             }
-            saveChangesBlocking(UpNextAction.ClearAll)
+            // PodHopper: this clear is bookkeeping so the new episode replaces a lone current one
+            // cleanly. It is not the user clearing their queue and must not be sent as one: sent as
+            // an action it would wipe the account's queue on every play from a device whose local
+            // queue happened to be empty, which is exactly the state a car is in after sitting.
+            saveChangesBlocking(UpNextAction.ClearAllLocal)
         }
-        saveChangesBlocking(UpNextAction.PlayNow(episode, onAdd))
+        saveChangesBlocking(UpNextAction.PlayNow(episode, onAdd, logChange = isUserInitiated))
         downloadIfPossible(episode, isUserInitiated)
         if (episode.isFinished) {
             episodeManager.markAsNotPlayedBlocking(episode)
@@ -239,7 +239,10 @@ class UpNextQueueImpl @Inject constructor(
         isUserInitiated: Boolean,
         onAdd: (() -> Unit)?,
     ) = withContext(coroutineContext) {
-        saveChangesBlocking(UpNextAction.PlayNext(episode, onAdd))
+        // PodHopper: an automatic insertion (autoplay filling an empty queue) is not a decision
+        // the user made, so it is not recorded as one. It stays local; if the backend turns out to
+        // hold a real queue, that queue wins on the next sync.
+        saveChangesBlocking(UpNextAction.PlayNext(episode, onAdd, logChange = isUserInitiated))
         downloadIfPossible(episode, isUserInitiated)
         if (episode.isFinished) {
             episodeManager.markAsNotPlayedBlocking(episode)
@@ -410,8 +413,11 @@ class UpNextQueueImpl @Inject constructor(
                 val modifiedList = episodes.filterNot { it.uuid == playingEpisode.uuid }.toMutableList()
                 modifiedList.add(0, playingEpisode)
 
+                // PodHopper: keeping the playing episode at the head is a local artifact of not
+                // interrupting playback, not a decision the user made, so it is NOT recorded as an
+                // action. Recording it made two devices playing different episodes rewrite the
+                // queue past each other indefinitely.
                 saveChangesBlocking(UpNextAction.Import(modifiedList))
-                upNextChangeDao.savePlayNowBlocking(playingEpisode)
 
                 downloadIfPossible(modifiedList, isUserInitiated = false)
             }
@@ -482,11 +488,5 @@ class UpNextQueueImpl @Inject constructor(
         // also makes this safe to call on every emission, including the one caused by applying a
         // remote queue, which by definition already matches its own signature.
         podHopperUpNextSync.get().pushIfChanged()
-
-        val changes: List<UpNextChange> = upNextChangeDao.findAllBlocking()
-        if (changes.isEmpty()) {
-            return
-        }
-        UpNextSyncWorker.enqueue(syncManager, application)
     }
 }

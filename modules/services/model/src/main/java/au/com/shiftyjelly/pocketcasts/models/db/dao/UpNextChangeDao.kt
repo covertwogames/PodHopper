@@ -17,6 +17,11 @@ abstract class UpNextChangeDao {
     @Query("DELETE FROM up_next_changes WHERE modified <= :modified")
     abstract suspend fun deleteChangesOlderOrEqualTo(modified: Long)
 
+    // PodHopper: clear exactly the changes that were sent, by row id. Deleting by timestamp could
+    // discard a change logged in the same millisecond as the last one sent.
+    @Query("DELETE FROM up_next_changes WHERE _id <= :maxId")
+    abstract fun deleteUpToIdBlocking(maxId: Long)
+
     @Query("DELETE FROM up_next_changes WHERE uuid = :uuid")
     abstract fun deleteByUuidBlocking(uuid: String)
 

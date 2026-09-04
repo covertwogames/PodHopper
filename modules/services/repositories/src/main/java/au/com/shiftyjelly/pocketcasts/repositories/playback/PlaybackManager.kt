@@ -371,7 +371,7 @@ open class PlaybackManager @Inject constructor(
         val autoPlayEpisode = autoSelectNextEpisode() ?: return null
 
         withContext(Dispatchers.Default) {
-            upNextQueue.playNextBlocking(autoPlayEpisode) {
+            upNextQueue.playNextBlocking(autoPlayEpisode, isUserInitiated = false) {
                 launch {
                     loadCurrentEpisode(play = autoPlay, sourceView = SourceView.AUTO_PLAY)
                 }

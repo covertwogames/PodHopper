@@ -1,5 +1,7 @@
 package au.com.shiftyjelly.pocketcasts.models.db
 
+import dagger.Lazy
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperUpNextSync
 import android.content.Context
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -22,7 +24,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
-import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import com.automattic.eventhorizon.EventHorizon
 import com.squareup.moshi.Moshi
@@ -104,8 +105,9 @@ class AutoArchiveTest {
             on { autoDownloadUpNext } doReturn UserSetting.Mock(false, mock())
         }
         val context = mock<Context>()
-        val syncManager = mock<SyncManager>()
-        return UpNextQueueImpl(db, settings, episodeManager, syncManager, mock(), context)
+        val upNextSync = mock<PodHopperUpNextSync>()
+        val lazySync = mock<Lazy<PodHopperUpNextSync>> { on { get() } doReturn upNextSync }
+        return UpNextQueueImpl(db, settings, episodeManager, mock(), lazySync, context)
     }
 
     @Test
