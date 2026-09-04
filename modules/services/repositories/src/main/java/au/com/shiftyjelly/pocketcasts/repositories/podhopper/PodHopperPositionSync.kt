@@ -248,12 +248,36 @@ class PodHopperPositionSync @Inject constructor(
      * apply them locally. Drains every page so one open fully catches up. Safe to call from any
      * thread; the work runs on the IO dispatcher.
      */
+    /**
+     * PodHopper: brings this device's playback state up to date, on every moment it wakes up: the
+     * playback service starting, the car app starting, and the engagement trigger that fires on
+     * phone foreground and car session connect.
+     *
+     * Position and queue are pulled together deliberately. They are not two features: the first
+     * entry of the Up Next queue IS the episode being played, and everything after it is what
+     * plays next. Refreshing one without the other leaves the device in a state that does not
+     * correspond to anything real, which is exactly what happened when the queue rode only the
+     * throttled background cycle: getting into the car restored the right position in an episode
+     * while the queue behind it stayed as it was a quarter of an hour earlier.
+     *
+     * Doing both here also means a future change to one cannot silently leave the other behind.
+     */
     fun pullLatestPositions(adoptCurrentEpisode: Boolean = false) {
         if (!supabaseClient.isLoggedIn()) {
             return
         }
         applicationScope.launch(Dispatchers.IO) {
             pullLatestPositionsBlocking(adoptCurrentEpisode)
+
+            // After the positions, matching the order the background cycle uses, and isolated: the
+            // queue is an addition to this device's state and a failure in it must never affect the
+            // position sync, which is the part playback depends on. Cheap when nothing has changed,
+            // because the backend answers with the version this device has already applied.
+            try {
+                upNextSync.get().syncBlocking()
+            } catch (e: Exception) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next sync failed on wake, the next one retries: ${e.message}")
+            }
         }
     }
 
