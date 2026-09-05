@@ -10,6 +10,7 @@ import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UpNextChange
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
+import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -60,6 +61,7 @@ import org.json.JSONObject
 class PodHopperUpNextSync @Inject constructor(
     private val supabaseClient: SupabaseClient,
     private val episodeManager: EpisodeManager,
+    private val podcastManager: PodcastManager,
     private val playbackManager: Lazy<PlaybackManager>,
     private val appDatabase: AppDatabase,
     @ApplicationContext private val context: Context,
@@ -74,13 +76,23 @@ class PodHopperUpNextSync @Inject constructor(
     fun isSignedIn(): Boolean = supabaseClient.isLoggedIn()
 
     /** Wire form of one queue entry, carrying enough for a device that has not seen the episode. */
+    /**
+     * The podcast's feed url, which is what lets a device that has never seen this podcast fetch it
+     * and resolve the episode. Position sync has carried this from the start; the queue did not,
+     * so a queued episode from an unsubscribed podcast could never appear on another device.
+     */
+    private fun feedUrlFor(episode: BaseEpisode): String? {
+        val podcastEpisode = episode as? PodcastEpisode ?: return null
+        return podcastManager.findPodcastByUuidBlocking(podcastEpisode.podcastUuid)?.podcastUrl
+    }
+
     private fun BaseEpisode.toEntryJson(): JSONObject {
         val podcastUuid = (this as? PodcastEpisode)?.podcastUuid
         return JSONObject().apply {
             put("u", uuid)
             put("t", title.ifEmpty { JSONObject.NULL })
             put("p", podcastUuid ?: JSONObject.NULL)
-            put("f", JSONObject.NULL)
+            put("f", feedUrlFor(this@toEntryJson) ?: JSONObject.NULL)
             put("m", downloadUrl ?: JSONObject.NULL)
             put("d", publishedDate.time)
         }
@@ -185,12 +197,33 @@ class PodHopperUpNextSync @Inject constructor(
         // that would have changed it. Applying again would only rewrite the database and re-emit
         // a queue change for no reason.
         if (actions.length() == 0 && version >= 0L && version == prefs().getLong(PREF_APPLIED_VERSION, -1L)) {
-            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pull: already at version $version")
-            return
+            // The backend has not moved. Re-apply only if an entry this device could not build
+            // before has since arrived locally, which is what makes a device recover once a feed
+            // refresh brings the podcast in. The check is local lookups only: no network, and no
+            // database write when nothing has changed, so this cannot feed itself.
+            val previouslyUnresolved = prefs().getString(PREF_UNRESOLVED, null)
+                ?.split(",")
+                ?.filter { it.isNotEmpty() }
+                .orEmpty()
+            val recovered = previouslyUnresolved.any { episodeManager.findEpisodeByUuid(it) != null }
+            if (!recovered) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next pull: already at version $version" + if (previouslyUnresolved.isEmpty()) "" else ", ${previouslyUnresolved.size} entry(s) still missing locally")
+                return
+            }
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next: a previously missing episode has arrived, re-applying version $version")
         }
 
-        applyCanonical(episodesJson)
-        prefs().edit().putLong(PREF_APPLIED_VERSION, version).apply()
+        // The version records what the backend was; the unresolved list records what this device
+        // could not build from it. Keeping them separate is what lets a device retry the missing
+        // entries without re-applying a queue that has not changed. Simply not banking the version
+        // would loop: applying emits a queue change, which triggers a push, which syncs, which
+        // applies again, every five seconds forever on a device holding an entry that can never
+        // resolve.
+        val stillUnresolved = applyCanonical(episodesJson)
+        prefs().edit()
+            .putLong(PREF_APPLIED_VERSION, version)
+            .putString(PREF_UNRESOLVED, stillUnresolved.joinToString(",").takeIf { it.isNotEmpty() })
+            .apply()
     }
 
     /** Turns the change log into the backend's action format, resolving episodes for adds. */
@@ -234,21 +267,38 @@ class PodHopperUpNextSync @Inject constructor(
      * rest behind it. Entries this device cannot resolve are skipped here and kept by the backend;
      * they appear once a feed refresh brings the episode in.
      */
-    private suspend fun applyCanonical(episodesJson: JSONArray) {
+    /** Applies the backend's queue and returns the uuids this device could not build. */
+    private suspend fun applyCanonical(episodesJson: JSONArray): List<String> {
         val resolved = mutableListOf<BaseEpisode>()
-        var unresolved = 0
+        val unresolved = mutableListOf<String>()
         for (i in 0 until episodesJson.length()) {
-            val uuid = episodesJson.optJSONObject(i)?.optString("u").orEmpty()
+            val entry = episodesJson.optJSONObject(i) ?: continue
+            val uuid = entry.optString("u").orEmpty()
             if (uuid.isEmpty()) continue
-            val episode = episodeManager.findEpisodeByUuid(uuid)
-            if (episode != null) resolved.add(episode) else unresolved++
+            var episode = episodeManager.findEpisodeByUuid(uuid)
+            if (episode == null) {
+                // Not known here, so fetch the podcast it belongs to and look again. Without this a
+                // queued episode from a podcast this device has never seen could never be shown,
+                // however many times it synced. Position sync has always done exactly this.
+                val feedUrl = entry.optString("f").takeIf { it.isNotEmpty() }
+                if (feedUrl != null) {
+                    try {
+                        podcastManager.addFeedUrlAsUnsubscribed(feedUrl)
+                        episode = episodeManager.findEpisodeByUuid(uuid)
+                    } catch (e: Exception) {
+                        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next could not fetch $feedUrl to resolve $uuid: ${e.message}")
+                    }
+                }
+            }
+            if (episode != null) resolved.add(episode) else unresolved.add(uuid)
         }
         val manager = playbackManager.get()
         withContext(Dispatchers.IO) {
             manager.upNextQueue.importServerChangesBlocking(resolved, manager)
         }
-        val note = if (unresolved > 0) ", $unresolved not yet known on this device" else ""
+        val note = if (unresolved.isNotEmpty()) ", ${unresolved.size} could not be built and will be retried when their podcasts arrive" else ""
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next applied ${resolved.size} episode(s)$note")
+        return unresolved
     }
 
     private fun getOrCreateInstallId(): String {
@@ -266,7 +316,7 @@ class PodHopperUpNextSync @Inject constructor(
      * has already applied a queue it has never seen.
      */
     fun clearLocalState() {
-        prefs().edit().remove(PREF_APPLIED_VERSION).apply()
+        prefs().edit().remove(PREF_APPLIED_VERSION).remove(PREF_UNRESOLVED).apply()
         applicationScope.launch(Dispatchers.IO) {
             try {
                 upNextChangeDao.deleteAllBlocking()
@@ -279,6 +329,7 @@ class PodHopperUpNextSync @Inject constructor(
     companion object {
         private const val PREFS_NAME = "podhopper_upnext_sync"
         private const val PREF_APPLIED_VERSION = "applied_version"
+        private const val PREF_UNRESOLVED = "unresolved_entries"
         private const val PREF_INSTALL_ID = "install_id"
         private const val RPC_APPLY_ACTIONS = "apply_up_next_actions"
     }
