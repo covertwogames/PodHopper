@@ -7,6 +7,10 @@
     <string name="podhopper_car_signin_button">Sign In</string>
     <string name="podhopper_car_signin_message">Sign in to see your podcasts here. While parked, tap Sign In to connect this car to PodHopper on your phone.</string>
 
+    <!-- Playback: offered as a button when another device is further ahead in this episode. Kept
+         to a couple of words because it renders as a transport button in the car, not a sentence. -->
+    <string name="podhopper_jump_to_synced">Catch up</string>
+
     <!-- Pairing screen -->
     <string name="podhopper_car_pairing_title">Sign in to PodHopper</string>
     <string name="podhopper_car_pairing_instructions">On your phone:\n\n1. Open PodHopper\n2. Go to Settings, then Sync Account to Car App\n3. Enter the code below</string>

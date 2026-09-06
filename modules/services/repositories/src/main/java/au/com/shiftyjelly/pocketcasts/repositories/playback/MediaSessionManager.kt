@@ -828,12 +828,23 @@ class MediaSessionManager(
             val allButtons = layout.primaryButtons + layout.overflowButtons
             if (allButtons != lastCustomLayout) {
                 lastCustomLayout = allButtons
+                // PodHopper: the car's answer was being discarded, so a layout it refused looked
+                // exactly like one it accepted. Log what went out and what each connected
+                // controller made of it, because a button that never appears is otherwise
+                // indistinguishable from one that was never sent.
+                LogBuffer.i(
+                    LogBuffer.TAG_PLAYBACK,
+                    "Sending ${allButtons.size} button(s) to the car: " + allButtons.joinToString { it.displayName.toString() },
+                )
                 session.setCustomLayout(allButtons)
                 // PodHopper: setMediaButtonPreferences is the API that fills the car's transport
                 // slots (central, forward, backward). setCustomLayout alone only populates the
                 // custom/overflow area, so the seek buttons must also go through here to land in the
                 // forward and backward slots and pick up the hardware/steering-wheel keys.
                 session.setMediaButtonPreferences(allButtons)
+                session.connectedControllers.forEach { controller ->
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car controller connected for layout: ${controller.packageName}")
+                }
             }
             return
         } else {

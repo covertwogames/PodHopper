@@ -8,7 +8,9 @@ import androidx.media3.session.SessionCommand
 import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.MediaNotificationControls
+import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.images.R as IR
+import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 @UnstableApi
 internal class Media3AutomotiveStrategy : AutomotiveSessionStrategy {
@@ -27,13 +29,18 @@ internal class Media3AutomotiveStrategy : AutomotiveSessionStrategy {
         // design: playback is already running, this is an offer, and it clears itself when
         // ignored, tapped, or the episode changes.
         if (playbackManager.pendingSyncedPositionMs() != null) {
+            // PodHopper: a real standard icon rather than ICON_UNDEFINED. The custom icon is only
+            // used by controllers that support one; a controller that does not falls back to the
+            // standard icon, and ICON_UNDEFINED leaves it with nothing to draw. The label is short
+            // because this renders as a button in a car, not a sentence.
             buttons.add(
-                CommandButton.Builder(CommandButton.ICON_UNDEFINED)
+                CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD)
                     .setSessionCommand(SessionCommand(APP_ACTION_JUMP_TO_SYNCED, Bundle.EMPTY))
-                    .setDisplayName("Newer playback position found. Jump to synced position?")
+                    .setDisplayName(context.getString(LR.string.podhopper_jump_to_synced))
                     .setCustomIconResId(IR.drawable.ic_skip_forward)
                     .build(),
             )
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Jump-to-synced button added to the car layout")
         }
 
         // PodHopper: leave the backward and forward transport slots empty here. Media3 fills them
