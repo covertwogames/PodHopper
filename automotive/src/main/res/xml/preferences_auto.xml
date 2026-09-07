@@ -20,6 +20,11 @@
             android:key="autoSwitchPlayerToCurrentPodcast"
             android:title="@string/podhopper_auto_switch_player"
             android:summary="@string/podhopper_auto_switch_player_summary" />
+        <SwitchPreference
+            android:key="podhopperCarAutoSwitchAfterResume"
+            android:persistent="false"
+            android:title="@string/podhopper_car_auto_switch_after_resume"
+            android:summary="@string/podhopper_car_auto_switch_after_resume_summary" />
     </PreferenceCategory>
     <EditTextPreference
         android:id="@+id/edit_text_skip_forward"

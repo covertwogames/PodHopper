@@ -47,6 +47,7 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat() {
     private lateinit var preferenceAutoSubscribeToPlayed: SwitchPreference
     private lateinit var preferenceAutoShowPlayed: SwitchPreference
     private lateinit var preferenceAutoSwitchPlayer: SwitchPreference
+    private lateinit var preferenceAutoSwitchAfterResume: SwitchPreference
     private lateinit var preferenceSkipForward: EditTextPreference
     private lateinit var preferenceSkipBackward: EditTextPreference
     private lateinit var preferenceRefreshNow: Preference
@@ -60,6 +61,7 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat() {
         preferenceAutoSubscribeToPlayed = findPreference("autoSubscribeToPlayed")!!
         preferenceAutoShowPlayed = findPreference("autoShowPlayed")!!
         preferenceAutoSwitchPlayer = findPreference("autoSwitchPlayerToCurrentPodcast")!!
+        preferenceAutoSwitchAfterResume = findPreference("podhopperCarAutoSwitchAfterResume")!!
         preferenceRefreshNow = findPreference("refresh_now")!!
         preferenceSkipForward = findPreference(Settings.PREFERENCE_SKIP_FORWARD)!!
         preferenceSkipBackward = findPreference(Settings.PREFERENCE_SKIP_BACKWARD)!!
@@ -70,6 +72,7 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat() {
         setupAutoSubscribeToPlayed()
         setupAutoShowPlayed()
         setupAutoSwitchPlayer()
+        setupAutoSwitchAfterResume()
         setupSkipForward()
         setupSkipBackward()
         setupRefreshNow()
@@ -114,6 +117,16 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat() {
         }
         settings.autoSwitchPlayerToCurrentPodcast.flow
             .onEach { preferenceAutoSwitchPlayer.isChecked = it }
+            .launchIn(lifecycleScope)
+    }
+
+    private fun setupAutoSwitchAfterResume() {
+        preferenceAutoSwitchAfterResume.setOnPreferenceChangeListener { _, newValue ->
+            settings.podhopperCarAutoSwitchAfterResume.set(newValue as Boolean, updateModifiedAt = true)
+            true
+        }
+        settings.podhopperCarAutoSwitchAfterResume.flow
+            .onEach { preferenceAutoSwitchAfterResume.isChecked = it }
             .launchIn(lifecycleScope)
     }
 

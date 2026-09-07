@@ -7,9 +7,15 @@
     <string name="podhopper_car_signin_button">Sign In</string>
     <string name="podhopper_car_signin_message">Sign in to see your podcasts here. While parked, tap Sign In to connect this car to PodHopper on your phone.</string>
 
-    <!-- Playback: offered as a button when another device is further ahead in this episode. Kept
-         to a couple of words because it renders as a transport button in the car, not a sentence. -->
-    <string name="podhopper_jump_to_synced">Catch up</string>
+    <!-- Car settings: automatic switch after auto-resume -->
+    <string name="podhopper_car_auto_switch_after_resume">Automatically change playback when a newer sync point is found after auto-resume</string>
+    <string name="podhopper_car_auto_switch_after_resume_summary">When the car resumes an episode and then finds another device is further ahead or has moved to a new episode, switch to it and show a brief message. Off: never interrupt what the car resumed.</string>
+
+    <!-- Playback screen messages shown briefly in place of the episode name when the car switches -->
+    <string name="podhopper_car_sync_newer_position_title">Newer position found on another device</string>
+    <string name="podhopper_car_sync_newer_position_subtitle">Resuming from there…</string>
+    <string name="podhopper_car_sync_new_episode_title">Picking up where your phone left off</string>
+    <string name="podhopper_car_sync_new_episode_subtitle">Switching to: %1$s</string>
 
     <!-- Pairing screen -->
     <string name="podhopper_car_pairing_title">Sign in to PodHopper</string>

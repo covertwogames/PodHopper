@@ -322,6 +322,12 @@ interface Settings {
      * most recently played on another device, loaded paused at the synced position.
      */
     val autoSwitchPlayerToCurrentPodcast: UserSetting<Boolean>
+
+    // PodHopper, car only. After the car auto-resumes an episode, sync may then find that another
+    // device is further ahead in it or has moved on to a different episode entirely. On: the car
+    // switches automatically and shows a short message on the playback screen. Off: the car never
+    // interrupts what it resumed; the driver corrects it by hand.
+    val podhopperCarAutoSwitchAfterResume: UserSetting<Boolean>
     val podcastRefreshFrequency: UserSetting<PodcastRefreshFrequency>
     val podcastsSortType: UserSetting<PodcastsSortType>
     val prioritizeSeekAccuracy: UserSetting<Boolean>

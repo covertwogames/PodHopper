@@ -238,6 +238,18 @@ class PodHopperPositionSync @Inject constructor(
      * push so another device can fetch and add the podcast (as not subscribed) on demand when it
      * adopts an episode it does not have locally yet. Blocking; call off the main thread.
      */
+    /**
+     * True when this device changed the episode's position after the remote row was written, so the
+     * row is stale regardless of which device wrote it. Uses played_up_to_modified, which is stamped
+     * only by real position changes; the played-status timestamp is refreshed by pressing play and is
+     * the wrong field for this, which is why the earlier guard misbehaved. Compares this device's clock
+     * to the server's, the same assumption the rest of the sync makes.
+     */
+    private fun localPositionIsNewer(episode: BaseEpisode, remoteTs: Long): Boolean {
+        val localTs = episode.playedUpToModified ?: return false
+        return remoteTs > 0L && localTs > remoteTs
+    }
+
     private fun feedUrlForEpisode(episode: BaseEpisode): String? {
         val podcastEpisode = episode as? PodcastEpisode ?: return null
         return podcastManager.findPodcastByUuidBlocking(podcastEpisode.podcastUuid)?.podcastUrl
@@ -668,17 +680,24 @@ class PodHopperPositionSync @Inject constructor(
                         val remoteTs = row.optLong("updated_at_ms", 0L)
                         if (positionSec < 0) {
                             PlayPullResult.NONE
+                        } else if (localPositionIsNewer(episode, remoteTs)) {
+                            // This device moved the position more recently than the row was written, and
+                            // has not pushed yet (pushes run on a cycle; a pause pushes at once but can
+                            // still be overwritten by a stale push from elsewhere in the meantime). The
+                            // row is therefore older than what this device already knows, however fresh
+                            // it looks by device id. Applying it is exactly the backward jump seen on pause
+                            // then play: seek, pause, press play, land a few seconds (or minutes) back.
+                            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper play-pull: keeping local position, it changed after the remote row was written")
+                            PlayPullResult.NONE
                         } else {
-                            // Freshest writer wins. There is one playback_state row per episode,
-                            // overwritten by whoever played it last, and its updated_at_ms is stamped by
-                            // the database, not by any device's clock. A row that belongs to another
-                            // device is therefore the freshest write for this episode, so adopt it, even
-                            // if it moves the position backward (a deliberate rewind on another device
-                            // should follow you here). When the latest write is ours, the device_id filter
-                            // returns no row and we keep our own local position. No clock comparison: the
-                            // old localModified vs remoteTs guard compared a local time that merely pressing
-                            // play refreshed against another device's time, so it wrongly kept local almost
-                            // every time.
+                            // Freshest writer wins, judged by WHEN each side last changed the position
+                            // rather than by which device wrote the server row last. A deliberate rewind on
+                            // another device still follows you here, because it is genuinely newer than
+                            // this device's last change. The guard removed in June compared against the
+                            // played-status timestamp, which merely pressing play refreshes, so it kept
+                            // local almost every time; the position timestamp is stamped only by real
+                            // position changes (playback, seeks, mark played, mark unplayed), so it does not
+                            // have that flaw.
                             Log.i(LOG_TAG, "play-pull ${episode.uuid}: applying freshest remote pos=${positionSec}s remoteTs=$remoteTs")
                             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
                             PlayPullResult.APPLIED
@@ -901,6 +920,13 @@ class PodHopperPositionSync @Inject constructor(
                 episodeManager.updatePlayingStatusBlocking(episode, EpisodePlayingStatus.IN_PROGRESS)
             }
         } else if (positionSec >= 0) {
+            if (localPositionIsNewer(episode, remoteTs)) {
+                // Same rule as the pre-play pull: a position row older than this device's own last
+                // change is stale, whoever wrote it. The circuit breaker was masking this path at six
+                // applies an hour; the guard removes the cause rather than bounding the symptom.
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper sync: keeping local position for ${episode.uuid}, it changed after the remote row was written")
+                return
+            }
             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
             if (positionSec > 0 && episode.playingStatus == EpisodePlayingStatus.NOT_PLAYED) {
                 // Keep status and position consistent: a synced mid-episode position is in progress,

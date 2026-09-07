@@ -187,6 +187,9 @@ open class PlaybackManager @Inject constructor(
         // offered. Covers the car booting offline and resuming from its own stale position, without
         // ever moving the scrubber under someone who has settled into listening.
         private const val AUTO_JUMP_WINDOW_MS = 90_000L
+
+        // PodHopper, car: how long the sync message replaces the episode name on the playback screen.
+        private const val CAR_SYNC_MESSAGE_MS = 5_000L
         private const val PENDING_SYNC_OFFER_WINDOW_MS = 60_000L
     }
 
@@ -556,6 +559,7 @@ open class PlaybackManager @Inject constructor(
         showedStreamWarning: Boolean = false,
         sourceView: SourceView = SourceView.UNKNOWN,
     ) {
+        lastPlayWasAutoResume = false
         launch {
             playNowSuspend(
                 episode = episode,
@@ -643,11 +647,23 @@ open class PlaybackManager @Inject constructor(
      * device, or if it is already the current episode, so it never interrupts active listening.
      */
     suspend fun adoptCurrentEpisodeFromSync(episode: BaseEpisode, loadIntoPlayer: Boolean = true) {
-        if (isPlaying()) {
-            return
-        }
         if (upNextQueue.isCurrentEpisode(episode)) {
             return
+        }
+        // PodHopper, car: an episode that another device moved on to may replace one the car
+        // auto-resumed, but never one the driver chose. Off-car, or with the setting off, playing
+        // is still a hard stop, as before.
+        val switchWhilePlaying = isPlaying() && carAutoSwitchAllowed(getCurrentEpisode()?.uuid)
+        if (isPlaying() && !switchWhilePlaying) {
+            return
+        }
+        if (switchWhilePlaying) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car auto-switch: another device moved on to ${episode.uuid}, switching after auto-resume")
+            mediaSessionManager.showTransientMessage(
+                application.getString(LR.string.podhopper_car_sync_new_episode_title),
+                application.getString(LR.string.podhopper_car_sync_new_episode_subtitle, episode.title),
+                CAR_SYNC_MESSAGE_MS,
+            )
         }
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Adopting synced episode into player: ${episode.uuid} ${episode.title}")
         withContext(Dispatchers.IO) {
@@ -662,7 +678,9 @@ open class PlaybackManager @Inject constructor(
             onAdd = if (loadIntoPlayer) {
                 {
                     launch {
-                        loadCurrentEpisode(play = false)
+                        // If we displaced something that was playing, keep playing; the driver was
+                        // listening and the point of the switch is to continue, not to stop.
+                        loadCurrentEpisode(play = switchWhilePlaying)
                     }
                 }
             } else {
@@ -2381,7 +2399,31 @@ open class PlaybackManager @Inject constructor(
      * work, its bound, and the offline fallback all live in PodHopperPositionSync.
      */
     suspend fun adoptLatestSyncedEpisodeBeforeResume(): BaseEpisode? {
+        // PodHopper: whatever plays next was chosen by the car resuming, not by the driver. That is
+        // the one case where a later sync result is allowed to move playback: the driver did not
+        // pick this, so correcting it is what they want. Cleared the moment the driver acts.
+        lastPlayWasAutoResume = true
         return podHopperPositionSync.adoptLatestForResume()
+    }
+
+    /**
+     * PodHopper, car only. True from the car's auto-resume until the driver plays or seeks, or until
+     * a sync correction has been applied on the strength of it. See [carAutoSwitchAllowed].
+     */
+    @Volatile private var lastPlayWasAutoResume = false
+
+    /**
+     * Whether a sync result that arrived after playback started may move playback: only on the car,
+     * only when the setting is on, only when this playback came from auto-resume, and only while the
+     * driver has not touched the position. Consumes the flag so it applies once per resume.
+     */
+    private fun carAutoSwitchAllowed(currentUuid: String?): Boolean {
+        if (!Util.isAutomotive(application)) return false
+        if (!settings.podhopperCarAutoSwitchAfterResume.value) return false
+        if (!lastPlayWasAutoResume) return false
+        if (currentUuid != null && userSeekedEpisodeUuid == currentUuid) return false
+        lastPlayWasAutoResume = false
+        return true
     }
 
     /**
@@ -2472,18 +2514,32 @@ open class PlaybackManager @Inject constructor(
                 // Not meaningfully ahead of where the listener already is; nothing worth doing.
                 return@launch
             }
+            if (Util.isAutomotive(application)) {
+                // PodHopper, car: no button, no offer. Either the car is allowed to correct an
+                // auto-resumed position, in which case it jumps and says so on the playback screen
+                // for a few seconds, or it leaves the driver alone. The earlier "offer" button was
+                // never rendered usefully by the car UI and has been removed.
+                if (carAutoSwitchAllowed(episode.uuid)) {
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car auto-switch: jumping to synced position %.3f (local %.3f) after auto-resume", remotePositionMs / 1000f, localMs / 1000f)
+                    mediaSessionManager.showTransientMessage(
+                        application.getString(LR.string.podhopper_car_sync_newer_position_title),
+                        application.getString(LR.string.podhopper_car_sync_newer_position_subtitle),
+                        CAR_SYNC_MESSAGE_MS,
+                    )
+                    seekToTimeMsSuspend(remotePositionMs.toInt())
+                } else {
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Newer synced position %.3f (local %.3f) not applied: setting off, driver chose this, or already corrected", remotePositionMs / 1000f, localMs / 1000f)
+                }
+                return@launch
+            }
+            // Phone and watch: unchanged. Jump only in the first moments of a session the listener
+            // has not seeked in; otherwise leave the scrubber alone.
             val startedAt = playbackStartedAtMs.takeIf { playbackStartedEpisodeUuid == episode.uuid }
             val withinAutoJumpWindow = startedAt != null && System.currentTimeMillis() - startedAt <= AUTO_JUMP_WINDOW_MS
             val listenerHasSeeked = userSeekedEpisodeUuid == episode.uuid
             if (withinAutoJumpWindow && !listenerHasSeeked) {
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Jumping to synced position %.3f (local %.3f), playback had just started", remotePositionMs / 1000f, localMs / 1000f)
-                clearPendingSyncedPosition()
                 seekToTimeMsSuspend(remotePositionMs.toInt())
-            } else {
-                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Offering synced position %.3f (local %.3f) from the background sync", remotePositionMs / 1000f, localMs / 1000f)
-                pendingSyncedPositionMs = remotePositionMs
-                pendingSyncedEpisodeUuid = episode.uuid
-                mediaSessionManager.refreshCustomLayout()
             }
         }
     }

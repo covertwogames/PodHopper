@@ -508,6 +508,27 @@ class MediaSessionManager(
      * state event while [forwardingPlayer] was still null.
      */
     @OptIn(UnstableApi::class)
+    /**
+     * PodHopper, car only: shows [title] and [subtitle] in place of the episode name and podcast
+     * name on the playback screen for [durationMs], then restores the real metadata. Used when the
+     * car has auto-resumed and sync then moved playback somewhere else, so the driver sees why the
+     * audio changed. A newer message replaces an older one and restarts the timer.
+     */
+    fun showTransientMessage(title: String, subtitle: String, durationMs: Long) {
+        val player = forwardingPlayer ?: return
+        if (!Util.isAutomotive(context)) return
+        transientMessageJob?.cancel()
+        player.transientMessage = title to subtitle
+        replayMetadataToPlayer(player)
+        transientMessageJob = scope.launch {
+            delay(durationMs)
+            player.transientMessage = null
+            replayMetadataToPlayer(player)
+        }
+    }
+
+    private var transientMessageJob: Job? = null
+
     private fun replayMetadataToPlayer(player: PocketCastsForwardingPlayer) {
         scope.launch(Dispatchers.IO) {
             try {

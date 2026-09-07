@@ -11,4 +11,11 @@
     <string name="podhopper_logout_confirm_yes">Yes</string>
     <string name="podhopper_logout_confirm_no">No</string>
 
+
+    <!-- PodHopper: About > Share logs with developers (phone). Uploads the playback log the same
+         way the car's settings do, so a phone can be diagnosed without a cable. -->
+    <string name="podhopper_share_logs_title">Share logs with developers</string>
+    <string name="podhopper_share_logs_uploading">Sharing logs…</string>
+    <string name="podhopper_share_logs_done">Logs shared. Thank you!</string>
+    <string name="podhopper_share_logs_failed">Could not share logs. Check sign-in and connection.</string>
 </resources>

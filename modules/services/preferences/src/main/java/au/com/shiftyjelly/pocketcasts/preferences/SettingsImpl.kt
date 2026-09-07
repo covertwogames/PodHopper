@@ -236,6 +236,12 @@ class SettingsImpl @Inject constructor(
         sharedPrefs = sharedPreferences,
     )
 
+    override val podhopperCarAutoSwitchAfterResume = UserSetting.BoolPref(
+        sharedPrefKey = "podhopperCarAutoSwitchAfterResume",
+        defaultValue = true,
+        sharedPrefs = sharedPreferences,
+    )
+
     override val podcastRefreshFrequency = UserSetting.PrefFromInt(
         sharedPrefKey = "podcastRefreshFrequencyIndex",
         defaultValue = PodcastRefreshFrequency.default,

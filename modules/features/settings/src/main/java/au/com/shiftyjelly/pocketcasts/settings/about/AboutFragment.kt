@@ -16,6 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDiagnostics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -52,6 +59,12 @@ class AboutFragment : BaseFragment() {
 
     @Inject lateinit var settings: Settings
 
+    // PodHopper: the car's one-tap diagnostics upload, wired into the phone's About screen so a
+    // phone log can be captured the same way. The phone previously had no way to get its log out
+    // at all: upstream's Logs screen only opened from the Pocket Casts support page, which the
+    // de-branding removed.
+    @Inject lateinit var podHopperCarDiagnostics: PodHopperCarDiagnostics
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,6 +74,7 @@ class AboutFragment : BaseFragment() {
 
         AppThemeWithBackground(theme.activeTheme) {
             AboutPage(
+                onShareLogs = { podHopperCarDiagnostics.uploadNow(reason = "manual") },
                 bottomInset = bottomInset.value.pxToDp(LocalContext.current).dp,
                 onBackPress = { closeFragment() },
                 openFragment = { fragment ->
@@ -77,6 +91,7 @@ class AboutFragment : BaseFragment() {
 
 @Composable
 private fun AboutPage(
+    onShareLogs: suspend () -> Boolean,
     bottomInset: Dp,
     onBackPress: () -> Unit,
     openFragment: (Fragment) -> Unit,
@@ -155,6 +170,22 @@ private fun AboutPage(
                     onClick = { openFragment(LicensesFragment()) },
                 )
             }
+            item {
+                val scope = rememberCoroutineScope()
+                var status by remember { mutableStateOf<Int?>(null) }
+                RowTextButton(
+                    text = stringResource(status ?: LR.string.podhopper_share_logs_title),
+                    onClick = {
+                        if (status != LR.string.podhopper_share_logs_uploading) {
+                            status = LR.string.podhopper_share_logs_uploading
+                            scope.launch {
+                                val ok = onShareLogs()
+                                status = if (ok) LR.string.podhopper_share_logs_done else LR.string.podhopper_share_logs_failed
+                            }
+                        }
+                    },
+                )
+            }
         }
     }
 }
@@ -182,6 +213,7 @@ private fun openUrl(url: String, context: Context) {
 @Composable
 private fun AboutPagePreview() {
     AboutPage(
+        onShareLogs = { true },
         bottomInset = 0.dp,
         onBackPress = {},
         openFragment = {},

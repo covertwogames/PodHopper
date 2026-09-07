@@ -76,6 +76,14 @@ class PocketCastsForwardingPlayer(
     }
 
     /**
+     * PodHopper: when set, replaces the episode title and podcast name on the playback screen with a
+     * short message. Nothing else changes: the media id is still the episode, so the now-playing
+     * marker in the queue, voice queries and the queue itself are unaffected. Cleared by the session
+     * manager after a few seconds, which then replays the real metadata.
+     */
+    var transientMessage: Pair<String, String>? = null
+
+    /**
      * Updates the metadata exposed via [getCurrentMediaItem]. Call this when the
      * current episode changes or when metadata is refreshed (e.g., artwork loaded).
      *
@@ -96,10 +104,11 @@ class PocketCastsForwardingPlayer(
     ) {
         checkMainThread()
         val podcastTitle = episode.displaySubtitle(podcast)
+        val message = transientMessage
 
         val metadataBuilder = MediaMetadata.Builder()
-            .setTitle(episode.title)
-            .setArtist(podcastTitle)
+            .setTitle(message?.first ?: episode.title)
+            .setArtist(message?.second ?: podcastTitle)
             .setAlbumTitle(podcast?.author?.takeIf { it.isNotEmpty() })
             .setGenre("Podcast")
             .setArtworkUri(artworkUri)
