@@ -529,6 +529,27 @@ class MediaSessionManager(
 
     private var transientMessageJob: Job? = null
 
+    /**
+     * PodHopper diagnostic: tells the car to reload a browse node, and records it. A reload of the
+     * ROOT node makes the car media app rebuild its whole view of the app, which is the current
+     * suspect for the app dropping back to the car's home screen while audio keeps playing. The
+     * log carries the node and how many controllers were notified, because this car connects
+     * around ten at once across three GM packages.
+     */
+    private fun notifyBrowseChanged(reason: String, vararg nodes: String) {
+        val session = media3Session ?: return
+        val controllers = session.connectedControllers
+        LogBuffer.i(
+            LogBuffer.TAG_PLAYBACK,
+            "Browse invalidate [$reason]: ${nodes.joinToString()} -> ${controllers.size} controller(s)",
+        )
+        controllers.forEach { controller ->
+            nodes.forEach { node ->
+                session.notifyChildrenChanged(controller, node, Int.MAX_VALUE, null)
+            }
+        }
+    }
+
     private fun replayMetadataToPlayer(player: PocketCastsForwardingPlayer) {
         scope.launch(Dispatchers.IO) {
             try {
@@ -714,11 +735,7 @@ class MediaSessionManager(
                     // notifyChildrenChanged overload does not reach connected legacy controllers (Android
                     // Auto), so notify each connected controller explicitly; a controller not subscribed to
                     // the node is a no-op.
-                    media3Session?.let { session ->
-                        session.connectedControllers.forEach { controller ->
-                            session.notifyChildrenChanged(controller, UP_NEXT_ROOT, Int.MAX_VALUE, null)
-                        }
-                    }
+                    notifyBrowseChanged("up-next-changed", UP_NEXT_ROOT)
                 },
                 onError = { Timber.e(it, "Error observing Up Next changes") },
             )
@@ -739,12 +756,7 @@ class MediaSessionManager(
                     // refreshed its podcasts list on a reconnect. The fix is to notify each connected
                     // controller explicitly with the per-controller overload; a controller not subscribed to
                     // the node is a no-op, so iterating every connected controller is safe.
-                    media3Session?.let { session ->
-                        session.connectedControllers.forEach { controller ->
-                            session.notifyChildrenChanged(controller, PODCASTS_ROOT, Int.MAX_VALUE, null)
-                            session.notifyChildrenChanged(controller, MEDIA_ID_ROOT, Int.MAX_VALUE, null)
-                        }
-                    }
+                    notifyBrowseChanged("subscriptions-changed", PODCASTS_ROOT, MEDIA_ID_ROOT)
                 },
                 onError = { Timber.e(it, "Error observing podcast subscription changes") },
             )
@@ -764,12 +776,7 @@ class MediaSessionManager(
                 .drop(1)
                 .onEach {
                     withContext(Dispatchers.Main) {
-                        media3Session?.let { session ->
-                            session.connectedControllers.forEach { controller ->
-                                session.notifyChildrenChanged(controller, MEDIA_ID_ROOT, Int.MAX_VALUE, null)
-                                session.notifyChildrenChanged(controller, PODCASTS_ROOT, Int.MAX_VALUE, null)
-                            }
-                        }
+                        notifyBrowseChanged("sign-in-changed", MEDIA_ID_ROOT, PODCASTS_ROOT)
                     }
                 }
                 .catch { Timber.e(it, "Error observing PodHopper sign-in changes") }
@@ -804,18 +811,15 @@ class MediaSessionManager(
                             emptyList()
                         }
                         withContext(Dispatchers.Main) {
-                            media3Session?.let { session ->
-                                session.connectedControllers.forEach { controller ->
-                                    toNotify.forEach { uuid ->
-                                        session.notifyChildrenChanged(controller, uuid, Int.MAX_VALUE, null)
-                                    }
-                                    filterUuids.forEach { uuid ->
-                                        session.notifyChildrenChanged(controller, uuid, Int.MAX_VALUE, null)
-                                    }
-                                    session.notifyChildrenChanged(controller, PODCASTS_ROOT, Int.MAX_VALUE, null)
-                                    session.notifyChildrenChanged(controller, MEDIA_ID_ROOT, Int.MAX_VALUE, null)
-                                }
-                            }
+                            // PodHopper: this is the path a synced queue apply reaches, via the episode
+                            // status writes it makes. It invalidates the ROOT as well as the changed
+                            // podcasts, which is the current suspect for the car UI dropping to its home
+                            // screen. Logged in one line so a drive shows how often it fires and how many
+                            // nodes and controllers each burst touches.
+                            notifyBrowseChanged(
+                                "episode-status",
+                                *(toNotify + filterUuids + listOf(PODCASTS_ROOT, MEDIA_ID_ROOT)).toTypedArray(),
+                            )
                         }
                     }
                 }
