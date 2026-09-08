@@ -811,14 +811,24 @@ class MediaSessionManager(
                             emptyList()
                         }
                         withContext(Dispatchers.Main) {
-                            // PodHopper: this is the path a synced queue apply reaches, via the episode
-                            // status writes it makes. It invalidates the ROOT as well as the changed
-                            // podcasts, which is the current suspect for the car UI dropping to its home
-                            // screen. Logged in one line so a drive shows how often it fires and how many
-                            // nodes and controllers each burst touches.
+                            // PodHopper: deliberately NOT the browse root. Invalidating the root tells a
+                            // media browser its whole view of the app is stale, and the car rebuilds from
+                            // the top, which drops the driver back to the car's home screen while audio
+                            // keeps playing. It was doing that on any played-status change, including the
+                            // one an ordinary play triggers, and Android Auto received the same instruction
+                            // because the phone runs this session too.
+                            //
+                            // Nothing is lost. This observer exists so a finished episode stops showing as
+                            // unplayed in the car's cached lists, which once baited replays of completed
+                            // episodes. Those lists are the changed podcasts' own nodes and the filter
+                            // nodes, both invalidated by name below, plus the podcasts list. The root's
+                            // children are the top-level menu (Podcasts, Up Next, Playlists, Discover,
+                            // Profile), which no played status can change, so it never contributed to that
+                            // fix. Sign-in and subscription changes DO alter the menu and still invalidate
+                            // the root; they are separate observers above.
                             notifyBrowseChanged(
                                 "episode-status",
-                                *(toNotify + filterUuids + listOf(PODCASTS_ROOT, MEDIA_ID_ROOT)).toTypedArray(),
+                                *(toNotify + filterUuids + listOf(PODCASTS_ROOT)).toTypedArray(),
                             )
                         }
                     }
