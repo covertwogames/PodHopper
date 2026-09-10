@@ -1,7 +1,5 @@
 package au.com.shiftyjelly.pocketcasts.repositories.user
 
-import android.accounts.AccountManager
-import android.accounts.OnAccountsUpdateListener
 import android.content.Context
 import au.com.shiftyjelly.pocketcasts.analytics.AccountStatusInfo
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsController
@@ -27,7 +25,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.subscription.SubscriptionMana
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.utils.Optional
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.UserSignedOutEvent
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,7 +44,7 @@ import kotlinx.coroutines.rx2.rxSingle
 import timber.log.Timber
 
 interface UserManager {
-    fun beginMonitoringAccountManager(playbackManager: PlaybackManager)
+
     fun getSignInState(): Flowable<SignInState>
     fun signOut(playbackManager: PlaybackManager, wasInitiatedByUser: Boolean)
     fun signOutAndClearData(playbackManager: PlaybackManager, upNextQueue: UpNextQueue, folderManager: FolderManager, searchHistoryManager: SearchHistoryManager, episodeManager: EpisodeManager, wasInitiatedByUser: Boolean)
@@ -66,7 +63,6 @@ class UserManagerImpl @Inject constructor(
     private val eventHorizon: EventHorizon,
     private val accountStatusInfo: AccountStatusInfo,
     @ApplicationScope private val applicationScope: CoroutineScope,
-    private val crashLogging: CrashLogging,
     private val experimentProvider: ExperimentProvider,
     private val endOfYearSync: EndOfYearSync,
     private val notificationScheduler: NotificationScheduler,
@@ -80,22 +76,15 @@ class UserManagerImpl @Inject constructor(
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
 
-    override fun beginMonitoringAccountManager(playbackManager: PlaybackManager) {
-        val accountListener = OnAccountsUpdateListener {
-            try {
-                // Handle sign out from outside of the app
-                if (!syncManager.isLoggedIn()) {
-                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Signing out because no account manager account found")
-                    signOut(playbackManager, wasInitiatedByUser = false)
-                }
-            } catch (t: Throwable) {
-                crashLogging.sendReport(t, message = "Account monitoring crash.")
-            }
-        }
-
-        val accountManager = AccountManager.get(application)
-        accountManager.addOnAccountsUpdatedListener(accountListener, null, true)
-    }
+    // PodHopper: account monitoring removed. Upstream watched Android's AccountManager so that
+    // removing the Pocket Casts account from system settings signed the user out of the app. The
+    // de-branding deleted that account authenticator, so no account can ever exist, and the check
+    // fired on every launch and signed the user out unconditionally. On one phone it ran 42 times
+    // in a single log. It never touched PodHopper's own sign-in, the Up Next queue or playback
+    // positions, so the damage was limited, but it did clear Plus preferences, cloud file status
+    // and marketing opt-in on the first run and left the UI mid-transition. Nothing replaces it:
+    // PodHopper accounts are signed out from the app's own profile screen, which calls signOut
+    // directly.
 
     override fun getSignInState(): Flowable<SignInState> {
         return syncManager.isLoggedInObservable.toFlowable(BackpressureStrategy.LATEST)

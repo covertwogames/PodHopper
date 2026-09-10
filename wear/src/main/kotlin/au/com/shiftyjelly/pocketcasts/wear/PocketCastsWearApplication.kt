@@ -18,7 +18,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackServiceToggl
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
-import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.shared.AppLifecycleObserver
 import au.com.shiftyjelly.pocketcasts.shared.DownloadStatisticsReporter
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
@@ -58,7 +57,6 @@ class PocketCastsWearApplication :
 
     @Inject lateinit var settings: Settings
 
-    @Inject lateinit var userManager: UserManager
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
@@ -118,7 +116,6 @@ class PocketCastsWearApplication :
         applicationScope.launch {
             runStartupStep("playback setup and account monitoring") {
                 playbackManager.setup()
-                userManager.beginMonitoringAccountManager(playbackManager)
             }
             runStartupStep("storage setup") {
                 if (settings.getStorageChoice() == null) {

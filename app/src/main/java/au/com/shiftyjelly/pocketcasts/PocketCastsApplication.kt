@@ -32,7 +32,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.shortcuts.DynamicShortcutsSynchronizer
 import au.com.shiftyjelly.pocketcasts.repositories.support.DatabaseExportHelper
 import au.com.shiftyjelly.pocketcasts.repositories.user.StatsManager
-import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.shared.AppLifecycleObserver
 import au.com.shiftyjelly.pocketcasts.shared.DownloadStatisticsReporter
 import au.com.shiftyjelly.pocketcasts.ui.helper.AppIcon
@@ -102,7 +101,6 @@ class PocketCastsApplication :
 
     @Inject lateinit var coilImageLoader: ImageLoader
 
-    @Inject lateinit var userManager: UserManager
 
     @Inject lateinit var analyticsController: AnalyticsController
 
@@ -289,7 +287,6 @@ class PocketCastsApplication :
 
         userEpisodeManager.monitorUploads(applicationContext)
         downloadStatusObserver.monitorDownloadStatus()
-        userManager.beginMonitoringAccountManager(playbackManager)
         shortcutsSynchronizer.keepShortcutsInSync()
         playlistInteractionNotifier.monitorPlaylistsInteraction()
         applicationScope.launch { appReviewManager.monitorAppReviewReasons() }
