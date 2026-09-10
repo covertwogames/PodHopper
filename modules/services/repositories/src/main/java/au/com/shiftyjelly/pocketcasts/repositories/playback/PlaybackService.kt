@@ -164,6 +164,11 @@ open class PlaybackService :
     }
 
     override fun onDestroy() {
+        // PodHopper diagnostic: pairs with the connect and disconnect logging on the session
+        // callback. "Playback service created" was logged but never its destruction, so a service
+        // that was torn down and rebuilt looked identical to one that had simply always been there.
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Playback service destroyed")
+
         // PodHopper: push the current position on shutdown so the other device gets the latest.
         // The upload runs on the application scope, so it survives the service being destroyed.
         podHopperPositionSync.pushCurrentPosition(immediate = true)

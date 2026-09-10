@@ -92,6 +92,19 @@ internal class Media3LibrarySessionCallback(
         return sessionCallback.onConnect(session, controller)
     }
 
+    /**
+     * PodHopper diagnostic: the moment the car's media app lets go. The app logs connections
+     * already, so the record used to show only the car coming back, never it leaving, which made
+     * the screen dropping to the car's home screen invisible in the app's own log.
+     */
+    override fun onDisconnected(
+        session: MediaSession,
+        controller: MediaSession.ControllerInfo,
+    ) {
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Client: ${controller.packageName} disconnected from media session")
+        sessionCallback.onDisconnected(session, controller)
+    }
+
     override fun onCustomCommand(
         session: MediaSession,
         controller: MediaSession.ControllerInfo,
@@ -177,6 +190,7 @@ internal class Media3LibrarySessionCallback(
         browser: MediaSession.ControllerInfo,
         params: MediaLibraryService.LibraryParams?,
     ): ListenableFuture<LibraryResult<MediaItem>> {
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car requested the library root from ${browser.packageName} (recent=${params?.isRecent == true}, suggested=${params?.isSuggested == true})")
         val isRecent = params?.isRecent == true
         val isSuggested = params?.isSuggested == true
         val rootId = browseTreeProvider.getRootId(
@@ -218,6 +232,7 @@ internal class Media3LibrarySessionCallback(
     // list. Browse node ids (the roots, podcast ids, folders) never contain the AutoMediaId divider
     // "#"; only episode media ids do (they are built as "sourceId#episodeId"), so classify on that and
     // return a browsable item for browse nodes so the subscription is kept.
+    /** PodHopper diagnostic: paired with the browse and disconnect logging above. */
     override fun onGetItem(
         session: MediaLibraryService.MediaLibrarySession,
         browser: MediaSession.ControllerInfo,
@@ -244,6 +259,12 @@ internal class Media3LibrarySessionCallback(
         pageSize: Int,
         params: MediaLibraryService.LibraryParams?,
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+        // PodHopper diagnostic: what the car is asking to show, and when. The car draws the UI, so
+        // the app has no window to lose when the screen drops back to the car's home screen; but the
+        // car has to ask for a node before it can display one, and a request for the root is that
+        // navigation happening. Without this the only visible event was the car reconnecting
+        // afterwards, which is the aftermath rather than the moment.
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car browse request: $parentId (page $page) from ${browser.packageName}")
         // PodHopper: on the car only, if there is no signed-in PodHopper account, return an
         // authentication error for any browse request. media3 forwards this error (with the sign-in
         // button below) to the platform session the car reads, so the car shows a full-screen prompt
