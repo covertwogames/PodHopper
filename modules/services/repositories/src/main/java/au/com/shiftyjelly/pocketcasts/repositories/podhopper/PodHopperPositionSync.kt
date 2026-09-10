@@ -74,6 +74,11 @@ class PodHopperPositionSync @Inject constructor(
     @Volatile
     private var lastPushAttemptMs = 0L
 
+    // PodHopper: the episode and position last handed to the backend, so a push that would repeat
+    // one already sent can be skipped. See the guard in [pushPosition].
+    private var lastPushedEpisodeUuid: String? = null
+    private var lastPushedPositionSec = -1
+
     @Volatile
     private var lastBrowsePullMs = 0L
     private var lastReconcileMs = 0L
@@ -155,6 +160,24 @@ class PodHopperPositionSync @Inject constructor(
 
         val positionSec = positionMs / 1000
         val totalSec = durationMs / 1000
+
+        // Publish only a position that has actually moved. The local database already works this
+        // way: its update is conditional on the value having changed, so an unchanged position
+        // leaves played_up_to_modified alone. This push did not honour that, and the two coming
+        // apart is what broke cross-device resume: a phone that had not played since morning was
+        // sent a pause by its headset six times, and each one republished the same position with a
+        // fresh timestamp. Hours later a car that genuinely was further ahead pulled that row,
+        // found it newer by timestamp and forty minutes older by content, and rewound.
+        //
+        // Exact equality rather than the database's two-second window, deliberately: the window
+        // exists to avoid writes for jitter, and at slow playback speeds a real few seconds of
+        // listening could fall inside it. Identical is unambiguous, and the repeats this prevents
+        // were identical to the millisecond.
+        if (episode.uuid == lastPushedEpisodeUuid && positionSec == lastPushedPositionSec) {
+            return
+        }
+        lastPushedEpisodeUuid = episode.uuid
+        lastPushedPositionSec = positionSec
 
         applicationScope.launch(Dispatchers.IO) {
             val row = try {
@@ -1269,6 +1292,10 @@ class PodHopperPositionSync @Inject constructor(
      * Does not touch any episode, podcast, or playback data on the device.
      */
     fun clearLocalSyncState() {
+        // The next account must not inherit this one's idea of what has already been published,
+        // or its first real position could be mistaken for a repeat and never sent.
+        lastPushedEpisodeUuid = null
+        lastPushedPositionSec = -1
         upNextSync.get().clearLocalState()
         prefs().edit()
             .remove(PREF_LAST_PULL_MS)
