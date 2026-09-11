@@ -229,20 +229,25 @@ class UpNextQueueImpl @Inject constructor(
     override suspend fun playNextBlocking(
         episode: BaseEpisode,
         isUserInitiated: Boolean,
+        recordChange: Boolean,
         onAdd: (() -> Unit)?,
     ) {
-        playNextNowBlocking(episode, isUserInitiated, onAdd)
+        playNextNowBlocking(episode, isUserInitiated, recordChange, onAdd)
     }
 
     private suspend fun playNextNowBlocking(
         episode: BaseEpisode,
         isUserInitiated: Boolean,
+        recordChange: Boolean,
         onAdd: (() -> Unit)?,
     ) = withContext(coroutineContext) {
-        // PodHopper: an automatic insertion (autoplay filling an empty queue) is not a decision
-        // the user made, so it is not recorded as one. It stays local; if the backend turns out to
-        // hold a real queue, that queue wins on the next sync.
-        saveChangesBlocking(UpNextAction.PlayNext(episode, onAdd, logChange = isUserInitiated))
+        // PodHopper: whether the insertion is sent to the account's queue is its own decision,
+        // separate from isUserInitiated, which also decides whether the auto-download setting is
+        // bypassed. By default an automatic insertion stays local. Autoplay passes true when the
+        // episode was finished on this device: the pick is then a real queue item, and leaving it
+        // local let the next sync replace the queue with the backend's copy, which never had it,
+        // removing the episode that was loaded (seen on the car, 11 Sep 2026).
+        saveChangesBlocking(UpNextAction.PlayNext(episode, onAdd, logChange = recordChange))
         downloadIfPossible(episode, isUserInitiated)
         if (episode.isFinished) {
             episodeManager.markAsNotPlayedBlocking(episode)

@@ -360,7 +360,16 @@ open class PlaybackManager @Inject constructor(
         return currentEpisode.podcastUuid.let { podcastManager.findPodcastByUuidBlocking(it) }
     }
 
-    private suspend fun autoLoadEpisode(autoPlay: Boolean): BaseEpisode? {
+    /**
+     * @param recordPick whether the chosen episode is sent to the account's Up Next queue. True
+     * only when the previous episode was finished on this device; a finish applied from another
+     * device's sync runs autoplay here too, and sending that pick would add a second episode the
+     * user never chose.
+     */
+    private suspend fun autoLoadEpisode(
+        autoPlay: Boolean,
+        recordPick: Boolean,
+    ): BaseEpisode? {
         val nextEpisode = getCurrentEpisode()
         if (nextEpisode != null) {
             return nextEpisode
@@ -372,9 +381,10 @@ open class PlaybackManager @Inject constructor(
 
         // auto queue next episode on empty
         val autoPlayEpisode = autoSelectNextEpisode() ?: return null
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Autoplay picked ${autoPlayEpisode.uuid}, sent to the account's queue: $recordPick")
 
         withContext(Dispatchers.Default) {
-            upNextQueue.playNextBlocking(autoPlayEpisode, isUserInitiated = false) {
+            upNextQueue.playNextBlocking(autoPlayEpisode, isUserInitiated = false, recordChange = recordPick) {
                 launch {
                     loadCurrentEpisode(play = autoPlay, sourceView = SourceView.AUTO_PLAY)
                 }
@@ -1731,9 +1741,12 @@ open class PlaybackManager @Inject constructor(
         // and it was playing episode
         val autoPlay = (!hadSleepAfterEpisode || isSleepAfterEpisodeEnabled()) && wasPlaying
 
+        // PodHopper: the same test that keeps a synced completion from being pushed back out.
+        val finishedOnThisDevice = episode != null && !podHopperPositionSync.isApplyingRemote(episode.uuid)
+
         var nextEpisode = getCurrentEpisode()
         if (nextEpisode == null) {
-            nextEpisode = autoLoadEpisode(autoPlay)
+            nextEpisode = autoLoadEpisode(autoPlay, recordPick = finishedOnThisDevice)
             if (nextEpisode == null) {
                 lastTrackedAutoPlaySource = null
                 stop()
@@ -2074,7 +2087,7 @@ open class PlaybackManager @Inject constructor(
         }
 
         if (episode == null) {
-            val nextEpisode = autoLoadEpisode(autoPlay = play)
+            val nextEpisode = autoLoadEpisode(autoPlay = play, recordPick = false)
             if (nextEpisode == null) {
                 Timber.d("Playback: No episode in upnext, shutting down")
                 shutdown()
@@ -2290,7 +2303,22 @@ open class PlaybackManager @Inject constructor(
             play(sourceView, posUpdatedOnPlayerReset)
         } else {
             player?.load(episode.playedUpToMs)
+            // PodHopper: load() prepares a new ExoPlayer when the old one was stopped for an episode
+            // change, and until now only play() handed it to the Media3 session. Paused, the session
+            // kept wrapping the released player, so the car and the lock screen showed the new
+            // episode's title over the old episode's position and length (seen on the car after Mark
+            // as played while paused, 11 Sep 2026). Installing it here gives them the new episode's
+            // own position, paused. A no-op when the session already wraps this player.
+            installSimplePlayerIntoSession()
             onPlayerPaused()
+        }
+    }
+
+    private suspend fun installSimplePlayerIntoSession() {
+        withContext(Dispatchers.Main) {
+            (player as? SimplePlayer)?.exoPlayer?.let {
+                mediaSessionManager.installPlayer(it)
+            }
         }
     }
 
@@ -2709,11 +2737,7 @@ open class PlaybackManager @Inject constructor(
         // SimplePlayer creates its ExoPlayer lazily in prepare(), which is called
         // inside play(). Now that the ExoPlayer exists, install it into the Media3
         // session so the notification system can monitor the player state.
-        withContext(Dispatchers.Main) {
-            (player as? SimplePlayer)?.exoPlayer?.let {
-                mediaSessionManager.installPlayer(it)
-            }
-        }
+        installSimplePlayerIntoSession()
 
         sleepTimer.restartSleepTimerIfApplies(currentEpisodeUuid = episode.uuid)
 

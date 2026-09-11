@@ -33,7 +33,7 @@ interface UpNextQueue {
     val allEpisodes get(): List<BaseEpisode> = currentEpisode?.let { listOf(it) + queueEpisodes } ?: queueEpisodes
     fun isCurrentEpisode(episode: BaseEpisode): Boolean
     suspend fun playNow(episode: BaseEpisode, automaticUpNextSource: AutoPlaySource?, isUserInitiated: Boolean = true, onAdd: (() -> Unit)?)
-    suspend fun playNextBlocking(episode: BaseEpisode, isUserInitiated: Boolean = true, onAdd: (() -> Unit)?)
+    suspend fun playNextBlocking(episode: BaseEpisode, isUserInitiated: Boolean = true, recordChange: Boolean = isUserInitiated, onAdd: (() -> Unit)?)
     suspend fun playLast(episode: BaseEpisode, isUserInitiated: Boolean = true, onAdd: (() -> Unit)?)
     suspend fun playAllNext(episodes: List<BaseEpisode>, isUserInitiated: Boolean = true)
     suspend fun playAllLast(episodes: List<BaseEpisode>, isUserInitiated: Boolean = true)
