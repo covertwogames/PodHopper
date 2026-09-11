@@ -114,7 +114,6 @@ project.apply {
             else -> sentryAndroidDsn
         }
         set("pocketcastsSentryDsn", sentryDsn)
-        set("googleSignInServerClientId", secretProperties.getProperty("googleSignInServerClientId", ""))
         set("measureBuildsEnabled", secretProperties.getProperty("measureBuildsEnabled", ""))
         set("appsMetricsToken", secretProperties.getProperty("appsMetricsToken", ""))
         set("encryptionKey", secretProperties.getProperty("encryption_key", ""))

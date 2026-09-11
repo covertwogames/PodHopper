@@ -324,13 +324,6 @@ private fun WearApp(
                     onEmailSignInSuccess = {
                         navController.navigate(LoggingInScreen.ROUTE)
                     },
-                    googleSignInSuccessScreen = { googleAccount ->
-                        LoggingInScreen(
-                            avatarUrl = googleAccount.avatarUrl,
-                            name = googleAccount.name,
-                            onClose = {},
-                        )
-                    },
                     syncState = currentSyncState,
                     onRetrySync = onRetrySync,
                     onSyncScreenVisible = onSyncScreenVisible,

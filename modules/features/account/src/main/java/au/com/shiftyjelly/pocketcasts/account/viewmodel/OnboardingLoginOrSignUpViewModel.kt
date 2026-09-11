@@ -5,17 +5,14 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
-import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
-import au.com.shiftyjelly.pocketcasts.utils.extensions.isGooglePlayServicesAvailableSuccess
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.OnboardingCarouselShownEvent
 import com.automattic.eventhorizon.OnboardingGetStartedEvent
 import com.automattic.eventhorizon.SetupAccountButtonTappedEvent
 import com.automattic.eventhorizon.SetupAccountButtonType
 import com.automattic.eventhorizon.SetupAccountDismissedEvent
-import com.google.android.gms.common.GoogleApiAvailability
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -23,18 +20,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-data class GoogleSignInState(val isNewAccount: Boolean)
-
 @HiltViewModel
 class OnboardingLoginOrSignUpViewModel @Inject constructor(
     private val eventHorizon: EventHorizon,
     @ApplicationContext context: Context,
     private val podcastManager: PodcastManager,
 ) : AndroidViewModel(context as Application) {
-
-    val showContinueWithGoogleButton =
-        Settings.GOOGLE_SIGN_IN_SERVER_CLIENT_ID.isNotEmpty() &&
-            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailableSuccess(context)
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState

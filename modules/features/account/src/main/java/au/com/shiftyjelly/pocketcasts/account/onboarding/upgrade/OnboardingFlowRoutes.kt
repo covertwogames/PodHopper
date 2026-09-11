@@ -135,13 +135,6 @@ object OnboardingFlowRoutes {
                 },
                 onSignUpClick = { navController.navigate(CREATE_FREE_ACCOUNT) },
                 onLoginClick = { navController.navigate(LOG_IN) },
-                onContinueWithGoogleComplete = { state, subscription ->
-                    if (state.isNewAccount) {
-                        onAccountCreated()
-                    } else {
-                        onLoginToExistingAccount(flow, subscription, exitOnboarding)
-                    }
-                },
                 onUpdateSystemBars = onUpdateSystemBars,
             )
         }
@@ -198,13 +191,6 @@ object OnboardingFlowRoutes {
                     navController.navigate(CREATE_FREE_ACCOUNT)
                 },
                 onUpdateSystemBars = onUpdateSystemBars,
-                onContinueWithGoogleComplete = { state, subscription ->
-                    if (state.isNewAccount) {
-                        onAccountCreated()
-                    } else {
-                        onLoginToExistingAccount(flow, subscription, exitOnboarding)
-                    }
-                },
                 onClickLogin = {
                     viewModel.onLogInPressed(flow)
                     navController.navigate(ROUTE_LOG_IN)
@@ -236,13 +222,6 @@ object OnboardingFlowRoutes {
                 },
                 onForgotPasswordClick = { navController.navigate(FORGOT_PASSWORD) },
                 onUpdateSystemBars = onUpdateSystemBars,
-                onContinueWithGoogleComplete = { state, subscription ->
-                    if (state.isNewAccount) {
-                        onAccountCreated()
-                    } else {
-                        onLoginToExistingAccount(flow, subscription, exitOnboarding)
-                    }
-                },
             )
         }
 

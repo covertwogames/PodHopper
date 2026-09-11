@@ -2,16 +2,11 @@ package au.com.shiftyjelly.pocketcasts.account.onboarding
 
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
@@ -35,8 +30,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import au.com.shiftyjelly.pocketcasts.account.onboarding.components.ContinueWithGoogleButton
-import au.com.shiftyjelly.pocketcasts.account.viewmodel.GoogleSignInState
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingLogInViewModel
 import au.com.shiftyjelly.pocketcasts.compose.AppThemeWithBackground
 import au.com.shiftyjelly.pocketcasts.compose.CallOnce
@@ -46,7 +39,6 @@ import au.com.shiftyjelly.pocketcasts.compose.bars.custom
 import au.com.shiftyjelly.pocketcasts.compose.bars.transparent
 import au.com.shiftyjelly.pocketcasts.compose.buttons.RowButton
 import au.com.shiftyjelly.pocketcasts.compose.components.EmailAndPasswordFields
-import au.com.shiftyjelly.pocketcasts.compose.components.TextC50
 import au.com.shiftyjelly.pocketcasts.compose.components.TextH40
 import au.com.shiftyjelly.pocketcasts.compose.components.TextP40
 import au.com.shiftyjelly.pocketcasts.compose.components.TextP50
@@ -66,7 +58,6 @@ internal fun OnboardingLoginPage(
     onLoginComplete: (Subscription?) -> Unit,
     onForgotPasswordClick: () -> Unit,
     onUpdateSystemBars: (SystemBarsStyles) -> Unit,
-    onContinueWithGoogleComplete: (GoogleSignInState, Subscription?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OnboardingLogInViewModel = hiltViewModel(),
 ) {
@@ -158,38 +149,6 @@ internal fun OnboardingLoginPage(
                 },
                 includePadding = false,
             )
-            if (viewModel.showContinueWithGoogleButton && !(flow is OnboardingFlow.Upsell || flow is OnboardingFlow.UpsellSuggestedFolder)) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(15.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(.75.dp)
-                            .background(color = MaterialTheme.theme.colors.primaryUi05),
-                    )
-                    TextC50(
-                        text = stringResource(LR.string.onboarding_login_or),
-                        color = MaterialTheme.theme.colors.primaryText01,
-                        fontWeight = FontWeight.W400,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(.75.dp)
-                            .background(color = MaterialTheme.theme.colors.primaryUi05),
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                ContinueWithGoogleButton(
-                    includePadding = false,
-                    flow = flow,
-                    onComplete = onContinueWithGoogleComplete,
-                )
-            }
         }
     }
 }

@@ -58,8 +58,6 @@ wear-compose = "1.6.0-alpha05"
 webkit = "1.16.0"
 wordpress-lint = "2.2.0"
 work = "2.11.2"
-credentials = "1.6.0"
-google-id = "1.2.0"
 
 [libraries]
 # Stalla: client-side RSS podcast feed parser (PodHopper feed engine)
@@ -132,10 +130,8 @@ glance-material3 = { module = "androidx.glance:glance-material3", version.ref = 
 # Horologist
 horologist-audio-ui = { module = "com.google.android.horologist:horologist-audio-ui", version.ref = "horologist" }
 horologist-audio = { module = "com.google.android.horologist:horologist-audio", version.ref = "horologist" }
-horologist-auth-composables = { module = "com.google.android.horologist:horologist-auth-composables", version.ref = "horologist" }
 horologist-auth-data = { module = "com.google.android.horologist:horologist-auth-data", version.ref = "horologist" }
 horologist-auth-data-phone = { module = "com.google.android.horologist:horologist-auth-data-phone", version.ref = "horologist" }
-horologist-auth-ui = { module = "com.google.android.horologist:horologist-auth-ui", version.ref = "horologist" }
 horologist-compose-layout = { module = "com.google.android.horologist:horologist-compose-layout", version.ref = "horologist" }
 horologist-compose-material = { module = "com.google.android.horologist:horologist-compose-material", version.ref = "horologist" }
 horologist-datalayer = { module = "com.google.android.horologist:horologist-datalayer", version.ref = "horologist" }
@@ -260,11 +256,6 @@ work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work"
 work-rx2 = { module = "androidx.work:work-rxjava2", version.ref = "work" }
 work-test = { module = "androidx.work:work-testing", version.ref = "work" }
 
-# Credentials
-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
-credentials-google-play = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
-google-identity = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "google-id"}
-
 # Other dependencies
 androidx-annotation = "androidx.annotation:annotation:1.10.0"
 androidx-appcompat = "androidx.appcompat:appcompat:1.7.1"
@@ -295,7 +286,6 @@ leakcanary = "com.squareup.leakcanary:leakcanary-android:2.14"
 material = "com.google.android.material:material:1.14.0"
 material-dialogs = "com.afollestad.material-dialogs:core:3.3.0"
 material-progressbar = "me.zhanghai.android.materialprogressbar:library:1.6.1"
-play-auth = "com.google.android.gms:play-services-auth:21.6.0"
 play-cast = "com.google.android.gms:play-services-cast-framework:22.3.1"
 play-review = "com.google.android.play:review-ktx:2.0.2"
 play-wearable = "com.google.android.gms:play-services-wearable:20.0.1"

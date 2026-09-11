@@ -35,8 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import au.com.shiftyjelly.pocketcasts.account.onboarding.components.ContinueWithGoogleButton
-import au.com.shiftyjelly.pocketcasts.account.viewmodel.GoogleSignInState
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingCreateAccountViewModel
 import au.com.shiftyjelly.pocketcasts.compose.AppThemeWithBackground
 import au.com.shiftyjelly.pocketcasts.compose.CallOnce
@@ -53,7 +51,6 @@ import au.com.shiftyjelly.pocketcasts.compose.components.TextH10
 import au.com.shiftyjelly.pocketcasts.compose.components.TextP40
 import au.com.shiftyjelly.pocketcasts.compose.preview.ThemePreviewParameterProvider
 import au.com.shiftyjelly.pocketcasts.compose.theme
-import au.com.shiftyjelly.pocketcasts.models.type.Subscription
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
 import au.com.shiftyjelly.pocketcasts.views.helper.UiUtil
@@ -68,7 +65,6 @@ internal fun OnboardingCreateAccountPage(
     onSkip: () -> Unit,
     onCreateAccount: () -> Unit,
     onUpdateSystemBars: (SystemBarsStyles) -> Unit,
-    onContinueWithGoogleComplete: (GoogleSignInState, Subscription?) -> Unit,
     onClickLogin: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OnboardingCreateAccountViewModel = hiltViewModel(),
@@ -150,19 +146,6 @@ internal fun OnboardingCreateAccountPage(
             contentScale = ContentScale.FillWidth,
         )
         Spacer(modifier = Modifier.weight(2f))
-        if (viewModel.showGoogleSignUp) {
-            ContinueWithGoogleButton(
-                flow = flow,
-                onComplete = onContinueWithGoogleComplete,
-                label = stringResource(
-                    if (flow.shouldOfferLogin) {
-                        LR.string.onboarding_continue_with_google
-                    } else {
-                        LR.string.onboarding_create_account_sign_up_google
-                    },
-                ),
-            )
-        }
         RowButton(
             text = stringResource(LR.string.onboarding_create_account_sign_up_email),
             enabled = state.enableSubmissionFields,

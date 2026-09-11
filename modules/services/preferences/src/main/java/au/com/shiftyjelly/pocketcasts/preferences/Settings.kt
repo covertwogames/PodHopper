@@ -59,8 +59,6 @@ interface Settings {
         const val SHARING_SERVER_SECRET = BuildConfig.SHARING_SERVER_SECRET
         val SETTINGS_ENCRYPT_SECRET = BuildConfig.SETTINGS_ENCRYPT_SECRET.toCharArray()
 
-        const val GOOGLE_SIGN_IN_SERVER_CLIENT_ID = BuildConfig.GOOGLE_SIGN_IN_SERVER_CLIENT_ID
-
         // PodHopper: every support and marketing link points at the PodHopper site instead of
         // pocketcasts.com. The /terms, /privacy and /help pages need to exist at podhopper.app.
         const val INFO_LEARN_MORE_URL = "https://podhopper.app"

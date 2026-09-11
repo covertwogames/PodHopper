@@ -37,7 +37,6 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.coroutines.core)
     implementation(libs.lifecycle.livedata.ktx)
-    implementation(libs.play.auth)
     implementation(libs.play.cast)
     implementation(libs.rx2.android)
     implementation(libs.unidecode)

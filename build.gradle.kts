@@ -272,7 +272,6 @@ subprojects {
                 buildConfigField("String", "VERSION_NAME", "\"${project.property("versionName")}\"")
                 buildConfigField("String", "SETTINGS_ENCRYPT_SECRET", "\"${project.property("settingsEncryptSecret")}\"")
                 buildConfigField("String", "SHARING_SERVER_SECRET", "\"${project.property("sharingServerSecret")}\"")
-                buildConfigField("String", "GOOGLE_SIGN_IN_SERVER_CLIENT_ID", "\"${project.property("googleSignInServerClientId")}\"")
                 buildConfigField("String", "SENTRY_DSN", "\"${project.property("pocketcastsSentryDsn")}\"")
                 buildConfigField("String", "BUILD_PLATFORM", "\"${project.property("buildPlatform")}\"")
                 buildConfigField("String", "ENCRYPTION_KEY", "\"${project.property("encryptionKey")}\"")

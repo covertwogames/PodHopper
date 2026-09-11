@@ -15,7 +15,6 @@ import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 @Composable
 fun LoginScreen(
-    onLoginWithGoogleClick: () -> Unit,
     onLoginWithPhoneClick: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
     onLoginWithEmailClick: () -> Unit,
@@ -32,19 +31,6 @@ fun LoginScreen(
         ScalingLazyColumn(
             columnState = columnState,
         ) {
-            item {
-                Chip(
-                    labelId = LR.string.log_in_with_google,
-                    colors = ChipDefaults.secondaryChipColors(),
-                    icon = DrawableResPaintable(IR.drawable.google_g_white),
-                    onClick = {
-                        viewModel.onGoogleLoginClicked {
-                            onLoginWithGoogleClick()
-                        }
-                    },
-                )
-            }
-
             item {
                 Chip(
                     labelId = LR.string.log_in_on_phone,

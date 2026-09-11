@@ -6,7 +6,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.ExperimentProvider
 import au.com.shiftyjelly.pocketcasts.models.type.Subscription
-import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.subscription.SubscriptionManager
 import au.com.shiftyjelly.pocketcasts.repositories.sync.LoginResult
@@ -14,13 +13,11 @@ import au.com.shiftyjelly.pocketcasts.repositories.sync.SignInSource
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
 import au.com.shiftyjelly.pocketcasts.utils.Network
-import au.com.shiftyjelly.pocketcasts.utils.extensions.isGooglePlayServicesAvailableSuccess
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.SigninButtonTappedEvent
 import com.automattic.eventhorizon.SigninDismissedEvent
 import com.automattic.eventhorizon.SigninForgotPasswordTappedEvent
 import com.automattic.eventhorizon.SigninShownEvent
-import com.google.android.gms.common.GoogleApiAvailability
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -43,10 +40,6 @@ class OnboardingLogInViewModel @Inject constructor(
     @ApplicationContext context: Context,
 ) : AndroidViewModel(context as Application),
     CoroutineScope {
-
-    val showContinueWithGoogleButton =
-        Settings.GOOGLE_SIGN_IN_SERVER_CLIENT_ID.isNotEmpty() &&
-            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailableSuccess(context)
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default

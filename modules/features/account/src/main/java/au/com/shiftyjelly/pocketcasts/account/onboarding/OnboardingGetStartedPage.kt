@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,10 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import au.com.shiftyjelly.pocketcasts.account.R
-import au.com.shiftyjelly.pocketcasts.account.onboarding.components.ContinueWithGoogleButton
 import au.com.shiftyjelly.pocketcasts.account.onboarding.components.FeatureCarousel
-import au.com.shiftyjelly.pocketcasts.account.viewmodel.GoogleSignInButtonViewModel
-import au.com.shiftyjelly.pocketcasts.account.viewmodel.GoogleSignInState
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingLoginOrSignUpViewModel
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingLoginOrSignUpViewModel.UiState
 import au.com.shiftyjelly.pocketcasts.compose.AppThemeWithBackground
@@ -64,7 +60,6 @@ import au.com.shiftyjelly.pocketcasts.compose.images.HorizontalLogo
 import au.com.shiftyjelly.pocketcasts.compose.preview.ThemePreviewParameterProvider
 import au.com.shiftyjelly.pocketcasts.compose.theme
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
-import au.com.shiftyjelly.pocketcasts.models.type.Subscription
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
 import au.com.shiftyjelly.pocketcasts.ui.extensions.inLandscape
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
@@ -120,7 +115,6 @@ internal fun OnboardingLoginOrSignUpPage(
     onDismiss: () -> Unit,
     onSignUpClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onContinueWithGoogleComplete: (GoogleSignInState, Subscription?) -> Unit,
     onUpdateSystemBars: (SystemBarsStyles) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OnboardingLoginOrSignUpViewModel = hiltViewModel(),
@@ -150,8 +144,6 @@ internal fun OnboardingLoginOrSignUpPage(
 
     Content(
         state = state,
-        flow = flow,
-        showContinueWithGoogleButton = viewModel.showContinueWithGoogleButton,
         onSignUpClick = {
             viewModel.onSignUpClicked(flow)
             onSignUpClick()
@@ -160,7 +152,6 @@ internal fun OnboardingLoginOrSignUpPage(
             viewModel.onLoginClicked(flow)
             onLoginClick()
         },
-        onContinueWithGoogleComplete = onContinueWithGoogleComplete,
         onNavigationClick = onNavigationClick,
         modifier = modifier,
     )
@@ -169,12 +160,9 @@ internal fun OnboardingLoginOrSignUpPage(
 @Composable
 private fun Content(
     state: UiState,
-    flow: OnboardingFlow,
-    showContinueWithGoogleButton: Boolean,
     onNavigationClick: () -> Unit,
     onSignUpClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onContinueWithGoogleComplete: (GoogleSignInState, Subscription?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -212,11 +200,7 @@ private fun Content(
             Spacer(Modifier.height(32.dp))
 
             if (state is UiState.Loaded) {
-                val context = LocalContext.current
                 Artwork(
-                    googleSignInShown = GoogleSignInButtonViewModel.showContinueWithGoogleButton(
-                        context,
-                    ),
                     podcasts = state.randomPodcasts,
                     viewWidth = width,
                     viewHeight = height,
@@ -245,15 +229,7 @@ private fun Content(
 
             Spacer(Modifier.weight(1f))
 
-            if (showContinueWithGoogleButton) {
-                Spacer(Modifier.height(8.dp))
-                ContinueWithGoogleButton(
-                    flow = flow,
-                    onComplete = onContinueWithGoogleComplete,
-                )
-            } else {
-                Spacer(Modifier.height(8.dp))
-            }
+            Spacer(Modifier.height(8.dp))
 
             SignUpButton(onClick = onSignUpClick)
             LogInButton(onClick = onLoginClick)
@@ -264,7 +240,6 @@ private fun Content(
 
 @Composable
 private fun Artwork(
-    googleSignInShown: Boolean,
     podcasts: List<Podcast>,
     viewWidth: Dp,
     viewHeight: Dp,
@@ -274,9 +249,9 @@ private fun Artwork(
         return
     }
 
-    val artworkWidth = viewWidth * Artwork.getScaleFactor(googleSignInShown)
+    val artworkWidth = viewWidth * Artwork.getScaleFactor()
     val maxY = Artwork.coverModels.maxOf { it.y }
-    val artworkAspectRatio = Artwork.getAspectRatio(configuration, googleSignInShown)
+    val artworkAspectRatio = Artwork.getAspectRatio(configuration)
     val artworkHeight = minOf(viewWidth * maxY * artworkAspectRatio, viewHeight / 2f)
 
     Box(
@@ -284,7 +259,7 @@ private fun Artwork(
         modifier = Modifier
             .height(artworkHeight)
             .fillMaxWidth()
-            .offset(x = artworkWidth * Artwork.getOffsetFactor(googleSignInShown)),
+            .offset(x = artworkWidth * Artwork.getOffsetFactor()),
     ) {
         Artwork.coverModels.mapIndexed { index, model ->
             val coverWidth = (artworkWidth * model.size).coerceAtMost(artworkHeight / 2f)
@@ -350,14 +325,14 @@ private object Artwork {
         CoverModel(imageResId = R.drawable.thedaily, size = 0.183f, x = 0.25f, y = -0.3f),
     )
 
-    fun getAspectRatio(configuration: Configuration, googleSignInShown: Boolean) = if (configuration.orientation == ORIENTATION_LANDSCAPE || googleSignInShown) {
+    fun getAspectRatio(configuration: Configuration) = if (configuration.orientation == ORIENTATION_LANDSCAPE) {
         2.2f
     } else {
         2.6f
     }
 
-    fun getScaleFactor(googleSignInShown: Boolean) = if (googleSignInShown) 1.65f else 1.85f
-    fun getOffsetFactor(googleSignInShown: Boolean) = if (googleSignInShown) 0.06f else 0.0f
+    fun getScaleFactor() = 1.85f
+    fun getOffsetFactor() = 0.0f
     fun getCoverYOffsetFactor(configuration: Configuration) = if (configuration.orientation == ORIENTATION_LANDSCAPE) 0.75f else 0.95f
 }
 
@@ -371,7 +346,6 @@ private fun OnboardingLoginOrSignUpPagePreview(@PreviewParameter(ThemePreviewPar
             onDismiss = {},
             onSignUpClick = {},
             onLoginClick = {},
-            onContinueWithGoogleComplete = { _, _ -> },
             onUpdateSystemBars = {},
         )
     }

@@ -64,7 +64,6 @@ dependencies {
     implementation(libs.media3.exoplayer.hls)
     api(libs.media3.session)
     implementation(libs.media3.ui)
-    implementation(libs.play.auth)
     implementation(libs.play.cast)
     implementation(libs.protobuf.javalite)
     implementation(libs.retrofit)

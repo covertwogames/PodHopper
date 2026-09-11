@@ -34,7 +34,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.core)
     implementation(libs.dagger.hilt.core)
-    implementation(libs.play.auth)
     implementation(libs.play.cast)
     implementation(libs.room.ktx)
     implementation(libs.room.rx2)
