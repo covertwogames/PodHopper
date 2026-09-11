@@ -26,13 +26,11 @@ dependencies {
     api(projects.modules.services.model)
     api(projects.modules.services.utils)
 
-    implementation(platform(libs.firebase.bom))
     implementation(platform(libs.compose.bom))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.coroutines.core)
-    implementation(libs.firebase.config)
     implementation(libs.play.cast)
     implementation(libs.timber)
 

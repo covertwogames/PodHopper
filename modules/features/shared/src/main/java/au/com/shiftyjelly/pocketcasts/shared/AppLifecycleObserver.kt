@@ -14,8 +14,8 @@ import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSy
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
+import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.DefaultReleaseFeatureProvider
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.FirebaseRemoteFeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.PreferencesFeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.getVersionCode
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -35,7 +35,6 @@ class AppLifecycleObserver(
     private val applicationScope: CoroutineScope,
     private val blazeAdsManager: BlazeAdsManager,
     private val defaultReleaseFeatureProvider: DefaultReleaseFeatureProvider,
-    private val firebaseRemoteFeatureProvider: FirebaseRemoteFeatureProvider,
     private val networkConnectionWatcher: NetworkConnectionWatcherImpl,
     private val versionCode: Int,
     private val preferencesFeatureProvider: PreferencesFeatureProvider,
@@ -53,7 +52,6 @@ class AppLifecycleObserver(
         blazeAdsManager: BlazeAdsManager,
         defaultReleaseFeatureProvider: DefaultReleaseFeatureProvider,
         networkConnectionWatcher: NetworkConnectionWatcherImpl,
-        firebaseRemoteFeatureProvider: FirebaseRemoteFeatureProvider,
         preferencesFeatureProvider: PreferencesFeatureProvider,
         settings: Settings,
         notificationScheduler: NotificationScheduler,
@@ -66,7 +64,6 @@ class AppLifecycleObserver(
         appLifecycleProviderImpl = appLifecycleProviderImpl,
         blazeAdsManager = blazeAdsManager,
         defaultReleaseFeatureProvider = defaultReleaseFeatureProvider,
-        firebaseRemoteFeatureProvider = firebaseRemoteFeatureProvider,
         networkConnectionWatcher = networkConnectionWatcher,
         versionCode = appContext.getVersionCode(),
         preferencesFeatureProvider = preferencesFeatureProvider,
@@ -140,13 +137,10 @@ class AppLifecycleObserver(
     }
 
     private fun setupFeatureFlags() {
-        val providers = if (BuildConfig.DEBUG || BuildConfig.IS_PROTOTYPE) {
+        val providers: List<FeatureProvider> = if (BuildConfig.DEBUG || BuildConfig.IS_PROTOTYPE) {
             listOf(preferencesFeatureProvider)
         } else {
-            listOf(
-                firebaseRemoteFeatureProvider,
-                defaultReleaseFeatureProvider,
-            )
+            listOf(defaultReleaseFeatureProvider)
         }
         FeatureFlag.initialize(providers)
     }

@@ -28,8 +28,8 @@ import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
+import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.DefaultReleaseFeatureProvider
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.FirebaseRemoteFeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.PreferencesFeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.utils.log.RxJavaUncaughtExceptionHandling
@@ -83,8 +83,6 @@ class AutomotiveApplication :
     @Inject lateinit var experimentProvider: ExperimentProvider
 
     @Inject lateinit var defaultReleaseFeatureProvider: DefaultReleaseFeatureProvider
-
-    @Inject lateinit var firebaseRemoteFeatureProvider: FirebaseRemoteFeatureProvider
 
     @Inject lateinit var preferencesFeatureProvider: PreferencesFeatureProvider
 
@@ -222,13 +220,10 @@ class AutomotiveApplication :
     }
 
     private fun setupFeatureFlags() {
-        val providers = if (BuildConfig.DEBUG || BuildConfig.IS_PROTOTYPE) {
+        val providers: List<FeatureProvider> = if (BuildConfig.DEBUG || BuildConfig.IS_PROTOTYPE) {
             listOf(preferencesFeatureProvider)
         } else {
-            listOf(
-                firebaseRemoteFeatureProvider,
-                defaultReleaseFeatureProvider,
-            )
+            listOf(defaultReleaseFeatureProvider)
         }
         FeatureFlag.initialize(providers)
     }

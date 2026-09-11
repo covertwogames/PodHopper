@@ -43,7 +43,6 @@ dependencies {
     api(projects.modules.services.views)
 
     implementation(platform(libs.compose.bom))
-    implementation(platform(libs.firebase.bom))
 
     implementation(libs.aboutlibraries.compose)
     implementation(libs.aboutlibraries.core)
@@ -57,8 +56,6 @@ dependencies {
     implementation(libs.compose.webview)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.rx2)
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.config)
     implementation(libs.fragment.compose)
     implementation(libs.fragment.ktx)
     implementation(libs.hilt.navigation.compose)

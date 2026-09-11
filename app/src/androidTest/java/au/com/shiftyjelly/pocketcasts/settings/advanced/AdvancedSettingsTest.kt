@@ -9,7 +9,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.model.ArtworkConfiguration
 import au.com.shiftyjelly.pocketcasts.preferences.model.ArtworkConfiguration.Element
 import au.com.shiftyjelly.pocketcasts.preferences.model.ShelfItem
 import au.com.shiftyjelly.pocketcasts.servers.di.NetworkModule
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -27,12 +26,10 @@ class AdvancedSettingsTest {
         val sharedPreferences = context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
         sharedPreferences.edit().clear().commit()
         val moshi = NetworkModule().provideMoshi()
-        val firebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
         settings = SettingsImpl(
             sharedPreferences = sharedPreferences,
             privatePreferences = sharedPreferences,
             context = context,
-            firebaseRemoteConfig = firebaseRemoteConfig,
             moshi = moshi,
         )
     }

@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.sentry)
-    alias(libs.plugins.google.services)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -72,7 +71,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(platform(libs.compose.bom))
-    implementation(platform(libs.firebase.bom))
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -96,7 +94,6 @@ dependencies {
     implementation(libs.dagger.hilt.core)
     implementation(libs.datastore)?.because("Force using the latest datastore version to stop the app crashing with Glance widgets. Glance and Horologist libraries both include this library. Pull request https://github.com/Automattic/pocket-casts-android/pull/4031.")
     implementation(libs.encryptedlogging)
-    implementation(libs.firebase.config)
     implementation(libs.guava)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)

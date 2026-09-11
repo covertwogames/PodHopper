@@ -10,7 +10,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.ads.BlazeAdsManager
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationScheduler
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.DefaultReleaseFeatureProvider
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.FirebaseRemoteFeatureProvider
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.providers.PreferencesFeatureProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -72,8 +71,6 @@ class AppLifecycleObserverTest {
 
     @Mock private lateinit var defaultReleaseFeatureProvider: DefaultReleaseFeatureProvider
 
-    @Mock private lateinit var firebaseRemoteFeatureProvider: FirebaseRemoteFeatureProvider
-
     @Mock private lateinit var appLifecycleOwner: LifecycleOwner
 
     @Mock private lateinit var appLifecycle: Lifecycle
@@ -113,7 +110,6 @@ class AppLifecycleObserverTest {
             blazeAdsManager = blazeAdsManager,
             preferencesFeatureProvider = preferencesFeatureProvider,
             defaultReleaseFeatureProvider = defaultReleaseFeatureProvider,
-            firebaseRemoteFeatureProvider = firebaseRemoteFeatureProvider,
             versionCode = VERSION_CODE_AFTER_SECOND_INSTALL,
             settings = settings,
             networkConnectionWatcher = networkConnectionWatcher,

@@ -25,7 +25,6 @@ import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.utils.log.RxJavaUncaughtExceptionHandling
 import au.com.shiftyjelly.pocketcasts.wear.networking.ConnectivityLogger
 import com.automattic.android.tracks.crashlogging.CrashLogging
-import com.google.firebase.FirebaseApp
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
@@ -86,8 +85,6 @@ class PocketCastsWearApplication :
 
     private fun setupCrashLogging() {
         initializeRemoteLogging()
-        // Setup the Firebase, the documentation says this isn't needed but in production we sometimes get the following error "FirebaseApp is not initialized in this process au.com.shiftyjelly.pocketcasts. Make sure to call FirebaseApp.initializeApp(Context) first."
-        FirebaseApp.initializeApp(this)
     }
 
     private fun setupLogging() {

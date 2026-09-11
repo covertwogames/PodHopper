@@ -14,7 +14,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.SettingsImpl
 import au.com.shiftyjelly.pocketcasts.sharedtest.MutableClock
 import au.com.shiftyjelly.pocketcasts.utils.UUIDProvider
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.squareup.moshi.Moshi
 import java.util.Date
 import java.util.UUID
@@ -55,7 +54,6 @@ class SuggestedFoldersManagerTest {
             sharedPreferences = preferences,
             privatePreferences = preferences,
             context = context,
-            firebaseRemoteConfig = FirebaseRemoteConfig.getInstance(),
             moshi = moshi,
         )
 

@@ -44,10 +44,9 @@ import au.com.shiftyjelly.pocketcasts.preferences.model.ShelfItem
 import au.com.shiftyjelly.pocketcasts.preferences.model.ThemeSetting
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.Util
-import au.com.shiftyjelly.pocketcasts.utils.config.FirebaseConfig
+import au.com.shiftyjelly.pocketcasts.utils.config.TuningDefaults
 import au.com.shiftyjelly.pocketcasts.utils.extensions.getString
 import au.com.shiftyjelly.pocketcasts.utils.extensions.splitIgnoreEmpty
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -79,7 +78,6 @@ class SettingsImpl @Inject constructor(
     @PublicSharedPreferences private val sharedPreferences: SharedPreferences,
     @PrivateSharedPreferences private val privatePreferences: SharedPreferences,
     @ApplicationContext private val context: Context,
-    private val firebaseRemoteConfig: FirebaseRemoteConfig,
     private val moshi: Moshi,
 ) : Settings {
 
@@ -266,7 +264,7 @@ class SettingsImpl @Inject constructor(
 
     override val cacheEntirePlayingEpisode = UserSetting.BoolPref(
         sharedPrefKey = "cacheEntirePlayingEpisode",
-        defaultValue = firebaseRemoteConfig.getBoolean(FirebaseConfig.EXOPLAYER_CACHE_ENTIRE_PLAYING_EPISODE_SETTING_DEFAULT),
+        defaultValue = TuningDefaults.EXOPLAYER_CACHE_ENTIRE_PLAYING_EPISODE_SETTING_DEFAULT,
         sharedPrefs = sharedPreferences,
     )
 
@@ -1097,48 +1095,44 @@ class SettingsImpl @Inject constructor(
     )
 
     override fun getCustomStorageLimitGb(): Long {
-        return getRemoteConfigLong(FirebaseConfig.CLOUD_STORAGE_LIMIT)
+        return TuningDefaults.CLOUD_STORAGE_LIMIT_GB
     }
 
     override fun getPeriodicSaveTimeMs(): Long {
-        return getRemoteConfigLong(FirebaseConfig.PERIODIC_SAVE_TIME_MS)
+        return TuningDefaults.PERIODIC_SAVE_TIME_MS
     }
 
     override fun getPlayerReleaseTimeOutMs(): Long {
-        return getRemoteConfigLong(FirebaseConfig.PLAYER_RELEASE_TIME_OUT_MS)
+        return TuningDefaults.PLAYER_RELEASE_TIME_OUT_MS
     }
 
     override fun getPodcastSearchDebounceMs(): Long {
-        return getRemoteConfigLong(FirebaseConfig.PODCAST_SEARCH_DEBOUNCE_MS)
+        return TuningDefaults.PODCAST_SEARCH_DEBOUNCE_MS
     }
 
     override fun getEpisodeSearchDebounceMs(): Long {
-        return getRemoteConfigLong(FirebaseConfig.EPISODE_SEARCH_DEBOUNCE_MS)
+        return TuningDefaults.EPISODE_SEARCH_DEBOUNCE_MS
     }
 
+    // PodHopper: there is no Slumber Studios promotion and nothing reads this.
     override fun getSlumberStudiosPromoCode(): String {
-        return firebaseRemoteConfig.getString(FirebaseConfig.SLUMBER_STUDIOS_YEARLY_PROMO_CODE)
+        return ""
     }
 
     override fun getSleepTimerDeviceShakeThreshold(): Long {
-        return getRemoteConfigLong(FirebaseConfig.SLEEP_TIMER_DEVICE_SHAKE_THRESHOLD)
+        return TuningDefaults.SLEEP_TIMER_DEVICE_SHAKE_THRESHOLD
     }
 
     override fun getRefreshPodcastsBatchSize(): Long {
-        return getRemoteConfigLong(FirebaseConfig.REFRESH_PODCASTS_BATCH_SIZE)
+        return TuningDefaults.REFRESH_PODCASTS_BATCH_SIZE
     }
 
     override fun getExoPlayerCacheEntirePlayingEpisodeSizeInMB(): Long {
-        return firebaseRemoteConfig.getLong(FirebaseConfig.EXOPLAYER_CACHE_ENTIRE_PLAYING_EPISODE_SIZE_IN_MB)
+        return TuningDefaults.EXOPLAYER_CACHE_ENTIRE_PLAYING_EPISODE_SIZE_IN_MB
     }
 
     override fun getPlaybackEpisodePositionChangedOnSyncThresholdSecs(): Long {
-        return firebaseRemoteConfig.getLong(FirebaseConfig.PLAYBACK_EPISODE_POSITION_CHANGED_ON_SYNC_THRESHOLD_SECS)
-    }
-
-    private fun getRemoteConfigLong(key: String): Long {
-        val value = firebaseRemoteConfig.getLong(key)
-        return if (value == 0L) (FirebaseConfig.defaults[key] as? Long ?: 0L) else value
+        return TuningDefaults.PLAYBACK_EPISODE_POSITION_CHANGED_ON_SYNC_THRESHOLD_SECS
     }
 
     override val upNextSwipe = UserSetting.PrefFromInt(

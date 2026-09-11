@@ -63,7 +63,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(platform(libs.compose.bom))
-    implementation(platform(libs.firebase.bom))
 
     implementation(libs.aboutlibraries.compose)
     implementation(libs.aboutlibraries.core)
@@ -139,5 +138,3 @@ dependencies {
     androidTestImplementation(libs.mockito.core)
     androidTestImplementation(libs.mockito.kotlin)
 }
-
-apply(plugin = "com.google.gms.google-services")

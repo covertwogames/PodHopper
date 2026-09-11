@@ -28,7 +28,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.SettingsImpl
 import au.com.shiftyjelly.pocketcasts.servers.di.NetworkModule
 import au.com.shiftyjelly.pocketcasts.sharedtest.MutableClock
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import java.util.Date
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
@@ -72,7 +71,6 @@ class PlaylistManagerDsl : TestWatcher() {
             sharedPreferences = sharedPrefs,
             privatePreferences = sharedPrefs,
             context = context,
-            firebaseRemoteConfig = FirebaseRemoteConfig.getInstance(),
             moshi = moshi,
         )
 

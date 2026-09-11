@@ -23,12 +23,8 @@ dependencies {
     api(projects.modules.services.utils)
     implementation(projects.modules.services.servers)
 
-    implementation(platform(libs.firebase.bom))
-
     implementation(libs.automattic.explat)
     implementation(libs.automattic.tracks)
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.config)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)

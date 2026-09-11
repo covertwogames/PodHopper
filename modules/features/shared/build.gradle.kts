@@ -27,11 +27,7 @@ dependencies {
     api(projects.modules.services.repositories)
     api(projects.modules.services.utils)
 
-    implementation(platform(libs.firebase.bom))
-
     implementation(libs.coroutines.play.services)
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.config)
     implementation(libs.lifecycle.process)
     implementation(libs.play.wearable)
     implementation(libs.timber)

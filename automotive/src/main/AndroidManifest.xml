@@ -25,7 +25,6 @@
          process on every download attempt, which on the car surfaced as playback stopping every
          ~25 seconds while Up Next auto-download retried. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
 
     <application
         android:name=".AutomotiveApplication"
@@ -90,9 +89,6 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-
-        <!-- Disable Advertising ID collection -->
-        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false"/>
 
         <meta-data
             android:name="podhopper_automotive"

@@ -30,15 +30,12 @@ dependencies {
     api(projects.modules.services.payment)
 
     implementation(platform(libs.compose.bom))
-    implementation(platform(libs.firebase.bom))
 
     implementation(libs.androidx.annotation)
     implementation(libs.androidx.car)
     implementation(libs.androidx.core.ktx)
     implementation(libs.compose.ui.graphics)
     implementation(libs.coroutines.core)
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.config)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.play.auth)
     implementation(libs.play.cast)

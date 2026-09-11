@@ -47,7 +47,6 @@ dependencies {
     api(projects.modules.services.views)
 
     implementation(platform(libs.compose.bom))
-    implementation(platform(libs.firebase.bom))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.compose.animation)

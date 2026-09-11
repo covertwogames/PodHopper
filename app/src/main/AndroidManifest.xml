@@ -26,8 +26,6 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
-
     <application
             android:name=".PocketCastsApplication"
             android:allowBackup="false"
@@ -449,9 +447,6 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-
-        <!-- Disable Advertising ID collection -->
-        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false"/>
 
         <!-- Samsung Carmode -->
         <meta-data android:name="com.sec.android.automotive.drivelink.notification.SmallIcon" android:resource="@drawable/notification"/>

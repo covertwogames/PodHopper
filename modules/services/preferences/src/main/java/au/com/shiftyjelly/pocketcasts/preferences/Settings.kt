@@ -467,7 +467,7 @@ interface Settings {
     val headphoneControlsPreviousAction: UserSetting<HeadphoneAction>
     val headphoneControlsPlayBookmarkConfirmationSound: UserSetting<Boolean>
 
-    // Firebase remote config
+    // Fixed tuning values (formerly Firebase Remote Config defaults)
     fun getPeriodicSaveTimeMs(): Long
     fun getPlayerReleaseTimeOutMs(): Long
     fun getPodcastSearchDebounceMs(): Long
