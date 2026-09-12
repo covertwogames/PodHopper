@@ -71,7 +71,12 @@ interface Settings {
         const val INFO_EPISODE_NOT_FOUND_URL = "https://podhopper.app/help"
         const val INFO_EPISODE_SERVER_PROBLEM_URL = "https://podhopper.app/help"
 
-        const val CHROME_CAST_APP_ID = "2FA4D21B"
+        // PodHopper: Google's stock Default Media Receiver. The previous value, 2FA4D21B, was
+        // Pocket Casts' own registered receiver, so casting loaded Automattic's receiver page and
+        // showed the Pocket Casts name and logo on the TV. The stock receiver displays whatever the
+        // sender supplies (title, podcast name, artwork, progress), which is already de-branded.
+        // A PodHopper receiver would need a registered app id and a hosted page; see the plan.
+        const val CHROME_CAST_APP_ID = "CC1AD845"
 
         const val WHATS_NEW_VERSION_CODE = 9432
 
