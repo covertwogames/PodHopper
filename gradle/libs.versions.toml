@@ -19,7 +19,6 @@
 # ignore AboutLibraries versions such as -b02 and stick to the stable versions
 aboutlibraries = "14.2.1"
 android-gradle-plugin = "9.2.1"
-billing = "9.0.0"
 coil = "3.5.0"
 compose = "2026.05.01" # https://developer.android.com/jetpack/compose/bom/bom-mapping
 datastore = "1.2.1"
@@ -70,7 +69,6 @@ aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose", versi
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 
 # Billing
-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
 
 # Coil
 

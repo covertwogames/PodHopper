@@ -53,17 +53,13 @@ class RepositoryProviderModule {
         return AnalyticsPaymentListener(eventHorizon)
     }
 
+    // PodHopper: Google Play Billing has been removed. The Google-backed data source only ever ran
+    // when the package name was Pocket Casts' own, which no PodHopper build has, so every build has
+    // always used this in-memory stand-in.
     @Provides
     @Singleton
-    fun providePaymentDataSource(
-        @ApplicationContext context: Context,
-        listeners: Set<@JvmSuppressWildcards PaymentClient.Listener>,
-    ): PaymentDataSource {
-        return if (context.packageName == "au.com.shiftyjelly.pocketcasts") {
-            PaymentDataSource.billing(context, listeners)
-        } else {
-            PaymentDataSource.fake()
-        }
+    fun providePaymentDataSource(): PaymentDataSource {
+        return PaymentDataSource.fake()
     }
 
     @Provides

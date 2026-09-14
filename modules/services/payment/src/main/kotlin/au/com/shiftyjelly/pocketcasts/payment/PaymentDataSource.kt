@@ -1,8 +1,6 @@
 package au.com.shiftyjelly.pocketcasts.payment
 
 import android.app.Activity
-import android.content.Context
-import au.com.shiftyjelly.pocketcasts.payment.billing.BillingPaymentDataSource
 import kotlinx.coroutines.flow.SharedFlow
 
 interface PaymentDataSource {
@@ -17,11 +15,6 @@ interface PaymentDataSource {
     suspend fun acknowledgePurchase(purchase: Purchase): PaymentResult<Purchase>
 
     companion object {
-        fun billing(
-            context: Context,
-            listeners: Set<PaymentClient.Listener>,
-        ): PaymentDataSource = BillingPaymentDataSource(context, listeners)
-
         fun fake() = FakePaymentDataSource()
     }
 }

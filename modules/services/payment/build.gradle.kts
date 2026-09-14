@@ -20,11 +20,8 @@ dependencies {
     api(libs.dagger.hilt.android)
     api(libs.eventhorizon)
 
-    implementation(libs.billing.ktx)
-
     testImplementation(libs.coroutines.test)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
-    testImplementation(libs.robolectric)
 }

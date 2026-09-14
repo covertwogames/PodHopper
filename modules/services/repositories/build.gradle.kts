@@ -17,7 +17,6 @@ dependencies {
     ksp(libs.hilt.compiler)
     ksp(libs.moshi.kotlin.codegen)
 
-    api(libs.billing.ktx)
     api(libs.dagger.hilt.android)
     api(libs.hilt.work)
     api(libs.media3.datasource)
