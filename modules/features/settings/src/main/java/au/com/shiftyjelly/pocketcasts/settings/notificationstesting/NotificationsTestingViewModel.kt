@@ -14,7 +14,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationWork
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationWorker.Companion.DOWNLOADED_EPISODES
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationWorker.Companion.SHOULD_SKIP_VALIDATIONS
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationWorker.Companion.SUBCATEGORY
-import au.com.shiftyjelly.pocketcasts.repositories.notification.OffersNotificationType
 import au.com.shiftyjelly.pocketcasts.repositories.notification.OnboardingNotificationType
 import au.com.shiftyjelly.pocketcasts.repositories.notification.ReEngagementNotificationType
 import au.com.shiftyjelly.pocketcasts.repositories.notification.TrendingAndRecommendationsNotificationType
@@ -49,7 +48,6 @@ internal class NotificationsTestingViewModel @Inject constructor(
         NotificationType.TRENDING -> TrendingAndRecommendationsNotificationType.Trending.subcategory
         NotificationType.RECOMMENDATIONS -> TrendingAndRecommendationsNotificationType.Recommendations.subcategory
         NotificationType.NEW_FEATURE_FOLDERS -> NewFeaturesAndTipsNotificationType.SmartFolders.subcategory
-        NotificationType.OFFERS -> OffersNotificationType.UpgradeNow.subcategory
         NotificationType.DAILY_REMINDER_MISS_YOU -> ReEngagementNotificationType.WeMissYou.subcategory
         NotificationType.DAILY_REMINDER_DOWNLOADS_OFFLINE -> ReEngagementNotificationType.CatchUpOffline.subcategory
         NotificationType.DAILY_REMINDER_SYNC -> OnboardingNotificationType.Sync.subcategory
@@ -58,7 +56,6 @@ internal class NotificationsTestingViewModel @Inject constructor(
         NotificationType.DAILY_REMINDER_FILTERS -> OnboardingNotificationType.Filters.subcategory
         NotificationType.DAILY_REMINDERS_STAFF_PICKS -> OnboardingNotificationType.StaffPicks.subcategory
         NotificationType.DAILY_REMINDERS_THEMES -> OnboardingNotificationType.Themes.subcategory
-        NotificationType.DAILY_REMINDERS_UPSELL -> OnboardingNotificationType.PlusUpsell.subcategory
     }
 
     private fun buildRequest(trigger: NotificationTrigger): OneTimeWorkRequest {
@@ -96,11 +93,9 @@ internal class NotificationsTestingViewModel @Inject constructor(
     fun cancelAllNotifications() {
         viewModelScope.launch {
             notificationScheduler.cancelScheduledReEngagementNotifications()
-            notificationScheduler.cancelScheduledOffersNotifications()
             notificationScheduler.cancelScheduledOnboardingNotifications()
             notificationScheduler.cancelScheduledTrendingAndRecommendationsNotifications()
             notificationScheduler.cancelScheduledNewFeaturesAndTipsNotifications()
-            notificationScheduler.cancelScheduledOffersNotifications()
         }
     }
 
@@ -125,11 +120,6 @@ internal class NotificationsTestingViewModel @Inject constructor(
 
                 NotificationCategoryType.NEW_FEATURES_AND_TIPS -> notificationScheduler.setupNewFeaturesAndTipsNotifications {
                     val indexOfType = NewFeaturesAndTipsNotificationType.values.indexOf(it)
-                    schedule.consecutiveDelay * (1 + indexOfType)
-                }
-
-                NotificationCategoryType.POCKET_CASTS_OFFERS -> notificationScheduler.setupOffersNotifications {
-                    val indexOfType = OffersNotificationType.values.indexOf(it)
                     schedule.consecutiveDelay * (1 + indexOfType)
                 }
             }
@@ -167,16 +157,13 @@ internal class NotificationsTestingViewModel @Inject constructor(
         DAILY_REMINDER_FILTERS,
         DAILY_REMINDERS_STAFF_PICKS,
         DAILY_REMINDERS_THEMES,
-        DAILY_REMINDERS_UPSELL,
         NEW_FEATURE_FOLDERS,
-        OFFERS,
     }
 
     enum class NotificationCategoryType {
         TRENDING_AND_RECOMMENDATIONS,
         DAILY_REMINDERS,
         NEW_FEATURES_AND_TIPS,
-        POCKET_CASTS_OFFERS,
     }
 
     companion object {

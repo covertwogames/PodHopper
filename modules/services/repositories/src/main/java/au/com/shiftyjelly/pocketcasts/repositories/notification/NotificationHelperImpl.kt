@@ -44,6 +44,11 @@ class NotificationHelperImpl @Inject constructor(@ApplicationContext private val
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // PodHopper: the Offers notification category was removed, so delete its channel. Android
+        // keeps a channel once it has been created, so without this an install from an earlier
+        // build would keep an orphaned "Offers" entry in the system notification settings.
+        notificationManager.deleteNotificationChannel(Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_OFFERS.id)
+
         val channelList = ArrayList<NotificationChannel>()
         // set up playback channel
         val playbackChannel = NotificationChannel(Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_PLAYBACK.id, "Playback", NotificationManager.IMPORTANCE_LOW).apply {
@@ -144,14 +149,6 @@ class NotificationHelperImpl @Inject constructor(@ApplicationContext private val
         }
         channelList.add(newFeaturesAndTipsChannel)
 
-        val offersChannel = NotificationChannel(Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_OFFERS.id, "Offers", NotificationManager.IMPORTANCE_DEFAULT).apply {
-            description = context.getString(LR.string.notification_channel_description_offers)
-            setShowBadge(false)
-            enableVibration(true)
-            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-        }
-        channelList.add(offersChannel)
-
         notificationManager.createNotificationChannels(channelList)
     }
 
@@ -199,10 +196,6 @@ class NotificationHelperImpl @Inject constructor(@ApplicationContext private val
         return NotificationCompat.Builder(context, Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_NEW_FEATURES_AND_TIPS.id)
     }
 
-    override fun offersChannelBuilder(): NotificationCompat.Builder {
-        return NotificationCompat.Builder(context, Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_OFFERS.id)
-    }
-
     /**
      * Opens the system notification activity for the episode channel.
      */
@@ -220,10 +213,6 @@ class NotificationHelperImpl @Inject constructor(@ApplicationContext private val
 
     override fun openNewFeaturesAndTipsNotificationSettings(activity: Activity?) {
         openNotificationChannelSettings(activity, Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_NEW_FEATURES_AND_TIPS.id)
-    }
-
-    override fun openOffersNotificationSettings(activity: Activity?) {
-        openNotificationChannelSettings(activity, Settings.NotificationChannel.NOTIFICATION_CHANNEL_ID_OFFERS.id)
     }
 
     override fun removeNotification(intentExtras: Bundle?, notificationId: Int) {

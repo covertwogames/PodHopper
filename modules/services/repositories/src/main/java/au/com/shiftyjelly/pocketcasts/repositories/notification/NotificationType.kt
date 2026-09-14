@@ -14,7 +14,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.SmartFoldersDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.StaffPicksDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ThemesDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.TrendingDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.UpsellDeepLink
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.NotificationId
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
@@ -50,7 +49,6 @@ sealed interface NotificationType {
                 addAll(ReEngagementNotificationType.values)
                 addAll(TrendingAndRecommendationsNotificationType.values)
                 addAll(NewFeaturesAndTipsNotificationType.values)
-                addAll(OffersNotificationType.values)
             }
             return allSupportedNotifications.find { it.subcategory == subCategory }
         }
@@ -144,18 +142,6 @@ sealed class OnboardingNotificationType(
         override fun toIntent(context: Context) = StaffPicksDeepLink.toIntent(context)
     }
 
-    data object PlusUpsell : OnboardingNotificationType(
-        notificationId = NotificationId.ONBOARDING_UPSELL.value,
-        subcategory = SUBCATEGORY_PLUS_UP_SELL,
-        titleRes = LR.string.notification_plus_upsell_title,
-        dayOffset = 6,
-        analyticsType = "onboardingUpsell",
-    ) {
-        override val messageRes get() = LR.string.notification_plus_upsell_message
-
-        override fun toIntent(context: Context) = UpsellDeepLink.toIntent(context)
-    }
-
     companion object {
         const val SUBCATEGORY_SYNC = "sync"
         const val SUBCATEGORY_IMPORT = "import"
@@ -163,7 +149,6 @@ sealed class OnboardingNotificationType(
         const val SUBCATEGORY_FILTERS = "filters"
         const val SUBCATEGORY_THEMES = "themes"
         const val SUBCATEGORY_STAFF_PICKS = "staff_picks"
-        const val SUBCATEGORY_PLUS_UP_SELL = "plus_upsell"
 
         val values: List<OnboardingNotificationType>
             get() = listOf(
@@ -173,7 +158,6 @@ sealed class OnboardingNotificationType(
                 Filters,
                 Themes,
                 StaffPicks,
-                PlusUpsell,
             )
     }
 }
@@ -294,36 +278,6 @@ sealed class NewFeaturesAndTipsNotificationType(
 
         val values: List<NotificationType> get() = listOf(
             SmartFolders,
-        )
-    }
-}
-
-sealed class OffersNotificationType(
-    override val notificationId: Int,
-    override val subcategory: String,
-    override val analyticsType: String,
-    @StringRes override val titleRes: Int,
-    @StringRes override val messageRes: Int? = null,
-    @PluralsRes override val messagePluralRes: Int? = null,
-) : NotificationType {
-
-    override fun isSettingsToggleOn(settings: Settings) = settings.offersNotification.value
-
-    data object UpgradeNow : OffersNotificationType(
-        notificationId = NotificationId.OFFERS.value,
-        subcategory = UPGRADE_NOW,
-        titleRes = LR.string.notification_offers_upgrade_title,
-        messageRes = LR.string.notification_offers_upgrade_message,
-        analyticsType = "upsell",
-    ) {
-        override fun toIntent(context: Context) = UpsellDeepLink.toIntent(context)
-    }
-
-    companion object {
-        const val UPGRADE_NOW = "upgrade_now"
-
-        val values: List<NotificationType> get() = listOf(
-            UpgradeNow,
         )
     }
 }

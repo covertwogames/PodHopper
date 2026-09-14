@@ -28,10 +28,6 @@ class NotificationManagerImpl @Inject constructor(
         setupNotificationsForType(NewFeaturesAndTipsNotificationType.values) { it.notificationId }
     }
 
-    override suspend fun setupOffersNotifications() {
-        setupNotificationsForType(OffersNotificationType.values) { it.notificationId }
-    }
-
     override suspend fun updateUserFeatureInteraction(type: NotificationType) {
         val now = clock.instant().toEpochMilli()
         userNotificationsDao.updateInteractedAt(type.notificationId, now)

@@ -85,9 +85,10 @@ class AppLifecycleObserver(
             // PodHopper: the promotional notification categories (Recommendations, New features,
             // Offers) were removed from settings. Never schedule them, and cancel any that an
             // earlier build may have scheduled so existing installs self heal on next launch.
+            // The Offers category itself is gone, so its leftover work is cancelled by its tag.
             notificationScheduler.cancelScheduledTrendingAndRecommendationsNotifications()
             notificationScheduler.cancelScheduledNewFeaturesAndTipsNotifications()
-            notificationScheduler.cancelScheduledOffersNotifications()
+            notificationScheduler.cancelScheduledWorksByTag(listOf("offers"))
         }
     }
 

@@ -22,11 +22,9 @@ interface NotificationHelper {
     fun openDailyReminderNotificationSettings(activity: Activity?)
     fun openTrendingAndRecommendationsNotificationSettings(activity: Activity?)
     fun openNewFeaturesAndTipsNotificationSettings(activity: Activity?)
-    fun openOffersNotificationSettings(activity: Activity?)
     fun dailyRemindersChannelBuilder(): NotificationCompat.Builder
     fun trendingAndRecommendationsChannelBuilder(): NotificationCompat.Builder
     fun featuresAndTipsChannelBuilder(): NotificationCompat.Builder
-    fun offersChannelBuilder(): NotificationCompat.Builder
     fun isShowing(notificationId: Int): Boolean
     fun removeNotification(intentExtras: Bundle?, notificationId: Int)
 }

@@ -76,13 +76,6 @@ class NotificationDelayCalculatorTest {
         assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.StaffPicks))
     }
 
-    @Test fun testBefore10AM_PlusUpsell() {
-        val t = getFixedTime(2025, Calendar.APRIL, 10, 9, 0)
-        val calc = calculatorAt(t)
-        val expected = (1 + 6 * 24) * HOUR_IN_MILLIS
-        assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.PlusUpsell))
-    }
-
     @Test fun testExact10AM_Sync() {
         val t = getFixedTime(2025, Calendar.APRIL, 10, 10, 0)
         val calc = calculatorAt(t)
@@ -125,13 +118,6 @@ class NotificationDelayCalculatorTest {
         assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.StaffPicks))
     }
 
-    @Test fun testExact10AM_PlusUpsell() {
-        val t = getFixedTime(2025, Calendar.APRIL, 10, 10, 0)
-        val calc = calculatorAt(t)
-        val expected = (24 + 6 * 24) * HOUR_IN_MILLIS
-        assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.PlusUpsell))
-    }
-
     @Test fun testAfter10AM_Sync() {
         val t = getFixedTime(2025, Calendar.APRIL, 10, 11, 0)
         val calc = calculatorAt(t)
@@ -172,13 +158,6 @@ class NotificationDelayCalculatorTest {
         val calc = calculatorAt(t)
         val expected = (23 + 5 * 24) * HOUR_IN_MILLIS
         assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.StaffPicks))
-    }
-
-    @Test fun testAfter10AM_PlusUpsell() {
-        val t = getFixedTime(2025, Calendar.APRIL, 10, 11, 0)
-        val calc = calculatorAt(t)
-        val expected = (23 + 6 * 24) * HOUR_IN_MILLIS
-        assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.PlusUpsell))
     }
 
     @Test fun testReEngagementCheck_Before4PM() {
@@ -263,30 +242,6 @@ class NotificationDelayCalculatorTest {
     @Test fun testFeaturesAndTips_After4PM() {
         val t = getFixedTime(2025, Calendar.MAY, 21, 17, 0)
         val calculatedDelay = calculatorAt(t).calculateDelayForNewFeatures()
-        val calculatedTime = t + calculatedDelay
-        val expected = getFixedTime(2025, Calendar.MAY, 22, 16, 0)
-        assertEquals(expected, calculatedTime)
-    }
-
-    @Test fun testOffers_Before4PM() {
-        val t = getFixedTime(2025, Calendar.MAY, 21, 15, 0)
-        val calculatedDelay = calculatorAt(t).calculateDelayForOffers()
-        val calculatedTriggerTime = t + calculatedDelay
-        val expectedTime = getFixedTime(2025, Calendar.MAY, 21, 16, 0)
-        assertEquals(expectedTime, calculatedTriggerTime)
-    }
-
-    @Test fun testOffers_At4PM() {
-        val t = getFixedTime(2025, Calendar.MAY, 21, 16, 0)
-        val calculatedDelay = calculatorAt(t).calculateDelayForOffers()
-        val calculatedTime = t + calculatedDelay
-        val expected = getFixedTime(2025, Calendar.MAY, 22, 16, 0)
-        assertEquals(expected, calculatedTime)
-    }
-
-    @Test fun testOffers_After4PM() {
-        val t = getFixedTime(2025, Calendar.MAY, 21, 17, 0)
-        val calculatedDelay = calculatorAt(t).calculateDelayForOffers()
         val calculatedTime = t + calculatedDelay
         val expected = getFixedTime(2025, Calendar.MAY, 22, 16, 0)
         assertEquals(expected, calculatedTime)

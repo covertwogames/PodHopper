@@ -576,39 +576,6 @@ class DeepLinkFactoryTest {
     }
 
     @Test
-    fun upgradeAccount() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://upgrade"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(UpgradeAccountDeepLink, deepLink)
-    }
-
-    @Test
-    fun promoCode() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://redeem/promo/ABC-123"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(PromoCodeDeepLink("ABC-123"), deepLink)
-    }
-
-    @Test
-    fun promoCodeWithLongPath() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://redeem/promo/with/some/long/path/ABC-123"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(PromoCodeDeepLink("ABC-123"), deepLink)
-    }
-
-    @Test
     fun import() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
@@ -668,17 +635,6 @@ class DeepLinkFactoryTest {
             ),
             deepLink,
         )
-    }
-
-    @Test
-    fun upsell() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://upsell"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(UpsellDeepLink, deepLink)
     }
 
     @Test

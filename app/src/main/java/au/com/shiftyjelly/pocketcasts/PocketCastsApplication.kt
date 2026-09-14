@@ -201,7 +201,6 @@ class PocketCastsApplication :
             notificationManager.setupReEngagementNotifications()
             notificationManager.setupTrendingAndRecommendationsNotifications()
             notificationManager.setupNewFeaturesNotifications()
-            notificationManager.setupOffersNotifications()
             appLifecycleObserver.setup()
             PlaybackServiceToggle.ensureCorrectServiceEnabled(this@PocketCastsApplication)
             // PodHopper: periodic cross-device sync so positions and completions from other

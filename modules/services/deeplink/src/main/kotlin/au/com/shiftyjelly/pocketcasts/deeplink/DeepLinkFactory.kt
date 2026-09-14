@@ -55,10 +55,7 @@ class DeepLinkFactory(
         SubscribeOnAndroidAdapter(),
         AppleAdapter(),
         CloudFilesAdapter(),
-        UpsellAdapter(),
-        UpgradeAccountAdapter(),
         FeaturesAdapter(),
-        PromoCodeAdapter(),
         ShareLinkNativeAdapter(),
         SignInAdapter(shareHost),
         ShareLinkAdapter(shareHost),
@@ -401,34 +398,6 @@ private class CloudFilesAdapter : DeepLinkAdapter {
     }
 }
 
-private class UpsellAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val scheme = uriData?.scheme
-        val host = uriData?.host
-
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "upsell") {
-            UpsellDeepLink
-        } else {
-            null
-        }
-    }
-}
-
-private class UpgradeAccountAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val scheme = uriData?.scheme
-        val host = uriData?.host
-
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "upgrade") {
-            UpgradeAccountDeepLink
-        } else {
-            null
-        }
-    }
-}
-
 private class FeaturesAdapter : DeepLinkAdapter {
     override fun create(intent: Intent): DeepLink? {
         val uriData = intent.data
@@ -440,20 +409,6 @@ private class FeaturesAdapter : DeepLinkAdapter {
                 "suggestedFolders" -> SmartFoldersDeepLink
                 else -> null
             }
-        } else {
-            null
-        }
-    }
-}
-
-private class PromoCodeAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val dataString = uriData?.toString().orEmpty()
-        val pathSegments = uriData?.pathSegments.orEmpty()
-
-        return if (intent.action == ACTION_VIEW && dataString.startsWith("pktc://redeem/promo") && pathSegments.size >= 2) {
-            PromoCodeDeepLink(pathSegments.last())
         } else {
             null
         }

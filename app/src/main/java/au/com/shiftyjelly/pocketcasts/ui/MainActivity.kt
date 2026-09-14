@@ -59,7 +59,6 @@ import androidx.mediarouter.media.MediaRouter
 import androidx.transition.Slide
 import au.com.shiftyjelly.pocketcasts.R
 import au.com.shiftyjelly.pocketcasts.account.AccountActivity
-import au.com.shiftyjelly.pocketcasts.account.PromoCodeUpgradedFragment
 import au.com.shiftyjelly.pocketcasts.account.onboarding.AccountBenefitsFragment
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
@@ -88,7 +87,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.NativeShareDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.OpmlImportDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.PlayFromSearchDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.PocketCastsWebsiteGetDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.PromoCodeDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.RecommendationsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ReferralsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShareListDeepLink
@@ -108,8 +106,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.SonosDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.StaffPicksDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ThemesDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.TrendingDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.UpgradeAccountDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.UpsellDeepLink
 import au.com.shiftyjelly.pocketcasts.discover.util.DiscoverDeepLinkManager
 import au.com.shiftyjelly.pocketcasts.discover.util.DiscoverDeepLinkManager.Companion.RECOMMENDATIONS_USER
 import au.com.shiftyjelly.pocketcasts.discover.util.DiscoverDeepLinkManager.Companion.STAFF_PICKS_LIST_ID
@@ -267,8 +263,6 @@ class MainActivity :
         init {
             AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
         }
-
-        const val PROMOCODE_REQUEST_CODE = 2
     }
 
     @Inject
@@ -1714,25 +1708,12 @@ class MainActivity :
                     openCloudFiles()
                 }
 
-                is UpsellDeepLink -> {
-                    closePlayer()
-                    openOnboardingFlow(OnboardingFlow.Upsell(OnboardingUpgradeSource.DEEP_LINK))
-                }
-
                 is SmartFoldersDeepLink -> {
                     if (supportFragmentManager.findFragmentByTag("suggested_folders") == null) {
                         closePlayer()
                         SuggestedFoldersFragment.newInstance(SuggestedFoldersFragment.Source.DEEPLINK).show(supportFragmentManager, "suggested_folders")
                     }
                     openTab(VR.id.navigation_podcasts)
-                }
-
-                is UpgradeAccountDeepLink -> {
-                    showAccountUpgradeNowDialog()
-                }
-
-                is PromoCodeDeepLink -> {
-                    openPromoCode(deepLink.code)
                 }
 
                 is NativeShareDeepLink -> {
@@ -1938,27 +1919,12 @@ class MainActivity :
     }
 
     @Suppress("DEPRECATION")
-    private fun openPromoCode(code: String) {
-        val accountIntent = AccountActivity.promoCodeInstance(this, code)
-        startActivityForResult(accountIntent, PROMOCODE_REQUEST_CODE)
-    }
-
-    private fun showUpgradedFromPromoCode(description: String) {
-        openTab(VR.id.navigation_profile)
-        PromoCodeUpgradedFragment.newInstance(description)
-            .show(supportFragmentManager, "upgraded_from_promocode")
-    }
-
-    @Suppress("DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == SonosAppLinkActivity.SONOS_APP_ACTIVITY_RESULT) {
             setResult(Activity.RESULT_OK, data)
             finish()
-        } else if (requestCode == PROMOCODE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val message = data?.getStringExtra(AccountActivity.PROMO_CODE_RETURN_DESCRIPTION)
-            showUpgradedFromPromoCode(message ?: "")
         }
     }
 

@@ -22,7 +22,6 @@ import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import java.time.Instant
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import au.com.shiftyjelly.pocketcasts.images.R as IR
@@ -80,13 +79,6 @@ class NotificationWorker @AssistedInject constructor(
                 !folders.isNullOrEmpty()
             }
 
-            is OnboardingNotificationType.PlusUpsell,
-            is OffersNotificationType.UpgradeNow,
-            -> {
-                val subscription = settings.cachedSubscription.value
-                subscription == null || subscription.expiryDate.isBefore(Instant.now())
-            }
-
             else -> true
         }
     }
@@ -101,10 +93,6 @@ class NotificationWorker @AssistedInject constructor(
 
             is NewFeaturesAndTipsNotificationType -> {
                 notificationHelper.featuresAndTipsChannelBuilder()
-            }
-
-            is OffersNotificationType -> {
-                notificationHelper.offersChannelBuilder()
             }
 
             else -> notificationHelper.dailyRemindersChannelBuilder()

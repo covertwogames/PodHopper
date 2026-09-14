@@ -5,7 +5,6 @@ interface NotificationManager {
     suspend fun setupReEngagementNotifications()
     suspend fun setupTrendingAndRecommendationsNotifications()
     suspend fun setupNewFeaturesNotifications()
-    suspend fun setupOffersNotifications()
     suspend fun updateUserFeatureInteraction(type: NotificationType)
     suspend fun updateUserFeatureInteraction(id: Int)
     suspend fun hasUserInteractedWithFeature(type: NotificationType): Boolean

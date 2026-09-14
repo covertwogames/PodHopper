@@ -30,7 +30,6 @@ class NotificationSchedulerImpl @Inject constructor(
         private const val TAG_REENGAGEMENT = "daily_re_engagement_check"
         private const val TAG_ONBOARDING = "onboarding_notification"
         private const val TAG_FEATURES = "features_and_tips"
-        private const val TAG_OFFERS = "offers"
     }
 
     override fun setupOnboardingNotifications(delayProvider: ((OnboardingNotificationType) -> Duration)?) {
@@ -43,7 +42,6 @@ class NotificationSchedulerImpl @Inject constructor(
             OnboardingNotificationType.Filters,
             OnboardingNotificationType.Themes,
             OnboardingNotificationType.StaffPicks,
-            OnboardingNotificationType.PlusUpsell,
         ).forEach { type ->
             val delay = delayProvider?.invoke(type)?.inWholeMilliseconds ?: delayCalculator.calculateDelayForOnboardingNotification(type)
 
@@ -132,25 +130,6 @@ class NotificationSchedulerImpl @Inject constructor(
         )
     }
 
-    override suspend fun setupOffersNotifications(delayProvider: ((OffersNotificationType) -> Duration)?) {
-        if (!isRunningOnPhone) return
-
-        val workData = workDataOf(
-            SUBCATEGORY to OffersNotificationType.UpgradeNow.subcategory,
-        )
-        val notificationWork = PeriodicWorkRequest.Builder(NotificationWorker::class.java, 14, TimeUnit.DAYS)
-            .setInputData(workData)
-            .setInitialDelay(delayProvider?.invoke(OffersNotificationType.UpgradeNow)?.inWholeMilliseconds ?: delayCalculator.calculateDelayForOffers(), TimeUnit.MILLISECONDS)
-            .addTag(TAG_OFFERS)
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            TAG_OFFERS,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            notificationWork,
-        )
-    }
-
     override fun cancelScheduledReEngagementNotifications() {
         WorkManager.getInstance(context).cancelUniqueWork(TAG_REENGAGEMENT)
     }
@@ -169,10 +148,6 @@ class NotificationSchedulerImpl @Inject constructor(
 
     override fun cancelScheduledNewFeaturesAndTipsNotifications() {
         WorkManager.getInstance(context).cancelAllWorkByTag(TAG_FEATURES)
-    }
-
-    override fun cancelScheduledOffersNotifications() {
-        WorkManager.getInstance(context).cancelAllWorkByTag(TAG_OFFERS)
     }
 
     override fun cancelScheduledWorksByTag(tags: List<String>) {
