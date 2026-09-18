@@ -296,6 +296,13 @@ class PodHopperUpNextSync @Inject constructor(
         withContext(Dispatchers.IO) {
             manager.upNextQueue.importServerChangesBlocking(resolved, manager)
         }
+        // PodHopper: the import only writes the queue, so without this the player keeps whatever it
+        // already held. Pressing play then resumed that episode's audio under the newly imported
+        // episode's identity (seen on the car, 18 Sep 2026). loadQueue switches a paused player over
+        // to the new head straight away, and does nothing at all while something is playing, since
+        // the import keeps the playing episode at the head. The original Pocket Casts queue sync
+        // called this in the same place; it was lost when this replacement was written.
+        manager.loadQueue()
         val note = if (unresolved.isNotEmpty()) ", ${unresolved.size} could not be built and will be retried when their podcasts arrive" else ""
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next applied ${resolved.size} episode(s)$note")
         return unresolved

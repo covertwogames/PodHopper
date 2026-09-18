@@ -842,7 +842,15 @@ open class PlaybackManager @Inject constructor(
         sourceView: SourceView = SourceView.UNKNOWN,
         showedStreamWarning: Boolean = false,
     ) {
-        if (isPlayerSwitchRequired()) {
+        // PodHopper: the switch test only covers a missing player and the local/cast swap, so a
+        // player still holding a previous episode used to be resumed as-is while the app treated
+        // it as the queue's current episode: the new episode's title on screen, the old episode's
+        // audio, and its length and position written onto the new episode's row (seen on the car,
+        // 18 Sep 2026). playNowSync has always made this comparison; the play button now does too.
+        val currentPlayer = this.player
+        val queueEpisode = getCurrentEpisode()
+        val differentEpisode = currentPlayer != null && queueEpisode != null && queueEpisode.uuid != currentPlayer.episodeUuid
+        if (differentEpisode || isPlayerSwitchRequired()) {
             loadCurrentEpisode(
                 play = true,
                 showedStreamWarning = showedStreamWarning,
@@ -3060,6 +3068,16 @@ open class PlaybackManager @Inject constructor(
                     updatePausedPlaybackState()
                 }
             } else if (episode.uuid != currentPlayer.episodeUuid) {
+                // PodHopper: loading an episode un-marks it as played, so an imported queue that
+                // still lists an episode another device has just finished would resurrect it here.
+                // Status is re-read from the database because the queue's cached copy can be a
+                // stale snapshot. The queue itself is left alone; the removal arrives with a later
+                // sync, and the self-heal in setup() advances past it if it is still there.
+                val fresh = episodeManager.findEpisodeByUuid(episode.uuid)
+                if (fresh != null && fresh.playingStatus == EpisodePlayingStatus.COMPLETED) {
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Not loading ${episode.uuid} from the imported queue: it is already finished here")
+                    return@launch
+                }
                 loadCurrentEpisode(false)
             }
         }
