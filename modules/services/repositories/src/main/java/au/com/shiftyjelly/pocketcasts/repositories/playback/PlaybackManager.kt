@@ -2525,6 +2525,59 @@ open class PlaybackManager @Inject constructor(
     }
 
     /**
+     * PodHopper: brings the loaded, paused episode to a position another device has just synced, so
+     * the in-memory copy, the paused player and the playback state all agree with the saved record.
+     *
+     * Background sync writes a synced position to the saved record only. Before this, the paused
+     * player and the in-memory copy kept the old position, and the next pause, which runs in full
+     * even when already paused and which a headset or the car can send repeatedly, read the old
+     * position back from the player and wrote it over the synced one. Playing offline afterwards
+     * then started from the old position.
+     *
+     * Called only from background sync, never from the pre-play check. Does nothing while playing or
+     * about to play (play marks itself playing before it reads a start point), while casting, or when
+     * the episode is not the loaded one. Mirrors a user scrub while paused, except that it does not
+     * record that the user seeked, which decides the car's auto-correct and the phone's auto-jump.
+     *
+     * The in-memory copy is updated at once, so a play tapped in the next moment starts from the
+     * synced position. The player is moved under [loadMutex], so this cannot interleave with an
+     * episode being loaded into the player.
+     */
+    fun alignPausedEpisodeWithSyncedPosition(
+        episodeUuid: String,
+        positionMs: Int,
+    ) {
+        if (positionMs < 0 || isPlaying() || isPlaybackRemote()) {
+            return
+        }
+        val current = getCurrentEpisode() ?: return
+        if (current.uuid != episodeUuid) {
+            return
+        }
+        current.playedUpToMs = positionMs
+        launch {
+            loadMutex.withLock {
+                if (isPlaying() || isPlaybackRemote()) {
+                    return@withLock
+                }
+                val loaded = getCurrentEpisode()
+                if (loaded == null || loaded.uuid != episodeUuid) {
+                    return@withLock
+                }
+                loaded.playedUpToMs = positionMs
+                val currentPlayer = player
+                if (currentPlayer != null && currentPlayer.episodeUuid == episodeUuid) {
+                    currentPlayer.seekToTimeMs(positionMs)
+                }
+                withContext(Dispatchers.Main) {
+                    updatePausedPlaybackState()
+                }
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper sync: moved the paused episode $episodeUuid to the synced position ${positionMs / 1000}s")
+            }
+        }
+    }
+
+    /**
      * PodHopper: a sync pull found a newer cross-device position for the episode playing right now.
      *
      * The sync layer will not write the database under live playback, and it used to discard the

@@ -278,8 +278,13 @@ class PodHopperPositionSync @Inject constructor(
      * the wrong field for this, which is why the earlier guard misbehaved. Compares this device's clock
      * to the server's, the same assumption the rest of the sync makes.
      */
-    private fun localPositionIsNewer(episode: BaseEpisode, remoteTs: Long): Boolean {
-        val localTs = episode.playedUpToModified ?: return false
+    private fun localPositionIsNewer(episode: BaseEpisode, remoteTs: Long): Boolean = localPositionIsNewer(episode.playedUpToModified, remoteTs)
+
+    private fun localPositionIsNewer(
+        localPositionModified: Long?,
+        remoteTs: Long,
+    ): Boolean {
+        val localTs = localPositionModified ?: return false
         return remoteTs > 0L && localTs > remoteTs
     }
 
@@ -711,9 +716,17 @@ class PodHopperPositionSync @Inject constructor(
                         val row = rows.getJSONObject(0)
                         val positionSec = row.optInt("position_sec", -1)
                         val remoteTs = row.optLong("updated_at_ms", 0L)
+                        // Judged against the saved record's timestamp, not the one on [episode]. The
+                        // caller passes the queue's in-memory copy, whose timestamp is set when it is
+                        // loaded and never moves as the listener plays, so after listening offline it
+                        // made an older row from another device look newer, and the car jumped back
+                        // to it on its next start. The copy's position is kept in step with background
+                        // sync by alignPausedEpisodeWithSyncedPosition, which this relies on. User
+                        // files are not in the podcast episode table and keep the copy's timestamp.
+                        val storedModified = episodeManager.findByUuid(episode.uuid)?.playedUpToModified
                         if (positionSec < 0) {
                             PlayPullResult.NONE
-                        } else if (localPositionIsNewer(episode, remoteTs)) {
+                        } else if (localPositionIsNewer(storedModified ?: episode.playedUpToModified, remoteTs)) {
                             // This device moved the position more recently than the row was written, and
                             // has not pushed yet (pushes run on a cycle; a pause pushes at once but can
                             // still be overwritten by a stale push from elsewhere in the meantime). The
@@ -733,6 +746,7 @@ class PodHopperPositionSync @Inject constructor(
                             // have that flaw.
                             Log.i(LOG_TAG, "play-pull ${episode.uuid}: applying freshest remote pos=${positionSec}s remoteTs=$remoteTs")
                             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
+                            recordReceivedPosition(episode.uuid, positionSec)
                             PlayPullResult.APPLIED
                         }
                     }
@@ -951,6 +965,8 @@ class PodHopperPositionSync @Inject constructor(
             if (positionSec > 0) {
                 episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
                 episodeManager.updatePlayingStatusBlocking(episode, EpisodePlayingStatus.IN_PROGRESS)
+                recordReceivedPosition(episode.uuid, positionSec)
+                manager.alignPausedEpisodeWithSyncedPosition(episode.uuid, positionSec * 1000)
             }
         } else if (positionSec >= 0) {
             if (localPositionIsNewer(episode, remoteTs)) {
@@ -961,6 +977,8 @@ class PodHopperPositionSync @Inject constructor(
                 return
             }
             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
+            recordReceivedPosition(episode.uuid, positionSec)
+            manager.alignPausedEpisodeWithSyncedPosition(episode.uuid, positionSec * 1000)
             if (positionSec > 0 && episode.playingStatus == EpisodePlayingStatus.NOT_PLAYED) {
                 // Keep status and position consistent: a synced mid-episode position is in progress,
                 // not "not played". Position zero is not progress, so it must not invent one; un-mark
@@ -1255,6 +1273,21 @@ class PodHopperPositionSync @Inject constructor(
 
     private fun writeParked(parked: JSONObject) {
         prefs().edit().putString(PREF_PARKED, parked.toString()).apply()
+    }
+
+    /**
+     * Records a position received from another device as if this device had sent it. The paused
+     * player now sits at that position (see alignPausedEpisodeWithSyncedPosition), so without this
+     * the next pause or shutdown push would send it straight back with a fresh timestamp, and if the
+     * other device had listened further in the meantime, drag it back. With it, that push is a repeat.
+     */
+    private fun recordReceivedPosition(
+        episodeUuid: String,
+        positionSec: Int,
+    ) {
+        synchronized(lastPushedLock) {
+            recordLastPushed(readLastPushed(), episodeUuid, positionSec, System.currentTimeMillis())
+        }
     }
 
     /** The saved per-episode record of the position last sent, keyed by episode uuid. */
