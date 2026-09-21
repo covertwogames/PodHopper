@@ -3,7 +3,6 @@ package au.com.shiftyjelly.pocketcasts.repositories.podhopper
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
-import android.util.Log
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
 import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
@@ -595,7 +594,7 @@ class PodHopperPositionSync @Inject constructor(
         val lastLocalActivityMs = prefs().getLong(PREF_LAST_LOCAL_ACTIVITY_MS, 0L)
         val sinceLocalActivityMs = System.currentTimeMillis() - lastLocalActivityMs
         if (lastLocalActivityMs > 0L && sinceLocalActivityMs < LOCAL_ACTIVITY_ADOPT_GRACE_MS) {
-            Log.i(LOG_TAG, "adopt skipped: local playback activity ${sinceLocalActivityMs}ms ago is within grace")
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper adopt skipped: local playback activity ${sinceLocalActivityMs}ms ago is within grace")
             return null
         }
         // Core guard, in server time: only switch to another device's episode when that row is newer
@@ -605,7 +604,7 @@ class PodHopperPositionSync @Inject constructor(
         // and so the page alone cannot tell that this device is the fresher one.
         val myLatest = latestServerTs(onlyThisDevice = true)
         if (candidate.updatedAtMs <= myLatest) {
-            Log.i(LOG_TAG, "adopt skipped: candidate ${candidate.episodeKey} ts=${candidate.updatedAtMs} not newer than my latest write ts=$myLatest")
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper adopt skipped: candidate ${candidate.episodeKey} ts=${candidate.updatedAtMs} not newer than my latest write ts=$myLatest")
             return null
         }
         var episode = episodeManager.findByUuid(candidate.episodeKey)
@@ -614,10 +613,10 @@ class PodHopperPositionSync @Inject constructor(
             episode = episodeManager.findByUuid(candidate.episodeKey)
         }
         val target = episode ?: run {
-            Log.i(LOG_TAG, "adopt skipped: episode ${candidate.episodeKey} not resolvable locally")
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper adopt skipped: episode ${candidate.episodeKey} not resolvable locally")
             return null
         }
-        Log.i(LOG_TAG, "adopting episode ${target.uuid} ts=${candidate.updatedAtMs} (my latest write ts=$myLatest), loadIntoPlayer=$loadIntoPlayer")
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper adopting episode ${target.uuid} ts=${candidate.updatedAtMs} (my latest write ts=$myLatest), loadIntoPlayer=$loadIntoPlayer")
         playbackManager.get().adoptCurrentEpisodeFromSync(target, loadIntoPlayer = loadIntoPlayer)
         return target
     }
@@ -650,7 +649,7 @@ class PodHopperPositionSync @Inject constructor(
                     val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
                     val candidate = latestInProgressFrom(rows)
                     if (candidate == null) {
-                        Log.i(LOG_TAG, "adopt-before-resume: no in-progress episode from another device")
+                        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper adopt-before-resume: no in-progress episode from another device")
                         return@withContext null
                     }
                     maybeAdoptLatest(candidate, loadIntoPlayer = loadIntoPlayer)
@@ -710,7 +709,7 @@ class PodHopperPositionSync @Inject constructor(
                         "&limit=1"
                     val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
                     if (rows.length() == 0) {
-                        Log.i(LOG_TAG, "play-pull ${episode.uuid}: no other-device row, keeping local")
+                        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper play-pull ${episode.uuid}: no other-device row, keeping local")
                         PlayPullResult.NONE
                     } else {
                         val row = rows.getJSONObject(0)
@@ -744,7 +743,7 @@ class PodHopperPositionSync @Inject constructor(
                             // local almost every time; the position timestamp is stamped only by real
                             // position changes (playback, seeks, mark played, mark unplayed), so it does not
                             // have that flaw.
-                            Log.i(LOG_TAG, "play-pull ${episode.uuid}: applying freshest remote pos=${positionSec}s remoteTs=$remoteTs")
+                            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper play-pull ${episode.uuid}: applying freshest remote pos=${positionSec}s remoteTs=$remoteTs")
                             episodeManager.updatePlayedUpToBlocking(episode, positionSec.toDouble(), forceUpdate = true)
                             recordReceivedPosition(episode.uuid, positionSec)
                             PlayPullResult.APPLIED
@@ -853,7 +852,7 @@ class PodHopperPositionSync @Inject constructor(
                     val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
                     val candidate = latestInProgressFrom(rows)
                     if (candidate == null) {
-                        Log.i(LOG_TAG, "resolve-latest: no in-progress episode from another device")
+                        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper resolve-latest: no in-progress episode from another device")
                         return@withContext null
                     }
                     var episode = episodeManager.findByUuid(candidate.episodeKey)
@@ -1385,7 +1384,6 @@ class PodHopperPositionSync @Inject constructor(
         // Rows per upsert when a bulk played-state change is pushed. Bulk mark-as-played over a
         // whole podcast can be hundreds of episodes; one request each would be slow and fragile.
         private const val PUSH_CHUNK_SIZE = 100
-        private const val LOG_TAG = "PodHopperSync"
         private const val TABLE_PLAYBACK_STATE = "playback_state"
         private const val PREF_NAME = "podhopper_position_sync"
         private const val PREF_INSTALL_ID = "install_id"
