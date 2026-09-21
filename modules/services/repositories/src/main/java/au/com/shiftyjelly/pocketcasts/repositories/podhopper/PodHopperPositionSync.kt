@@ -19,6 +19,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -74,10 +75,9 @@ class PodHopperPositionSync @Inject constructor(
     @Volatile
     private var lastPushAttemptMs = 0L
 
-    // PodHopper: the episode and position last handed to the backend, so a push that would repeat
-    // one already sent can be skipped. See the guard in [pushPosition].
-    private var lastPushedEpisodeUuid: String? = null
-    private var lastPushedPositionSec = -1
+    // PodHopper: guards the saved per-episode record of the position last handed to the backend,
+    // which [pushPosition] reads and updates from several threads. See the guard in [pushPosition].
+    private val lastPushedLock = Any()
 
     @Volatile
     private var lastBrowsePullMs = 0L
@@ -169,15 +169,25 @@ class PodHopperPositionSync @Inject constructor(
         // fresh timestamp. Hours later a car that genuinely was further ahead pulled that row,
         // found it newer by timestamp and forty minutes older by content, and rewound.
         //
-        // Exact equality rather than the database's two-second window, deliberately: the window
-        // exists to avoid writes for jitter, and at slow playback speeds a real few seconds of
-        // listening could fall inside it. Identical is unambiguous, and the repeats this prevents
-        // were identical to the millisecond.
-        if (episode.uuid == lastPushedEpisodeUuid && positionSec == lastPushedPositionSec) {
-            return
+        // The check used to be exact equality, and was held only in memory for one episode. Both
+        // failed on 21 Sep 2026: a phone paused at 2605 seconds had its playback service shut down
+        // 37 minutes later, and the shutdown push reads the position from the playback state,
+        // which is refreshed once a second and so lagged the player by a second. It sent 2604, not
+        // an exact repeat of the 2605 it had already sent, and the car, which had listened ten
+        // minutes further in the meantime, rewound to it. The record is now kept per episode, so
+        // switching episodes cannot reset it, and saved, so an app restart cannot either. A push
+        // within REPEAT_WINDOW_SEC of the last one sent for the same episode is a repeat. Real
+        // listening moves at least four seconds between the periodic pushes at normal speed, so
+        // it always clears the window; the cost is that a change of three seconds or less is not
+        // published until the position moves further.
+        synchronized(lastPushedLock) {
+            val lastPushed = readLastPushed()
+            val previousSec = lastPushed.optJSONObject(episode.uuid)?.takeIf { it.has("p") }?.optInt("p")
+            if (previousSec != null && abs(positionSec - previousSec) <= REPEAT_WINDOW_SEC) {
+                return
+            }
+            recordLastPushed(lastPushed, episode.uuid, positionSec, now)
         }
-        lastPushedEpisodeUuid = episode.uuid
-        lastPushedPositionSec = positionSec
 
         applicationScope.launch(Dispatchers.IO) {
             val row = try {
@@ -1247,6 +1257,38 @@ class PodHopperPositionSync @Inject constructor(
         prefs().edit().putString(PREF_PARKED, parked.toString()).apply()
     }
 
+    /** The saved per-episode record of the position last sent, keyed by episode uuid. */
+    private fun readLastPushed(): JSONObject {
+        val raw = prefs().getString(PREF_LAST_PUSHED, null) ?: return JSONObject()
+        return try {
+            JSONObject(raw)
+        } catch (e: Exception) {
+            JSONObject()
+        }
+    }
+
+    /**
+     * Records [positionSec] as the last position sent for [episodeUuid] and saves the record,
+     * dropping the least recently sent episodes once it holds more than [MAX_LAST_PUSHED].
+     */
+    private fun recordLastPushed(
+        lastPushed: JSONObject,
+        episodeUuid: String,
+        positionSec: Int,
+        nowMs: Long,
+    ) {
+        val entry = JSONObject()
+        entry.put("p", positionSec)
+        entry.put("u", nowMs)
+        lastPushed.put(episodeUuid, entry)
+        if (lastPushed.length() > MAX_LAST_PUSHED) {
+            val keys = lastPushed.keys().asSequence().toList()
+            val oldestFirst = keys.sortedBy { lastPushed.optJSONObject(it)?.optLong("u", 0L) ?: 0L }
+            oldestFirst.take(lastPushed.length() - MAX_LAST_PUSHED).forEach { lastPushed.remove(it) }
+        }
+        prefs().edit().putString(PREF_LAST_PUSHED, lastPushed.toString()).apply()
+    }
+
     private fun getOrCreateInstallId(): String {
         val prefs = prefs()
         val existing = prefs.getString(PREF_INSTALL_ID, null)
@@ -1294,10 +1336,9 @@ class PodHopperPositionSync @Inject constructor(
     fun clearLocalSyncState() {
         // The next account must not inherit this one's idea of what has already been published,
         // or its first real position could be mistaken for a repeat and never sent.
-        lastPushedEpisodeUuid = null
-        lastPushedPositionSec = -1
         upNextSync.get().clearLocalState()
         prefs().edit()
+            .remove(PREF_LAST_PUSHED)
             .remove(PREF_LAST_PULL_MS)
             .remove(PREF_PARKED)
             .remove(PREF_OUTBOX)
@@ -1321,6 +1362,7 @@ class PodHopperPositionSync @Inject constructor(
         private const val PREF_LAST_LOCAL_ACTIVITY_MS = "last_local_activity_ms"
         private const val PREF_COMPLETIONS_CURSOR = "completions_cursor"
         private const val PREF_LAST_FULL_SYNC_MS = "last_full_sync_ms"
+        private const val PREF_LAST_PUSHED = "last_pushed_positions"
         private const val FULL_SYNC_MIN_INTERVAL_MS = 15 * 60 * 1000L
         private const val MIN_PUSH_INTERVAL_MS = 4000L
         private const val PLAY_PULL_TIMEOUT_MS = 5000L
@@ -1331,6 +1373,13 @@ class PodHopperPositionSync @Inject constructor(
         private const val FIRST_SYNC_SENTINEL = -1L
         private const val MAX_PARKED = 500
         private const val MAX_OUTBOX = 500
+        private const val MAX_LAST_PUSHED = 200
+
+        // A push within this many seconds of the last one sent for the same episode is a repeat.
+        // Must exceed the lag between the two position readings (at most about two whole seconds,
+        // since the playback state is refreshed once a second) and stay below the smallest real
+        // movement between periodic pushes (about four seconds at normal speed).
+        private const val REPEAT_WINDOW_SEC = 3
         // Episode keys per "what does the backend have now" query when draining the outbox. Keeps
         // the request url comfortably short.
         private const val OUTBOX_CHECK_CHUNK_SIZE = 50
