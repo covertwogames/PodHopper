@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Pocket Casts</string>
+    <string name="app_name" translatable="false">PodHopper</string>
     <string name="pocket_casts" translatable="false">@string/app_name</string>
     <string name="pocket_casts_plus" translatable="false">Pocket Casts Plus</string>
     <string name="pocket_casts_plus_short" translatable="false">Plus</string>
@@ -1846,19 +1846,12 @@
     <string name="settings_about_website">Website</string>
     <string name="settings_about_terms_of_service_available_at">Our Terms of service are available at %s</string>
     <string name="settings_about_privacy_policy_available_at">Our Privacy policy is available at %s</string>
-    <string name="settings_privacy_summary">Allowing us to collect analytics and crash reports helps us build a better app. We understand if you would prefer not to share this information.</string>
-    <string name="settings_privacy_analytics">Analytics</string>
     <string name="settings_privacy_analytics_first_party">First-party analytics</string>
-    <string name="settings_privacy_analytics_summary">Allow us to collect analytics.</string>
     <string name="settings_privacy_listening_stats">Listening statistics</string>
     <string name="settings_privacy_listening_stats_summary">Allow us to collect listening statistics to display them in your Stats page.</string>
     <string name="settings_privacy_analytics_third_party">Third-party analytics</string>
     <string name="settings_privacy_analytics_third_party_summary">Allow us to use trusted third-party services to collect anonymous data.</string>
-    <string name="settings_privacy_crash">Crash reports</string>
-    <string name="settings_privacy_crash_summary">Allow us to collect crash reports.</string>
     <string name="settings_privacy_crash_link">Link your account to crashes</string>
-    <string name="settings_privacy_crash_link_short">Link your account</string>
-    <string name="settings_privacy_crash_link_summary">Allow us to link your Pocket Casts account to crash reports.</string>
     <string name="settings_open_on_phone">Open on phone</string>
     <string name="settings_could_not_open_on_phone">Unable to open on phone</string>
 

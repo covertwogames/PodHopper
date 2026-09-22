@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- PodHopper brand overrides. App-module resources override the same-named
-     strings inherited from the localization library module. Replaces every
-     user-facing "Pocket Casts" reference with "PodHopper". app_name lives in
-     titles.xml and must NOT be redefined here (AAPT duplicate-resource error). -->
+<!--
+    PodHopper brand string overrides for the Wear OS build.
+
+    This is a copy of app/src/main/res/values/strings_podhopper_brand.xml. The overrides live in
+    the app modules, not the shared localization module, so each app build must carry its own
+    copy. Without this file the watch falls back to the upstream Pocket Casts wording for any
+    shared string it displays, including the notification channel descriptions the watch
+    creates, which appear in the watch's notification settings. Keep this file in sync with the
+    phone copy.
+-->
 <resources>
     <string name="settings_about_share_with_friends_message">Hey! Here is a link to download PodHopper. I\'m really enjoying it and thought you might too. \nhttps://podhopper.app</string>
     <string name="settings_playback_resumption_summary">If on, PodHopper will go back a little in episodes you resume so you can catch up more comfortably.</string>

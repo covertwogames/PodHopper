@@ -924,7 +924,6 @@ Language: sv_SE
     <string name="error_invalid_password_length">Ange ett lösenord som är minst 6 tecken långt.</string>
     <string name="error_no_network">Ingen nätverksanslutning upptäckt. Försök igen senare.</string>
     <string name="error_server_failed">Ett internt serverfel inträffade. Försök igen senare.</string>
-    <string name="settings_privacy_crash_link_short">Länka ditt konto</string>
     <string name="log_in_with_plus">Logga in med ett Plus-konto</string>
     <string name="log_in_watch_requires_plus">Logga in med ett Plus-konto för att använda den här appen eller uppgradera genom att besöka</string>
     <string name="enter_password">Ditt lösenord</string>
@@ -1169,13 +1168,7 @@ Language: sv_SE
     <string name="settings_show_played">Visa spelade avsnitt</string>
     <string name="settings_title_privacy">Integritet</string>
     <string name="profile_privacy_policy_read">Läs integritetspolicy</string>
-    <string name="settings_privacy_crash_link_summary">Tillåt oss att länka ditt Pocket Casts-konto till kraschrapporter.</string>
     <string name="settings_privacy_crash_link">Länka ditt konto till krascher</string>
-    <string name="settings_privacy_crash_summary">Tillåt oss att samla in kraschrapporter.</string>
-    <string name="settings_privacy_crash">Kraschrapporter</string>
-    <string name="settings_privacy_analytics_summary">Tillåt oss att samla in analyser.</string>
-    <string name="settings_privacy_analytics">Analyser</string>
-    <string name="settings_privacy_summary">Att tillåta oss att samla in analyser och kraschrapporter hjälper oss att bygga en bättre app. Vi förstår om du föredrar att inte dela denna information.</string>
     <string name="token_refresh_sign_in_error_title">Inloggningsfel</string>
     <string name="token_refresh_sign_in_error_description">Det uppstod ett problem och du har blivit utloggad. Tryck här för att logga in igen.</string>
     <string name="settings_downloads_clean_up_summary">Är du säker på att du vill ta bort dessa nedladdade filer?</string>

@@ -925,7 +925,6 @@ Language: ru
     <string name="error_invalid_password_length">Введите пароль длиной не менее 6 символов.</string>
     <string name="error_invalid_email_address">Укажите действительный адрес эл. почты.</string>
     <string name="error_no_network">Сетевое подключение не обнаружено. Повторите попытку позже.</string>
-    <string name="settings_privacy_crash_link_short">Привязать учетную запись</string>
     <string name="log_in_with_plus">Войдите с учетной записью Plus</string>
     <string name="log_in_watch_requires_plus">Войдите с учётной записью Plus, чтобы использовать это приложение или расширить возможности посещения</string>
     <string name="enter_password">Введите пароль</string>
@@ -1168,13 +1167,7 @@ Language: ru
     <string name="end_of_year_launch_modal_primary_button_title">Просмотреть мою историю прослушиваний за 2025 год</string>
     <string name="settings_show_played_summary">Выпуски, которые вы уже прослушали, будут по-прежнему отображаться</string>
     <string name="settings_show_played">Показывать прослушанные выпуски</string>
-    <string name="settings_privacy_crash_link_summary">Разрешите подключить вашу учётную запись Pocket Casts к отчётам о сбоях.</string>
     <string name="settings_privacy_crash_link">Подключить учётную запись к данным о сбоях</string>
-    <string name="settings_privacy_crash_summary">Разрешите собирать отчёты о сбоях.</string>
-    <string name="settings_privacy_crash">Отчёты о сбоях</string>
-    <string name="settings_privacy_analytics_summary">Разрешите собирать аналитические данные.</string>
-    <string name="settings_privacy_analytics">Аналитические данные</string>
-    <string name="settings_privacy_summary">Разрешая собирать аналитические данные и отчёты о сбоях, вы помогаете нам улучшать приложение. Мы поймём, если вы решите не предоставлять эту информацию.</string>
     <string name="settings_title_privacy">Политика конфиденциальности</string>
     <string name="profile_privacy_policy_read">Ознакомиться с политикой конфиденциальности</string>
     <string name="token_refresh_sign_in_error_description">Возникла проблема, и был выполнен выход из системы. Коснитесь здесь, чтобы войти.</string>

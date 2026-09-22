@@ -78,7 +78,6 @@ Language: nb_NO
     <string name="error_invalid_email_address">Oppgi en gyldig e-postadresse.</string>
     <string name="error_invalid_password_length">Oppgi et passord som er minst seks tegn langt</string>
     <string name="error_server_failed">Det har oppstått en intern serverfeil. Prøv på nytt senere.</string>
-    <string name="settings_privacy_crash_link_short">Koble kontoen din</string>
     <string name="log_in_watch_requires_plus">Logg på med en Plus-konto for å bruke denne appen eller oppgradere besøket</string>
     <string name="log_in_with_plus">Logg på med en Plus-konto</string>
     <string name="effects">Effekter</string>
@@ -305,13 +304,7 @@ Language: nb_NO
     <string name="settings_show_played_summary">Episoder som du har spilt av, vises fremdeles</string>
     <string name="profile_privacy_policy_read">Les personvernreglene</string>
     <string name="settings_title_privacy">Personvern</string>
-    <string name="settings_privacy_summary">Tillatelse til å innhente analyse og krasjrapporter hjelper oss å lage en bedre app. Men vi forstår hvis du foretrekker å ikke dele denne informasjonen.</string>
-    <string name="settings_privacy_analytics">Analyse</string>
-    <string name="settings_privacy_analytics_summary">Gi oss tillatelse til å innhente analysedata.</string>
-    <string name="settings_privacy_crash">Krasjrapporter</string>
-    <string name="settings_privacy_crash_summary">Gi oss tillatelse til å innhente krasjrapporter.</string>
     <string name="settings_privacy_crash_link">Koble kontoen til krasj</string>
-    <string name="settings_privacy_crash_link_summary">Gi oss tillatelse til å koble Pocket Cast-kontoen til krasjrapporter.</string>
     <string name="token_refresh_sign_in_error_title">Påloggingsfeil</string>
     <string name="token_refresh_sign_in_error_description">Det oppsto et problem, og du ble logget av. Trykk her for å logge på igjen.</string>
     <string name="settings_downloads_clean_up_summary">Er du sikker på at du vil slette disse nedlastede filene?</string>

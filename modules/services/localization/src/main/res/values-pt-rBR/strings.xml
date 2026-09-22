@@ -925,7 +925,6 @@ Language: pt_BR
     <string name="error_invalid_password_length">Informe uma senha com pelo menos seis caracteres.</string>
     <string name="error_invalid_email_address">Digite um endereço de e-mail válido.</string>
     <string name="error_no_network">Nenhuma conexão de rede detectada. Tente novamente mais tarde.</string>
-    <string name="settings_privacy_crash_link_short">Vincular sua conta</string>
     <string name="log_in_with_plus">Faça login com uma conta do Plus</string>
     <string name="log_in_watch_requires_plus">Faça login com uma conta do Plus para usar este aplicativo ou faça upgrade acessando</string>
     <string name="enter_password">Inserir senha</string>
@@ -1168,13 +1167,7 @@ Language: pt_BR
     <string name="end_of_year_launch_modal_primary_button_title">Ver minha retrospectiva de 2025</string>
     <string name="settings_show_played_summary">Os episódios que você já terminou de reproduzir continuarão sendo exibidos</string>
     <string name="settings_show_played">Mostrar episódios reproduzidos</string>
-    <string name="settings_privacy_crash_link_summary">Permita-nos vincular sua conta do Pocket Casts a relatórios de falha.</string>
     <string name="settings_privacy_crash_link">Vincular sua conta a falhas</string>
-    <string name="settings_privacy_crash_summary">Permita-nos receber relatórios de falha.</string>
-    <string name="settings_privacy_crash">Relatórios de falha</string>
-    <string name="settings_privacy_analytics_summary">Permita-nos coletar dados analíticos.</string>
-    <string name="settings_privacy_analytics">Dados analíticos</string>
-    <string name="settings_privacy_summary">Permitir a coleta de dados analíticos e relatórios de falha nos ajuda a criar um aplicativo melhor, mas entenderemos se você preferir não compartilhar essas informações.</string>
     <string name="settings_title_privacy">Privacidade</string>
     <string name="profile_privacy_policy_read">Ler política de privacidade</string>
     <string name="token_refresh_sign_in_error_description">Ocorreu um problema e você foi desconectado. Toque aqui para fazer login novamente.</string>

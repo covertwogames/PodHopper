@@ -925,7 +925,6 @@ Language: es
     <string name="error_invalid_email_address">Introduce una dirección de correo electrónico válida.</string>
     <string name="error_invalid_password_length">Introduce una contraseña que tenga al menos 6 caracteres.</string>
     <string name="error_no_network">No se ha detectado ninguna conexión de red. Inténtalo de nuevo más tarde.</string>
-    <string name="settings_privacy_crash_link_short">Vincular tu cuenta</string>
     <string name="log_in_with_plus">Accede con una cuenta Plus</string>
     <string name="log_in_watch_requires_plus">Para utilizar esta aplicación o mejorar la experiencia de visita, accede con una cuenta Plus.</string>
     <string name="enter_password">Escribe contraseña</string>
@@ -1168,15 +1167,9 @@ Language: es
     <string name="end_of_year_launch_modal_primary_button_title">Ver Mi Playback 2025</string>
     <string name="settings_show_played_summary">Se seguirán mostrando los episodios que hayas terminado de reproducir.</string>
     <string name="settings_show_played">Mostrar episodios reproducidos</string>
-    <string name="settings_privacy_crash_link_summary">Permítenos vincular tu cuenta de Pocket Casts a los informes de errores.</string>
     <string name="settings_privacy_crash_link">Vincular tu cuenta a los errores</string>
-    <string name="settings_privacy_crash_summary">Permítenos recopilar informes de errores.</string>
-    <string name="settings_privacy_crash">Informes de errores</string>
-    <string name="settings_privacy_analytics_summary">Permítenos recopilar análisis.</string>
-    <string name="settings_privacy_analytics">Análisis</string>
     <string name="settings_title_privacy">Privacidad</string>
     <string name="profile_privacy_policy_read">Leer la política de privacidad</string>
-    <string name="settings_privacy_summary">Si nos permites recopilar análisis e informes de errores podremos mejorar la aplicación. Entendemos que prefieras no compartir esta información.</string>
     <string name="token_refresh_sign_in_error_description">Ha habido un problema y tu sesión se ha cerrado. Toca aquí para volver a acceder.</string>
     <string name="token_refresh_sign_in_error_title">Error al acceder</string>
     <string name="settings_downloads_clean_up_summary">¿Seguro que quieres eliminar estos archivos descargados?</string>

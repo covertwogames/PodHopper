@@ -925,7 +925,6 @@ Language: ko_KR
     <string name="error_invalid_password_length">비밀번호를 6자 이상 입력하세요.</string>
     <string name="error_invalid_email_address">유효한 이메일 주소를 입력하세요.</string>
     <string name="error_no_network">네트워크 연결이 감지되지 않았습니다. 나중에 다시 시도해 주세요.</string>
-    <string name="settings_privacy_crash_link_short">계정 연결</string>
     <string name="log_in_with_plus">Plus 계정으로 로그인하세요.</string>
     <string name="log_in_watch_requires_plus">이 앱을 사용하거나 방문을 업그레이드하려면 Plus 계정으로 로그인하세요.</string>
     <string name="enter_password">비밀번호 입력</string>
@@ -1168,13 +1167,7 @@ Language: ko_KR
     <string name="end_of_year_launch_modal_primary_button_title">2025년에 청취한 목록 보기</string>
     <string name="settings_show_played_summary">재생을 마친 에피소드가 계속 표시됩니다.</string>
     <string name="settings_show_played">재생한 에피소드 표시</string>
-    <string name="settings_privacy_crash_link_summary">Pocket Casts 계정을 충돌 보고서에 연결하도록 허용합니다.</string>
     <string name="settings_privacy_crash_link">충돌에 계정 연결</string>
-    <string name="settings_privacy_crash_summary">충돌 보고서를 수집하도록 허용합니다.</string>
-    <string name="settings_privacy_crash">충돌 보고서</string>
-    <string name="settings_privacy_analytics_summary">분석을 수집하도록 허용합니다.</string>
-    <string name="settings_privacy_analytics">분석</string>
-    <string name="settings_privacy_summary">분석 및 충돌 보고서 수집을 허용하면 더 나은 앱을 제작하는 데 도움이 됩니다. 이 정보를 공유하지 않으셔도 됩니다.</string>
     <string name="settings_title_privacy">개인정보</string>
     <string name="profile_privacy_policy_read">개인정보 취급방침 읽기</string>
     <string name="token_refresh_sign_in_error_description">문제가 발생했으며, 로그아웃하셨습니다. 다시 로그인하려면 여기를 누르세요.</string>

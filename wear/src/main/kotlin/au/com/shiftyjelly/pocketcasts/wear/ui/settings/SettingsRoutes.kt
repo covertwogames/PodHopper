@@ -11,16 +11,9 @@ fun NavGraphBuilder.settingsRoutes(navController: NavController) {
         route = SettingsScreen.ROUTE,
     ) {
         SettingsScreen(
-            navigateToPrivacySettings = { navController.navigate(PrivacySettingsScreen.ROUTE) },
             navigateToAbout = { navController.navigate(WearAboutScreen.ROUTE) },
             navigateToHelp = { navController.navigate(HelpScreen.ROUTE) },
         )
-    }
-
-    composable(
-        route = PrivacySettingsScreen.ROUTE,
-    ) {
-        PrivacySettingsScreen()
     }
 
     composable(

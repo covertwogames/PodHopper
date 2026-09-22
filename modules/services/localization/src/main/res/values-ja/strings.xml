@@ -925,7 +925,6 @@ Language: ja_JP
     <string name="error_invalid_password_length">パスワードは少なくとも6文字以上にしてください。</string>
     <string name="error_invalid_email_address">有効なメールアドレスを入力してください。</string>
     <string name="error_no_network">ネットワーク接続が検出されませんでした。 後でもう一度お試しください。</string>
-    <string name="settings_privacy_crash_link_short">アカウントをリンクする</string>
     <string name="log_in_with_plus">Plus アカウントでログインしてください</string>
     <string name="log_in_watch_requires_plus">Plus アカウントでログインしてこのアプリを使用するかアクセスをアップグレードする</string>
     <string name="enter_password">パスワードを入力</string>
@@ -1168,13 +1167,7 @@ Language: ja_JP
     <string name="end_of_year_launch_modal_primary_button_title">マイプレイバック2025を表示</string>
     <string name="settings_show_played_summary">プレイを終了したエピソードは、引き続き表示されます。</string>
     <string name="settings_show_played">「再生されたエピソードを表示」</string>
-    <string name="settings_privacy_crash_link_summary">クラッシュレポートへの Pocket Casts アカウントのリンクを許可します。 </string>
     <string name="settings_privacy_crash_link">アカウントをクラッシュにリンク</string>
-    <string name="settings_privacy_crash_summary">クラッシュレポートの収集を許可します。</string>
-    <string name="settings_privacy_crash">クラッシュレポート</string>
-    <string name="settings_privacy_analytics_summary">アナリティクスの収集を許可します。</string>
-    <string name="settings_privacy_analytics">アナリティクス</string>
-    <string name="settings_privacy_summary">アナリティクスとクラッシュレポートの収集を許可することで、より優れたアプリを構築できます。この情報を共有したくない場合は考慮されます。</string>
     <string name="settings_title_privacy">プライバシー</string>
     <string name="profile_privacy_policy_read">個人情報保護方針を読む</string>
     <string name="token_refresh_sign_in_error_description">問題が発生したため、ログアウトしました。 ここをタップして再度ログインしてください。</string>

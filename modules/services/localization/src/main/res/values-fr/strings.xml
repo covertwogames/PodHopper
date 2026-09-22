@@ -925,7 +925,6 @@ Language: fr
     <string name="error_invalid_password_length">Veuillez saisir un mot de passe d’au moins 6 caractères.</string>
     <string name="error_invalid_email_address">Veuillez saisir une adresse e-mail valide.</string>
     <string name="error_no_network">Aucune connexion réseau n’a été détectée. Veuillez réessayer plus tard.</string>
-    <string name="settings_privacy_crash_link_short">Associer votre compte</string>
     <string name="log_in_with_plus">Veuillez vous connecter avec un compte Plus</string>
     <string name="log_in_watch_requires_plus">Connectez-vous avec un compte Plus pour utiliser cette application ou souscrivez une option payante en vous rendant sur le site</string>
     <string name="enter_password">Saisissez un mot de passe</string>
@@ -1168,15 +1167,9 @@ Language: fr
     <string name="end_of_year_launch_modal_primary_button_title">Voir ma rétrospective 2025</string>
     <string name="settings_show_played_summary">Les épisodes que vous avez terminé de lire continueront à s’afficher</string>
     <string name="settings_show_played">Voir les épisodes lus</string>
-    <string name="settings_privacy_crash_link_summary">Permettez-nous d\'associer votre compte Pocket Casts aux rapports d\'incident.</string>
-    <string name="settings_privacy_crash_summary">Permettez-nous de collecter des rapports d\'incident.</string>
-    <string name="settings_privacy_crash">Rapports d\'incident</string>
-    <string name="settings_privacy_analytics_summary">Permettez-nous de collecter des statistiques.</string>
-    <string name="settings_privacy_analytics">Statistiques</string>
     <string name="settings_title_privacy">Confidentialité</string>
     <string name="profile_privacy_policy_read">Lire notre politique de confidentialité</string>
     <string name="settings_privacy_crash_link">Associez votre compte aux incidents</string>
-    <string name="settings_privacy_summary">En nous autorisant à collecter des statistiques et des rapports d\'incident, vous nous permettez de créer une meilleure application. Nous comprendrions toutefois que vous préfériez ne pas partager ces informations.</string>
     <string name="token_refresh_sign_in_error_description">Un problème s\'est produit, et vous avez été déconnecté(e). Appuyez ici pour vous reconnecter.</string>
     <string name="token_refresh_sign_in_error_title">Erreur de connexion</string>
     <string name="settings_downloads_clean_up_summary">Voulez-vous vraiment supprimer ces fichiers téléchargés ?</string>

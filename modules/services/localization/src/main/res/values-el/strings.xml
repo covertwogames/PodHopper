@@ -558,7 +558,6 @@ Language: el_GR
     <string name="error_invalid_password_length">Παρακαλούμε εισήγαγε έναν κωδικό πρόσβασης με τουλάχιστον 6 χαρακτήρες.</string>
     <string name="error_no_network">Δεν ανιχνεύθηκε σύνδεση δικτύου. Παρακαλώ δοκίμασε ξανά αργότερα.</string>
     <string name="error_server_failed">Εμφανίστηκε εσωτερικό σφάλμα διακομιστή. Προσπάθησε ξανά αργότερα.</string>
-    <string name="settings_privacy_crash_link_short">Σύνδεσε το λογαριασμό σου</string>
     <string name="log_in_with_plus">Παρακαλώ συνδέσου με έναν λογαριασμό Plus</string>
     <string name="log_in_watch_requires_plus">Συνδέσου με έναν λογαριασμό Plus για να χρησιμοποιήσεις αυτή την εφαρμογή ή αναβαθμίσου εντός</string>
     <string name="effects">Εφέ</string>
@@ -794,13 +793,7 @@ Language: el_GR
     <string name="settings_show_played_summary">Τα επεισόδια που έχεις ολοκληρώσει θα εξακολουθούν να εμφανίζονται</string>
     <string name="settings_title_privacy">Απόρρητο</string>
     <string name="profile_privacy_policy_read">Διάβασε την πολιτική απορρήτου</string>
-    <string name="settings_privacy_analytics">Αναλυτικά στοιχεία</string>
-    <string name="settings_privacy_crash">Αναφορές σφαλμάτων</string>
-    <string name="settings_privacy_analytics_summary">Επέτρεψε μας να συλλέγουμε αναλυτικά στοιχεία.</string>
-    <string name="settings_privacy_crash_link_summary">Επέτρεψέ μας να συνδέσουμε τον λογαριασμό σου στο Pocket Casts με τις αναφορές σφαλμάτων.</string>
     <string name="settings_privacy_crash_link">Σύνδεσε τον λογαριασμό σου με σφάλματα</string>
-    <string name="settings_privacy_crash_summary">Επέτρεψέ μας να συλλέξουμε αναφορές σφαλμάτων.</string>
-    <string name="settings_privacy_summary">Η δυνατότητα να συλλέγουμε αναλύσεις και αναφορές σφαλμάτων μας βοηθά να δημιουργήσουμε μια καλύτερη εφαρμογή. Καταλαβαίνουμε αν προτιμάς να μην μοιραστείς αυτές τις πληροφορίες.</string>
     <string name="token_refresh_sign_in_error_title">Σφάλμα Σύνδεσης</string>
     <string name="token_refresh_sign_in_error_description">Υπήρξε ένα πρόβλημα και έχεις αποσυνδεθεί. Πάτησε εδώ για να συνδεθείς ξανά.</string>
     <string name="settings_downloads_clean_up_summary">Σίγουρα θέλεις να διαγράψεις αυτά τα κατεβασμένα αρχεία;</string>

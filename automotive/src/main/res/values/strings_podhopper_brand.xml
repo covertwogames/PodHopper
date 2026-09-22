@@ -95,7 +95,6 @@
     <string name="settings_notification_offers">PodHopper Offers</string>
     <string name="settings_opml_email_body"><![CDATA[Hi, <br/><br/>Please find attached your freshly exported podcast list in an OPML file. <br/><br/>PodHopper Team]]></string>
     <string name="settings_opml_email_subject">PodHopper - Backup of Podcast List</string>
-    <string name="settings_privacy_crash_link_summary">Allow us to link your PodHopper account to crash reports.</string>
     <string name="settings_storage_background_refresh_off">PodHopper will only refresh when you open the app.\n\nEpisode notifications and auto downloads will only happen when you open the app.</string>
     <string name="settings_storage_background_refresh_off_watch">PodHopper will only sync your account when you open the app.</string>
     <string name="settings_storage_background_refresh_on">PodHopper will periodically check for new episodes and auto downloads in the background.</string>

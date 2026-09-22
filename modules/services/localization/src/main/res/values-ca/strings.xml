@@ -937,7 +937,6 @@ Language: ca
     <string name="error_server_failed">S\'ha produït un error intern del servidor. Torna-ho a provar més tard.</string>
     <string name="error_invalid_password_length">Introdueix una contrasenya que tingui almenys 6 caràcters.</string>
     <string name="error_invalid_email_address">Introdueix una adreça de correu electrònic vàlida.</string>
-    <string name="settings_privacy_crash_link_short">Enllaça el teu compte</string>
     <string name="log_in_with_plus">Inicia sessió amb un compte Plus</string>
     <string name="log_in_watch_requires_plus">Inicia sessió amb un compte Plus per utilitzar aquesta app o millorar l\'experiència de la visita</string>
     <string name="effects">Efectes</string>
@@ -1182,13 +1181,7 @@ Language: ca
     <string name="settings_show_played">Mostra els episodis reproduïts</string>
     <string name="profile_privacy_policy_read">Llegeix la política de privacitat</string>
     <string name="settings_title_privacy">Privacitat</string>
-    <string name="settings_privacy_crash_link_summary">Permet-nos enllaçar el teu compte de Pocket Casts amb els informes d\'errors.</string>
     <string name="settings_privacy_crash_link">Enllaça el teu compte als errors</string>
-    <string name="settings_privacy_crash_summary">Permet-nos recollir informes d\'errors.</string>
-    <string name="settings_privacy_crash">Informes d\'errors</string>
-    <string name="settings_privacy_analytics_summary">Permet-nos recopilar dades analítiques.</string>
-    <string name="settings_privacy_analytics">Analítiques</string>
-    <string name="settings_privacy_summary">Si ens permets recopilar analítiques podrem millorar l\'aplicació. Tanmateix, entenem que prefereixis no compartir aquesta informació.</string>
     <string name="token_refresh_sign_in_error_description">Hi havia un problema i t\'has desconnectat. Toca aquí per tornar a iniciar sessió.</string>
     <string name="token_refresh_sign_in_error_title">Error d\'inici de sessió</string>
     <string name="settings_downloads_clean_up_summary">Estàs seguir que vols eliminar aquests arxius descarregats?</string>

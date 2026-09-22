@@ -923,7 +923,6 @@ Language: ar
     <string name="error_invalid_password_length">يرجى إدخال كلمة مرور يصل طولها إلى 6 أحرف على الأقل.</string>
     <string name="error_server_failed">حدث خطأ داخلي في الخادم. ترجى المحاولة مرة أخرى لاحقًا.</string>
     <string name="error_no_network">لم يتم الكشف عن اتصال الشبكة. يرجى المحاولة مرة أخرى لاحقًا.</string>
-    <string name="settings_privacy_crash_link_short">ربط حسابك</string>
     <string name="log_in_watch_requires_plus">تسجيل الدخول باستخدام حساب Plus لاستخدام هذا التطبيق أو ترقية الزيارة</string>
     <string name="log_in_with_plus">يرجى تسجيل الدخول باستخدام حساب Plus</string>
     <string name="enter_password">أدخل كلمة المرور</string>
@@ -1168,13 +1167,7 @@ Language: ar
     <string name="settings_show_played_summary">ستظل الحلقات التي أنهيت تشغيلها معروضة</string>
     <string name="profile_privacy_policy_read">قراءة سياسة الخصوصية</string>
     <string name="settings_title_privacy">الخصوصية</string>
-    <string name="settings_privacy_summary">يؤدي السماح لنا بجمع التحليلات وتقارير الأعطال إلى مساعدتنا على إنشاء تطبيق أفضل. نتفهم ما إذا كنت تفضّل عدم مشاركة هذه المعلومات أم لا.</string>
-    <string name="settings_privacy_analytics">التحليلات</string>
-    <string name="settings_privacy_analytics_summary">اسمح لنا بجمع التحليلات.</string>
-    <string name="settings_privacy_crash">تقارير الأعطال</string>
-    <string name="settings_privacy_crash_summary">اسمح لنا بجمع تقارير الأعطال.</string>
     <string name="settings_privacy_crash_link">ربط حسابك بالأعطال</string>
-    <string name="settings_privacy_crash_link_summary">اسمح لنا بربط حسابك على Pocket Casts بتقارير الأعطال.</string>
     <string name="token_refresh_sign_in_error_title">خطأ في تسجيل الدخول</string>
     <string name="token_refresh_sign_in_error_description">هناك مشكلة وقد سجّلت الخروج. انقر هنا لتسجيل الدخول مرة أخرى.</string>
     <string name="settings_downloads_clean_up_summary">هل تريد بالتأكيد حذف هذه الملفات التي تم تنزيلها؟</string>

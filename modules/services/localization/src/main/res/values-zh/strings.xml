@@ -925,7 +925,6 @@ Language: zh_CN
     <string name="error_invalid_password_length">请输入密码，至少包含 6 个字符。</string>
     <string name="error_invalid_email_address">请输入有效的电子邮箱地址。</string>
     <string name="error_no_network">未检测到网络连接。 请稍后重试。</string>
-    <string name="settings_privacy_crash_link_short">关联您的账户</string>
     <string name="log_in_with_plus">请使用 Plus 账户登录</string>
     <string name="log_in_watch_requires_plus">使用 Plus 账户登录以使用此应用或升级访问</string>
     <string name="enter_password">输入密码</string>
@@ -1168,13 +1167,7 @@ Language: zh_CN
     <string name="end_of_year_launch_modal_primary_button_title">查看我的 2025 年播放记录</string>
     <string name="settings_show_played_summary">您已播放完的剧集仍会显示</string>
     <string name="settings_show_played">显示已播放的剧集</string>
-    <string name="settings_privacy_crash_link_summary">允许我们将您的 Pocket Casts 账户与崩溃报告相关联。</string>
     <string name="settings_privacy_crash_link">将您的账户与崩溃报告相关联</string>
-    <string name="settings_privacy_crash_summary">允许我们收集崩溃报告</string>
-    <string name="settings_privacy_crash">崩溃报告</string>
-    <string name="settings_privacy_analytics_summary">允许我们收集分析。</string>
-    <string name="settings_privacy_analytics">分析</string>
-    <string name="settings_privacy_summary">允许我们收集分析数据和崩溃报告有助于我们构建更好的应用。 如果您不愿意分享共享此信息，我们也能理解。</string>
     <string name="settings_title_privacy">隐私</string>
     <string name="profile_privacy_policy_read">阅读隐私政策</string>
     <string name="token_refresh_sign_in_error_description">出了点问题，您已退出。 点击此处重新登录。</string>

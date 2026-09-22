@@ -46,7 +46,6 @@ object SettingsScreen {
 
 @Composable
 fun SettingsScreen(
-    navigateToPrivacySettings: () -> Unit,
     navigateToAbout: () -> Unit,
     navigateToHelp: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +65,6 @@ fun SettingsScreen(
             onRefreshInBackgroundChange = { viewModel.setRefreshPodcastsInBackground(it) },
             onSignOutClick = viewModel::signOut,
             onRefreshClick = viewModel::refresh,
-            onPrivacyClick = navigateToPrivacySettings,
             onAboutClick = navigateToAbout,
             onHelpClick = navigateToHelp,
         )
@@ -81,7 +79,6 @@ private fun Content(
     onRefreshInBackgroundChange: (Boolean) -> Unit,
     onSignOutClick: () -> Unit,
     onRefreshClick: () -> Unit,
-    onPrivacyClick: () -> Unit,
     onAboutClick: () -> Unit,
     onHelpClick: () -> Unit,
 ) {
@@ -168,14 +165,6 @@ private fun Content(
                 color = MaterialTheme.colors.onSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-        }
-
-        item {
-            WatchListChip(
-                title = stringResource(LR.string.settings_privacy_analytics),
-                iconRes = SR.drawable.whatsnew_privacy,
-                onClick = onPrivacyClick,
             )
         }
 
@@ -285,7 +274,6 @@ private fun SettingsScreenPreview_unchecked() {
             onRefreshInBackgroundChange = {},
             onSignOutClick = {},
             onRefreshClick = {},
-            onPrivacyClick = {},
             onAboutClick = {},
             onHelpClick = {},
         )
@@ -313,7 +301,6 @@ private fun SettingsScreenPreview_checked() {
             onRefreshInBackgroundChange = {},
             onSignOutClick = {},
             onRefreshClick = {},
-            onPrivacyClick = {},
             onAboutClick = {},
             onHelpClick = {},
         )
