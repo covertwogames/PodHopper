@@ -11,6 +11,10 @@ class RefreshResponse {
     // refresh pipeline reads the count from the full episode list, exactly as before.
     private val totalEpisodeCounts = HashMap<String, Int>()
 
+    // PodHopper: each downloaded feed's version markers (ETag, Last-Modified), keyed by feed URL.
+    // The refresh records them only after it has stored that feed's new episodes.
+    private val feedValidators = HashMap<String, Pair<String?, String?>>()
+
     fun getPodcastsWithUpdates(): Set<String> {
         return updates.keys
     }
@@ -31,12 +35,22 @@ class RefreshResponse {
         totalEpisodeCounts[podcastUuid] = count
     }
 
+    fun getFeedValidators(): Map<String, Pair<String?, String?>> {
+        return feedValidators
+    }
+
+    fun setFeedValidators(feedUrl: String, etag: String?, lastModified: String?) {
+        feedValidators[feedUrl] = etag to lastModified
+    }
+
     fun merge(other: RefreshResponse): RefreshResponse {
         val newResponse = RefreshResponse()
         newResponse.updates += this.updates
         newResponse.updates += other.updates
         newResponse.totalEpisodeCounts += this.totalEpisodeCounts
         newResponse.totalEpisodeCounts += other.totalEpisodeCounts
+        newResponse.feedValidators += this.feedValidators
+        newResponse.feedValidators += other.feedValidators
         return newResponse
     }
 

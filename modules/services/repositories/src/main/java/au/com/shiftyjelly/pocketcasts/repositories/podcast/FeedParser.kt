@@ -1,5 +1,6 @@
 package au.com.shiftyjelly.pocketcasts.repositories.podcast
 
+import android.net.Network
 import android.util.Xml
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
@@ -7,13 +8,16 @@ import au.com.shiftyjelly.pocketcasts.models.type.EpisodePlayingStatus
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import dev.stalla.PodcastRssParser
 import dev.stalla.model.Episode
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.xmlpull.v1.XmlPullParser
 import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
+import java.net.InetAddress
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -70,8 +74,33 @@ class FeedParser @Inject constructor() {
      * the number of playable episodes the feed contained.
      */
     sealed interface StreamResult {
-        data class Success(val podcast: Podcast, val episodeCount: Int) : StreamResult
+        data class Success(
+            val podcast: Podcast,
+            val episodeCount: Int,
+            val validators: FeedValidators? = null,
+        ) : StreamResult
+
+        /** The feed has not changed since [validators] were recorded, so nothing was downloaded. */
+        data object NotModified : StreamResult
+
         data class Failure(val reason: String) : StreamResult
+    }
+
+    /**
+     * PodHopper: a feed's version markers from its last full download (the ETag and Last-Modified
+     * response headers). A refresh sends them back to ask the host whether the feed changed, and an
+     * unchanged feed then costs a 304 reply with no body.
+     */
+    data class FeedValidators(val etag: String?, val lastModified: String?)
+
+    /** PodHopper: outcome of a refresh download (see [fetchForRefresh]). */
+    sealed interface RefreshFetchResult {
+        /** The feed has not changed since its validators were recorded, so nothing was downloaded. */
+        data object NotModified : RefreshFetchResult
+
+        data class Updated(val feed: ParsedFeed, val validators: FeedValidators?) : RefreshFetchResult
+
+        data class Failure(val reason: String) : RefreshFetchResult
     }
 
     private val httpClient = OkHttpClient.Builder()
@@ -88,6 +117,26 @@ class FeedParser @Inject constructor() {
         httpClient.newBuilder()
             .callTimeout(STREAMING_CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
+    }
+
+    // PodHopper watch: while set, streamed reads go over this network (a Wi-Fi network the watch was
+    // granted for a sync pass) instead of the default one, which on a watch is usually a slow
+    // Bluetooth link through the phone.
+    @Volatile
+    private var preferredNetwork: Network? = null
+
+    /**
+     * PodHopper watch: runs [block] with streamed reads routed over [network], then restores the
+     * previous routing. A null [network] leaves reads on the default network.
+     */
+    suspend fun <T> withPreferredNetwork(network: Network?, block: suspend () -> T): T {
+        val previous = preferredNetwork
+        preferredNetwork = network
+        try {
+            return block()
+        } finally {
+            preferredNetwork = previous
+        }
     }
 
     /** Deterministic podcast id derived from the feed URL. */
@@ -127,7 +176,47 @@ class FeedParser @Inject constructor() {
             Timber.e(e, "FeedParser: could not fetch $url")
             return FeedResult.Failure("${e.javaClass.simpleName}: ${e.message ?: "no detail"}")
         }
+        return parseBytes(bytes, url)
+    }
 
+    /**
+     * PodHopper: the refresh version of [fetch]. Sends [validators] from the last download so an
+     * unchanged feed comes back as [RefreshFetchResult.NotModified] with nothing downloaded. A changed
+     * feed is downloaded and parsed exactly as [fetch] does, and its new validators come back with it
+     * for the caller to record once the refresh has stored its episodes. Runs blocking, so call it off
+     * the main thread.
+     */
+    fun fetchForRefresh(feedUrl: String, validators: FeedValidators?): RefreshFetchResult {
+        val url = feedUrl.trim()
+        val (bytes, newValidators) = try {
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", USER_AGENT)
+                .header("Accept", ACCEPT)
+                .withValidators(validators)
+                .build()
+            httpClient.newCall(request).execute().use { response ->
+                if (response.code == HTTP_NOT_MODIFIED) {
+                    return RefreshFetchResult.NotModified
+                }
+                if (!response.isSuccessful) {
+                    Timber.e("FeedParser: HTTP ${response.code} for $url")
+                    return RefreshFetchResult.Failure("HTTP ${response.code}")
+                }
+                response.body.bytes() to validatorsFrom(response)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "FeedParser: could not fetch $url")
+            return RefreshFetchResult.Failure("${e.javaClass.simpleName}: ${e.message ?: "no detail"}")
+        }
+        return when (val parsed = parseBytes(bytes, url)) {
+            is FeedResult.Success -> RefreshFetchResult.Updated(parsed.feed, newValidators)
+            is FeedResult.Failure -> RefreshFetchResult.Failure(parsed.reason)
+        }
+    }
+
+    /** Parses a downloaded feed: the strict parser first, then the lenient one. */
+    private fun parseBytes(bytes: ByteArray, url: String): FeedResult {
         // Pass one: strict library parser for spec correct feeds.
         val strict = try {
             PodcastRssParser.parse(ByteArrayInputStream(bytes))
@@ -169,32 +258,47 @@ class FeedParser @Inject constructor() {
     fun stream(
         feedUrl: String,
         batchSize: Int,
+        validators: FeedValidators? = null,
+        continueReading: () -> Boolean = { true },
         onBatch: (podcast: Podcast, episodes: List<PodcastEpisode>) -> Unit,
     ): StreamResult {
         val url = feedUrl.trim()
         val startHeap = usedHeapBytes()
         var peakHeap = startHeap
-        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream start: $url (heap ${startHeap / BYTES_PER_MB} MB)")
+        val network = preferredNetwork
+        val client = if (network == null) streamingClient else clientOn(network)
+        val route = if (network == null) "default network" else "Wi-Fi"
+        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream start: $url (heap ${startHeap / BYTES_PER_MB} MB, $route)")
         return try {
             val request = Request.Builder()
                 .url(url)
                 .header("User-Agent", USER_AGENT)
                 .header("Accept", ACCEPT)
+                .withValidators(validators)
                 .build()
-            streamingClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
+            client.newCall(request).execute().use { response ->
+                if (response.code == HTTP_NOT_MODIFIED) {
+                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream not modified: $url")
+                    StreamResult.NotModified
+                } else if (!response.isSuccessful) {
                     LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream failed: HTTP ${response.code} for $url")
                     StreamResult.Failure("HTTP ${response.code}")
                 } else {
                     val input = CountingInputStream(response.body.byteStream())
-                    val result = streamFrom(input, url, batchSize) { podcast, episodes ->
+                    val streamed = streamFrom(input, url, batchSize, continueReading) { podcast, episodes ->
                         onBatch(podcast, episodes)
                         peakHeap = maxOf(peakHeap, usedHeapBytes())
+                    }
+                    val result = if (streamed is StreamResult.Success) {
+                        streamed.copy(validators = validatorsFrom(response))
+                    } else {
+                        streamed
                     }
                     val endHeap = usedHeapBytes()
                     peakHeap = maxOf(peakHeap, endHeap)
                     val outcome = when (result) {
                         is StreamResult.Success -> "${result.episodeCount} episodes"
+                        is StreamResult.NotModified -> "not modified"
                         is StreamResult.Failure -> "failed (${result.reason})"
                     }
                     LogBuffer.i(
@@ -220,6 +324,7 @@ class FeedParser @Inject constructor() {
         input: InputStream,
         url: String,
         batchSize: Int,
+        continueReading: () -> Boolean,
         onBatch: (podcast: Podcast, episodes: List<PodcastEpisode>) -> Unit,
     ): StreamResult {
         val podcastUuid = podcastUuidForFeed(url)
@@ -259,8 +364,12 @@ class FeedParser @Inject constructor() {
 
         val text = StringBuilder()
 
+        // Set once the caller has read enough, checked after each batch. Stopping closes the
+        // download, so the rest of the feed is never transferred.
+        var stopped = false
+
         var event = parser.eventType
-        while (event != XmlPullParser.END_DOCUMENT) {
+        while (event != XmlPullParser.END_DOCUMENT && !stopped) {
             when (event) {
                 XmlPullParser.START_TAG -> {
                     val name = (parser.name ?: "").lowercase()
@@ -334,6 +443,7 @@ class FeedParser @Inject constructor() {
                                     if (batch.size >= batchSize) {
                                         onBatch(podcast, batch.toList())
                                         batch.clear()
+                                        stopped = !continueReading()
                                     }
                                 }
                                 inItem = false
@@ -359,12 +469,17 @@ class FeedParser @Inject constructor() {
                     }
                 }
             }
-            event = parser.next()
+            if (!stopped) {
+                event = parser.next()
+            }
         }
 
         if (batch.isNotEmpty()) {
             onBatch(podcast, batch.toList())
             batch.clear()
+        }
+        if (stopped) {
+            LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream stopped early after $episodeCount episodes: $url")
         }
 
         if (podcast.title.isBlank() && episodeCount == 0) {
@@ -391,6 +506,30 @@ class FeedParser @Inject constructor() {
         }
         return parsePubDate(value)
     }
+
+    /** PodHopper: asks the host to reply 304 Not Modified if the feed is unchanged since [validators]. */
+    private fun Request.Builder.withValidators(validators: FeedValidators?): Request.Builder {
+        validators?.etag?.takeIf { it.isNotBlank() }?.let { header("If-None-Match", it) }
+        validators?.lastModified?.takeIf { it.isNotBlank() }?.let { header("If-Modified-Since", it) }
+        return this
+    }
+
+    /** PodHopper: the version markers of a full download, or null if the host sent none. */
+    private fun validatorsFrom(response: Response): FeedValidators? {
+        val etag = response.header("ETag")?.takeIf { it.isNotBlank() }
+        val lastModified = response.header("Last-Modified")?.takeIf { it.isNotBlank() }
+        return if (etag == null && lastModified == null) null else FeedValidators(etag, lastModified)
+    }
+
+    /** PodHopper watch: the streaming client with its sockets and name lookups bound to [network]. */
+    private fun clientOn(network: Network): OkHttpClient = streamingClient.newBuilder()
+        .socketFactory(network.socketFactory)
+        .dns(
+            object : Dns {
+                override fun lookup(hostname: String): List<InetAddress> = network.getAllByName(hostname).toList()
+            },
+        )
+        .build()
 
     private fun usedHeapBytes(): Long {
         val runtime = Runtime.getRuntime()
@@ -634,10 +773,14 @@ class FeedParser @Inject constructor() {
     }
 
     companion object {
-        /** PodHopper watch: episodes handed to each [stream] batch. */
-        const val STREAM_BATCH_SIZE = 50
+        /**
+         * PodHopper watch: the watch keeps only each podcast's newest episodes, this many. Also the
+         * batch size of its streamed reads, so a read can stop as soon as it has them.
+         */
+        const val WATCH_EPISODE_CAP = 25
 
         private const val STREAMING_CALL_TIMEOUT_SECONDS = 180L
+        private const val HTTP_NOT_MODIFIED = 304
         private const val BYTES_PER_KB = 1024L
         private const val BYTES_PER_MB = 1024L * 1024L
 

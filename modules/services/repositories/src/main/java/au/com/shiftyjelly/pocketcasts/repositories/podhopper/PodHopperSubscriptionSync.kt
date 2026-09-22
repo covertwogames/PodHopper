@@ -9,12 +9,15 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.FeedParser
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.SubscribeManager
+import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
+import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +28,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 /**
@@ -53,7 +58,11 @@ class PodHopperSubscriptionSync @Inject constructor(
     private val settings: Settings,
     @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
+    private val feedWifiRequester: FeedWifiRequester,
 ) {
+    // PodHopper watch: true only in the Wear OS app, whose manifest alone declares the flag.
+    private val isWatch: Boolean by lazy { Util.getAppPlatform(context) == AppPlatform.WearOs }
+
     // True only while a pull is applying remote changes. This is a cheap first guard against
     // re-enqueuing a change we are in the middle of applying; the real echo prevention is the
     // cursor plus removing downloaded changes from the upload set below.
@@ -250,14 +259,40 @@ class PodHopperSubscriptionSync @Inject constructor(
         val queuedAdded = readQueue(PREF_QUEUE_ADDED).toMutableList()
         val queuedRemoved = readQueue(PREF_QUEUE_REMOVED).toMutableList()
 
+        // Feeds that failed to add in an earlier pass and are due another try. A remote or local
+        // unsubscribe cancels a pending retry, and a feed that is now subscribed here needs none.
+        val now = System.currentTimeMillis()
+        val retries = readRetries()
+        retries.keys.removeAll { it in remoteRemoved || queuedRemoved.contains(it) || localSubscriptions.contains(it) }
+
+        // Remote adds and due retries, skipping feeds we already have or just removed locally.
+        val toAdd = LinkedHashSet<String>()
+        for (feedUrl in remoteAdded) {
+            if (!localSubscriptions.contains(feedUrl) && !queuedRemoved.contains(feedUrl)) {
+                toAdd.add(feedUrl)
+            }
+        }
+        for ((feedUrl, retry) in retries) {
+            if (retry.nextAttemptAtMs <= now) {
+                toAdd.add(feedUrl)
+            }
+        }
+
         applyingRemote = true
         try {
-            // Apply remote adds, skipping feeds we already have or just removed locally.
-            for (feedUrl in remoteAdded) {
-                if (localSubscriptions.contains(feedUrl) || queuedRemoved.contains(feedUrl)) {
-                    continue
+            // A feed that fails to add (the network dropped, the host was down) is remembered and
+            // retried later, spaced out further each time, instead of being skipped for good once the
+            // cursor moves past it.
+            withFeedWifi(needed = toAdd.isNotEmpty()) {
+                for (feedUrl in toAdd) {
+                    if (addFeed(manager, feedUrl)) {
+                        retries.remove(feedUrl)
+                    } else {
+                        val attempts = (retries[feedUrl]?.attempts ?: 0) + 1
+                        retries[feedUrl] = RetryState(attempts = attempts, nextAttemptAtMs = now + retryDelayMs(attempts))
+                        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "SUBSYNC could not add $feedUrl (attempt $attempts), will retry")
+                    }
                 }
-                manager.subscribeToFeedUrl(feedUrl)
             }
             // Apply remote removes, skipping feeds we just re-subscribed to locally.
             for (feedUrl in remoteRemoved) {
@@ -271,6 +306,12 @@ class PodHopperSubscriptionSync @Inject constructor(
             }
         } finally {
             applyingRemote = false
+        }
+
+        writeRetries(retries)
+        if (retries.isNotEmpty()) {
+            val earliest = retries.values.minOf { it.nextAttemptAtMs }
+            PodHopperSubscriptionRetryWorker.enqueue(context, earliest - System.currentTimeMillis())
         }
 
         // On the first sync, push the whole local library up so the cloud starts consistent.
@@ -289,6 +330,93 @@ class PodHopperSubscriptionSync @Inject constructor(
         if (newest > lastSync) {
             prefs().edit().putLong(PREF_LAST_PULL_MS, newest).apply()
         }
+    }
+
+    /** Subscribes to [feedUrl] and reports whether it actually ended up subscribed on this device. */
+    private suspend fun addFeed(manager: PodcastManager, feedUrl: String): Boolean {
+        return try {
+            manager.subscribeToFeedUrl(feedUrl)
+            manager.findPodcastByUuid(feedParser.podcastUuidForFeed(feedUrl))?.isSubscribed == true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "SUBSYNC add failed for $feedUrl: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * PodHopper watch: while a pass has feeds to add, asks for Wi-Fi and sends their downloads over it
+     * (a Bluetooth link through the phone is many times slower), releasing it when the adds are done.
+     * The phone and car run [block] as is.
+     */
+    private suspend fun withFeedWifi(needed: Boolean, block: suspend () -> Unit) {
+        if (!needed || !isWatch) {
+            block()
+            return
+        }
+        feedWifiRequester.withWifi(WIFI_WAIT_MS) { network ->
+            feedParser.withPreferredNetwork(network) { block() }
+        }
+    }
+
+    /**
+     * Runs one sync pass now for [PodHopperSubscriptionRetryWorker] and reports whether any feed is
+     * still waiting to be retried. If another pass is already running it is left to finish; it
+     * schedules its own retry if one is needed.
+     */
+    suspend fun syncNowForRetry(): Boolean {
+        if (!supabaseClient.isLoggedIn()) {
+            return false
+        }
+        if (!syncInFlight.compareAndSet(false, true)) {
+            return readRetries().isNotEmpty()
+        }
+        lastPollMs = System.currentTimeMillis()
+        try {
+            withContext(Dispatchers.IO) { runSync() }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "SUBSYNC retry pass FAILED: ${e.message}")
+        } finally {
+            syncInFlight.set(false)
+        }
+        return readRetries().isNotEmpty()
+    }
+
+    private data class RetryState(val attempts: Int, val nextAttemptAtMs: Long)
+
+    private fun readRetries(): MutableMap<String, RetryState> {
+        val retries = LinkedHashMap<String, RetryState>()
+        val json = prefs().getString(PREF_RETRIES, null) ?: return retries
+        val stored = try {
+            JSONObject(json)
+        } catch (e: JSONException) {
+            return retries
+        }
+        for (feedUrl in stored.keys()) {
+            val entry = stored.optJSONObject(feedUrl) ?: continue
+            retries[feedUrl] = RetryState(attempts = entry.optInt("a", 1), nextAttemptAtMs = entry.optLong("t", 0L))
+        }
+        return retries
+    }
+
+    private fun writeRetries(retries: Map<String, RetryState>) {
+        val stored = JSONObject()
+        for ((feedUrl, retry) in retries) {
+            stored.put(feedUrl, JSONObject().put("a", retry.attempts).put("t", retry.nextAttemptAtMs))
+        }
+        prefs().edit().putString(PREF_RETRIES, stored.toString()).apply()
+    }
+
+    /** Spacing between retries of a feed that failed to add: 1, 5, 15 and 60 minutes, then 6 hours. */
+    private fun retryDelayMs(attempts: Int): Long = when (attempts) {
+        1 -> RETRY_DELAY_1_MS
+        2 -> RETRY_DELAY_2_MS
+        3 -> RETRY_DELAY_3_MS
+        4 -> RETRY_DELAY_4_MS
+        else -> RETRY_DELAY_MAX_MS
     }
 
     private fun uploadChanges(added: List<String>, removed: List<String>) {
@@ -392,6 +520,7 @@ class PodHopperSubscriptionSync @Inject constructor(
      */
     fun clearLocalSyncState() {
         prefs().edit().clear().apply()
+        PodHopperSubscriptionRetryWorker.cancel(context)
     }
 
     companion object {
@@ -403,5 +532,12 @@ class PodHopperSubscriptionSync @Inject constructor(
         private const val PREF_QUEUE_ADDED = "sync_added"
         private const val PREF_QUEUE_REMOVED = "sync_removed"
         private const val PREF_FEED_PREFIX = "feedfor_"
+        private const val PREF_RETRIES = "add_retries"
+        private const val WIFI_WAIT_MS = 10_000L
+        private const val RETRY_DELAY_1_MS = 60_000L
+        private const val RETRY_DELAY_2_MS = 5 * 60_000L
+        private const val RETRY_DELAY_3_MS = 15 * 60_000L
+        private const val RETRY_DELAY_4_MS = 60 * 60_000L
+        private const val RETRY_DELAY_MAX_MS = 6 * 60 * 60_000L
     }
 }

@@ -609,7 +609,7 @@ class PodHopperPositionSync @Inject constructor(
         }
         var episode = episodeManager.findByUuid(candidate.episodeKey)
         if (episode == null && !candidate.feedUrl.isNullOrBlank()) {
-            podcastManager.addFeedUrlAsUnsubscribed(candidate.feedUrl)
+            podcastManager.addFeedUrlForEpisode(candidate.feedUrl, candidate.episodeKey)
             episode = episodeManager.findByUuid(candidate.episodeKey)
         }
         val target = episode ?: run {
@@ -857,7 +857,7 @@ class PodHopperPositionSync @Inject constructor(
                     }
                     var episode = episodeManager.findByUuid(candidate.episodeKey)
                     if (episode == null && !candidate.feedUrl.isNullOrBlank()) {
-                        podcastManager.addFeedUrlAsUnsubscribed(candidate.feedUrl)
+                        podcastManager.addFeedUrlForEpisode(candidate.feedUrl, candidate.episodeKey)
                         episode = episodeManager.findByUuid(candidate.episodeKey)
                     }
                     episode

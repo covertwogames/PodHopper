@@ -38,7 +38,6 @@ import io.reactivex.schedulers.Schedulers
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.rxCompletable
 import timber.log.Timber
 
@@ -53,6 +52,7 @@ class SubscribeManager @Inject constructor(
     private val feedParser: FeedParser,
     @ApplicationContext val context: Context,
     val settings: Settings,
+    private val feedValidatorStore: FeedValidatorStore,
 ) {
 
     private val subscribeRelay: PublishRelay<PodcastSubscribe> by lazy { setupSubscribeRelay() }
@@ -166,11 +166,15 @@ class SubscribeManager @Inject constructor(
         val uuid = feedParser.podcastUuidForFeed(feedUrl)
         val existing = podcastDao.findByUuidBlocking(uuid)
         if (existing != null) {
+            // PodHopper: a resubscribe only flips the podcast back on, and its episodes may have been
+            // deleted while it was unsubscribed. Forget the feed's refresh version markers so the next
+            // refresh downloads the whole feed and restores them.
+            feedValidatorStore.remove(feedUrl)
             podcastDao.updateSubscribedBlocking(subscribed = true, uuid = uuid)
             subscriptionChangedRelay.accept(uuid)
             return
         }
-        // PodHopper watch: read the feed a batch at a time so a large feed fits in a watch's memory.
+        // PodHopper watch: keep only the newest episodes, reading no more of the feed than needed.
         if (isWatch) {
             if (addFeedStreamingBlocking(feedUrl, subscribed = true) != null) {
                 subscriptionChangedRelay.accept(uuid)
@@ -198,7 +202,7 @@ class SubscribeManager @Inject constructor(
         if (existing != null) {
             return uuid
         }
-        // PodHopper watch: read the feed a batch at a time so a large feed fits in a watch's memory.
+        // PodHopper watch: keep only the newest episodes, reading no more of the feed than needed.
         if (isWatch) {
             return addFeedStreamingBlocking(feedUrl, subscribed = false)
         }
@@ -210,64 +214,105 @@ class SubscribeManager @Inject constructor(
     }
 
     /**
-     * PodHopper watch: stores the podcast at [feedUrl] and its episodes from a streamed read, writing
-     * each batch of episodes as it arrives instead of holding the whole feed. The end state matches
-     * the one shot path: the podcast row (with [subscribed] and the latest episode) and every episode.
-     * If the read fails part way, the podcast row and every episode this read inserted are removed
-     * again, so a failure leaves nothing behind, exactly like the one shot path, and a later refresh
-     * cannot mistake the rest of the feed for new episodes. Only called for a podcast that is not
-     * stored yet. Returns the podcast uuid, or null if the feed could not be read.
+     * PodHopper: looks up one episode for Up Next or position sync, which only call this when the
+     * episode is not stored. On the phone and car this is exactly [addFeedUrlAsUnsubscribedBlocking].
+     * The watch keeps only each podcast's newest [FeedParser.WATCH_EPISODE_CAP] episodes, so an older
+     * episode can be missing even when its podcast is stored: the watch then reads the feed until
+     * that episode turns up and stores just it. Runs blocking, so call it off the main thread.
      */
-    private fun addFeedStreamingBlocking(feedUrl: String, subscribed: Boolean): String? {
-        var podcastInserted = false
-        val insertedEpisodeUuids = ArrayList<String>()
-        val result = feedParser.stream(feedUrl, FeedParser.STREAM_BATCH_SIZE) { podcast, episodes ->
-            if (!podcastInserted) {
-                podcast.isSubscribed = subscribed
-                podcastDao.insertBlocking(podcast)
-                podcastInserted = true
-            }
-            val alreadyStored = runBlocking { episodeDao.findByUuids(episodes.map { it.uuid }) }
-                .mapTo(HashSet()) { it.uuid }
-            val newEpisodes = episodes.filterNot { it.uuid in alreadyStored }
-            if (newEpisodes.isNotEmpty()) {
-                episodeDao.insertAllBlocking(newEpisodes)
-                newEpisodes.mapTo(insertedEpisodeUuids) { it.uuid }
+    fun addFeedUrlForEpisodeBlocking(feedUrl: String, episodeUuid: String) {
+        if (!isWatch) {
+            addFeedUrlAsUnsubscribedBlocking(feedUrl)
+            return
+        }
+        val uuid = feedParser.podcastUuidForFeed(feedUrl)
+        if (podcastDao.findByUuidBlocking(uuid) == null) {
+            addFeedStreamingBlocking(feedUrl, subscribed = false, targetEpisodeUuid = episodeUuid)
+        } else {
+            addEpisodeFromFeedBlocking(feedUrl, episodeUuid)
+        }
+    }
+
+    /**
+     * PodHopper watch: stores the podcast at [feedUrl] with its newest [FeedParser.WATCH_EPISODE_CAP]
+     * episodes, plus [targetEpisodeUuid] if given and found. For a newest-first feed the download stops
+     * once those are in; for any other order the whole feed is read, holding only the newest few in
+     * memory. Everything is written at the end, so a failed read leaves nothing behind. The feed's
+     * version markers are saved with it, so the first refresh can be answered "not modified" instead
+     * of downloading the feed again. Only called for a podcast that is not stored yet. Returns the
+     * podcast uuid, or null if the feed could not be read.
+     */
+    private fun addFeedStreamingBlocking(feedUrl: String, subscribed: Boolean, targetEpisodeUuid: String? = null): String? {
+        val newest = NewestEpisodes(FeedParser.WATCH_EPISODE_CAP)
+        var target: PodcastEpisode? = null
+        var newestFirst = true
+        var previousDate: Date? = null
+        var itemsRead = 0
+        val result = feedParser.stream(
+            feedUrl = feedUrl,
+            batchSize = FeedParser.WATCH_EPISODE_CAP,
+            continueReading = {
+                val haveNewest = newestFirst && itemsRead >= FeedParser.WATCH_EPISODE_CAP
+                val haveTarget = targetEpisodeUuid == null || target != null
+                !(haveNewest && haveTarget)
+            },
+        ) { _, episodes ->
+            for (episode in episodes) {
+                itemsRead++
+                val previous = previousDate
+                if (previous != null && episode.publishedDate.after(previous)) {
+                    newestFirst = false
+                }
+                previousDate = episode.publishedDate
+                newest.add(episode)
+                if (episode.uuid == targetEpisodeUuid) {
+                    target = episode
+                }
             }
         }
         return when (result) {
             is FeedParser.StreamResult.Success -> {
                 val podcast = result.podcast
                 podcast.isSubscribed = subscribed
-                if (podcastInserted) {
-                    podcastDao.updateBlocking(podcast)
-                } else {
-                    podcastDao.insertBlocking(podcast)
-                }
+                val kept = newest.toList()
+                val found = target
+                val episodes = if (found != null && kept.none { it.uuid == found.uuid }) kept + found else kept
+                podcastDao.insertBlocking(podcast)
+                episodeDao.insertAllBlocking(episodes)
+                result.validators?.let { feedValidatorStore.putAll(mapOf(feedUrl to it)) }
                 podcast.uuid
             }
 
-            is FeedParser.StreamResult.Failure -> {
-                if (podcastInserted) {
-                    removePartialFeedBlocking(feedParser.podcastUuidForFeed(feedUrl), insertedEpisodeUuids)
-                }
-                null
-            }
+            // A first-time add sends no version markers, so the host never answers "not modified"
+            // here; the branch only completes the match and is treated like a failed read.
+            is FeedParser.StreamResult.NotModified, is FeedParser.StreamResult.Failure -> null
         }
     }
 
-    /** PodHopper watch: undoes a streamed read that failed part way (see [addFeedStreamingBlocking]). */
-    private fun removePartialFeedBlocking(podcastUuid: String, episodeUuids: List<String>) {
-        runBlocking {
-            episodeUuids.chunked(FeedParser.STREAM_BATCH_SIZE).forEach { chunk ->
-                val stored = episodeDao.findByUuids(chunk)
-                if (stored.isNotEmpty()) {
-                    episodeDao.deleteAll(stored)
-                }
+    /**
+     * PodHopper watch: reads the feed of a stored podcast until [episodeUuid] turns up, stores just
+     * that episode, and stops. Reading always starts at the top of the feed, so an episode from years
+     * back means reading most of the feed; this only runs for a specific episode that Up Next or
+     * position sync needs.
+     */
+    private fun addEpisodeFromFeedBlocking(feedUrl: String, episodeUuid: String) {
+        var found: PodcastEpisode? = null
+        val result = feedParser.stream(
+            feedUrl = feedUrl,
+            batchSize = FeedParser.WATCH_EPISODE_CAP,
+            continueReading = { found == null },
+        ) { _, episodes ->
+            if (found == null) {
+                found = episodes.firstOrNull { it.uuid == episodeUuid }
             }
         }
-        podcastDao.deleteByUuidBlocking(podcastUuid)
-        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream failed part way, removed partial podcast $podcastUuid")
+        val episode = found
+        if (result is FeedParser.StreamResult.Success && episode != null) {
+            episodeDao.insertAllBlocking(listOf(episode))
+            LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream fetched episode $episodeUuid on demand")
+        } else {
+            LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream could not find episode $episodeUuid in $feedUrl")
+        }
     }
 
     /**
@@ -342,7 +387,14 @@ class SubscribeManager @Inject constructor(
 
     private fun subscribeToExistingPodcastRxSingle(podcastUuid: String, sync: Boolean): Single<Podcast> {
         // set subscribed to true and update the sync status
-        val updateObservable = podcastDao.updateSubscribedRxCompletable(subscribed = true, uuid = podcastUuid)
+        // PodHopper: a resubscribe only flips the podcast back on, and its episodes may have been
+        // deleted while it was unsubscribed. Forget the feed's refresh version markers first so the
+        // next refresh downloads the whole feed and restores them.
+        val forgetMarkers = Completable.fromAction {
+            podcastDao.findByUuidBlocking(podcastUuid)?.podcastUrl?.takeIf { it.isNotBlank() }?.let(feedValidatorStore::remove)
+        }
+        val updateObservable = forgetMarkers
+            .andThen(podcastDao.updateSubscribedRxCompletable(subscribed = true, uuid = podcastUuid))
             .andThen(podcastDao.updateSyncStatusRxCompletable(syncStatus = if (sync) Podcast.SYNC_STATUS_NOT_SYNCED else Podcast.SYNC_STATUS_SYNCED, uuid = podcastUuid))
             .andThen(Completable.fromAction { podcastDao.updateGroupingBlocking(settings.podcastGroupingDefault.value, podcastUuid) })
             .andThen(rxCompletable { podcastDao.updateShowArchived(podcastUuid, settings.showArchivedDefault.value) })

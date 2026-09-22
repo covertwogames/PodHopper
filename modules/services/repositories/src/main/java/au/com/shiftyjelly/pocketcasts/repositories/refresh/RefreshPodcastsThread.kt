@@ -211,6 +211,12 @@ class RefreshPodcastsThread(
         val notificationLastSeen = getNotificationLastSeen(entryPoint.settings())
         val addedEpisodes = updatePodcasts(result)
 
+        // PodHopper: remember each downloaded feed's version markers only now that its new episodes
+        // are stored, so a refresh cut short never makes the next one skip episodes it did not save.
+        if (result != null) {
+            entryPoint.feedRefresher().commitFeedValidators(result)
+        }
+
         val syncRefreshState = sync()
 
         addNewEpisodesToUpNext(addedEpisodes.episodesToAddToUpNext)

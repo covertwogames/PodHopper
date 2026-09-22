@@ -25,6 +25,8 @@ import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.utils.log.RxJavaUncaughtExceptionHandling
 import au.com.shiftyjelly.pocketcasts.wear.networking.ConnectivityLogger
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
 import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.HiltAndroidApp
@@ -72,11 +74,19 @@ class PocketCastsWearApplication :
 
     @Inject lateinit var crashLogging: CrashLogging
 
+    @Inject lateinit var coilImageLoader: ImageLoader
+
     @Inject @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
     override fun onCreate() {
         super.onCreate()
+
+        // PodHopper: register the DI ImageLoader (which carries FeedArtworkInterceptor) as the
+        // singleton that compose artwork resolves, so podcast artwork addressed by uuid shows the
+        // feed's artwork on the watch exactly as it does on the phone and car. Without it every
+        // uuid-addressed artwork request fails and the placeholder shows instead.
+        SingletonImageLoader.setSafe { coilImageLoader }
         RxJavaUncaughtExceptionHandling.setUp()
         setupCrashLogging()
         setupLogging()

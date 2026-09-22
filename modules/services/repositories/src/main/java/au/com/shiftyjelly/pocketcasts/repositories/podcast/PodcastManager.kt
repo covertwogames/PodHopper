@@ -72,6 +72,14 @@ interface PodcastManager {
     suspend fun addFeedUrlAsUnsubscribed(feedUrl: String): String?
 
     /**
+     * PodHopper: makes the episode [episodeUuid] from [feedUrl] available locally, for Up Next and
+     * position sync, which only call this when the episode is not stored. On the phone and car this
+     * is [addFeedUrlAsUnsubscribed]; on the watch, which keeps only each podcast's newest episodes, it
+     * also finds an older episode of a podcast that is already stored.
+     */
+    suspend fun addFeedUrlForEpisode(feedUrl: String, episodeUuid: String)
+
+    /**
      * PodHopper instant open: insert a lightweight NOT subscribed podcast from metadata (no
      * network) so the real podcast page can open immediately, returning its uuid. Pair with
      * [fillFeedUrlEpisodes] to load the episodes in the background.

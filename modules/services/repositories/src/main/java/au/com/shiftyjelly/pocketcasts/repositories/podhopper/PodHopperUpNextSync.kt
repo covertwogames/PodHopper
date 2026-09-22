@@ -283,7 +283,7 @@ class PodHopperUpNextSync @Inject constructor(
                 val feedUrl = entry.optString("f").takeIf { it.isNotEmpty() }
                 if (feedUrl != null) {
                     try {
-                        podcastManager.addFeedUrlAsUnsubscribed(feedUrl)
+                        podcastManager.addFeedUrlForEpisode(feedUrl, uuid)
                         episode = episodeManager.findEpisodeByUuid(uuid)
                     } catch (e: Exception) {
                         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper Up Next could not fetch $feedUrl to resolve $uuid: ${e.message}")

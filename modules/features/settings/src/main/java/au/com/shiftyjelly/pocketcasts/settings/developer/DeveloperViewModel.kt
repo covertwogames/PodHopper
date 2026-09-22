@@ -12,6 +12,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackIssue
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackState
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
+import au.com.shiftyjelly.pocketcasts.repositories.podcast.FeedValidatorStore
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.SuggestedFoldersManager
 import com.automattic.android.tracks.crashlogging.CrashLogging
@@ -41,6 +42,7 @@ class DeveloperViewModel
     @ApplicationContext private val context: Context,
     private val crashLogging: CrashLogging,
     private val appReviewManagerImpl: AppReviewManagerImpl,
+    private val feedValidatorStore: FeedValidatorStore,
 ) : ViewModel() {
     private val reviewManager = FakeReviewManager(context)
 
@@ -73,6 +75,9 @@ class DeveloperViewModel
                                 val episodeToDelete = episodes[0]
                                 Timber.i("Creating a notification for ${podcast.title} - ${episodeToDelete.title}")
                                 episodeManager.deleteAllEpisodes(setOf(episodeToDelete), SourceView.UNKNOWN)
+                                // PodHopper: the refresh below re-adds the deleted episode only if it
+                                // downloads the feed, so forget the feed's "not modified" markers.
+                                podcast.podcastUrl?.let(feedValidatorStore::remove)
                                 settings.setNotificationLastSeenToNow()
                                 continue
                             }
@@ -107,6 +112,9 @@ class DeveloperViewModel
                         val newLatest = episodes.getOrNull(1)
                         Timber.i("Deleted episode ${podcast.title} - ${episodeToDelete.title}")
                         episodeManager.deleteAllEpisodes(setOf(episodeToDelete), SourceView.UNKNOWN)
+                        // PodHopper: a later refresh re-adds the deleted episode only if it downloads
+                        // the feed, so forget the feed's "not modified" markers.
+                        podcast.podcastUrl?.let(feedValidatorStore::remove)
 
                         podcast.latestEpisodeUuid = newLatest?.uuid
                         podcast.latestEpisodeDate = newLatest?.publishedDate

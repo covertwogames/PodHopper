@@ -64,6 +64,7 @@ class PodcastManagerImpl @Inject constructor(
     @ApplicationScope private val applicationScope: CoroutineScope,
     appDatabase: AppDatabase,
     private val podHopperSubscriptionSync: PodHopperSubscriptionSync,
+    private val feedValidatorStore: FeedValidatorStore,
 ) : PodcastManager,
     CoroutineScope {
 
@@ -95,6 +96,12 @@ class PodcastManagerImpl @Inject constructor(
             podcast.folderUuid = null
             podcastDao.updateSuspend(podcast)
             downloadQueue.cancelAll(podcast.uuid, sourceView)
+
+            // PodHopper: forget the feed's refresh version markers. The unused-podcast cleanup can
+            // later delete this podcast's episodes while keeping the podcast, and resubscribing only
+            // flips it back on, so its next refresh must download the whole feed to restore them
+            // instead of being told the feed has not changed.
+            podcast.podcastUrl?.takeIf { it.isNotBlank() }?.let(feedValidatorStore::remove)
 
             unsubscribeRelay.accept(podcastUuid)
 
@@ -132,6 +139,10 @@ class PodcastManagerImpl @Inject constructor(
 
     override suspend fun addFeedUrlAsUnsubscribed(feedUrl: String): String? = withContext(Dispatchers.IO) {
         subscribeManager.addFeedUrlAsUnsubscribedBlocking(feedUrl)
+    }
+
+    override suspend fun addFeedUrlForEpisode(feedUrl: String, episodeUuid: String) = withContext(Dispatchers.IO) {
+        subscribeManager.addFeedUrlForEpisodeBlocking(feedUrl, episodeUuid)
     }
 
     override suspend fun addFeedUrlStub(feedUrl: String, title: String, author: String, imageUrl: String?): String = withContext(Dispatchers.IO) {
