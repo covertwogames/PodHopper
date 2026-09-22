@@ -92,7 +92,10 @@ private fun PairingContent(
                             text = state.code,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.title1.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colors.primary,
+                            // PodHopper: the watch theme is dark only (black background), and its
+                            // "primary" is the dark grey surface colour, so use the primary text
+                            // colour (white) to keep the code easy to read.
+                            color = MaterialTheme.colors.onBackground,
                             modifier = Modifier.padding(vertical = 8.dp),
                         )
                     }
