@@ -807,15 +807,6 @@ class MainActivity :
         RefreshPodcastsTask.scheduleOrCancel(this@MainActivity, settings)
     }
 
-    @Suppress("DEPRECATION")
-    private suspend fun refreshAppAndWait() = withContext(Dispatchers.Main) {
-        val dialog = android.app.ProgressDialog.show(this@MainActivity, getString(LR.string.loading), getString(LR.string.please_wait), true)
-        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Running refresh from refresh and wait")
-        RefreshPodcastsTask.runNowSync(application, applicationScope)
-
-        UiUtil.hideProgressDialog(dialog)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         disposables.clear()

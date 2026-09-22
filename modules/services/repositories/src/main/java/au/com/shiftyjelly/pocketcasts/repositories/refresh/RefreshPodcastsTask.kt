@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -85,29 +86,50 @@ class RefreshPodcastsTask @AssistedInject constructor(
         private val refreshMutex = Mutex()
         private var refreshJob: Deferred<Result>? = null
         suspend fun runNowSync(context: Context, applicationScope: CoroutineScope) = withContext(Dispatchers.Default) {
-            refreshMutex.withLock {
-                if (refreshJob != null) {
-                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Already running, joining.")
-                    refreshJob?.await()
-                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Already running, join complete.")
-                    return@withContext
+            // PodHopper: only the check-and-start happens under the lock. A request that finds a
+            // refresh already running waits for that same refresh outside the lock and then returns.
+            // Waiting while holding the lock made later requests queue behind it, and each one that
+            // got the lock after the refresh ended found nothing running and started another full
+            // refresh, so several requests during one slow refresh (the watch asks on every screen
+            // wake) ran back to back instead of sharing it.
+            var startedHere = false
+            val job = refreshMutex.withLock {
+                refreshJob ?: run {
+                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Start")
+                    val refreshThread = RefreshPodcastsThread(
+                        context = context.applicationContext,
+                        runNow = true,
+                    )
+                    async { refreshThread.run() }.also {
+                        refreshJob = it
+                        startedHere = true
+                    }
                 }
+            }
 
-                LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Start")
-                val refreshThread = RefreshPodcastsThread(
-                    context = context.applicationContext,
-                    runNow = true,
-                )
-                refreshJob = async { refreshThread.run() }
+            if (!startedHere) {
+                LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Already running, joining.")
+                job.await()
+                LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Already running, join complete.")
+                return@withContext
             }
 
             try {
-                val result = refreshJob?.await()
+                val result = job.await()
                 LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "RefreshPodcastsTask - runNow - Finished $result")
             } catch (e: Exception) {
                 LogBuffer.e(LogBuffer.TAG_BACKGROUND_TASKS, e, "RefreshPodcastsTask - runNow - Exception")
             } finally {
-                refreshJob = null
+                // Clear the marker even if this coroutine was cancelled, and only while it still
+                // points at this refresh, so a finished or cancelled refresh can never be left in
+                // place for later requests to join forever.
+                withContext(NonCancellable) {
+                    refreshMutex.withLock {
+                        if (refreshJob === job) {
+                            refreshJob = null
+                        }
+                    }
+                }
             }
         }
     }
