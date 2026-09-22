@@ -19,7 +19,9 @@ import au.com.shiftyjelly.pocketcasts.servers.cdn.ArtworkColors
 import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.sync.PodcastEpisodesResponse
+import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.Optional
+import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import coil3.imageLoader
 import coil3.request.CachePolicy
@@ -36,6 +38,7 @@ import io.reactivex.schedulers.Schedulers
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.rxCompletable
 import timber.log.Timber
 
@@ -58,6 +61,10 @@ class SubscribeManager @Inject constructor(
     private val uuidsInQueue = HashSet<String>()
     private val podcastDao = appDatabase.podcastDao()
     private val episodeDao = appDatabase.episodeDao()
+
+    // PodHopper watch: true only in the Wear OS app, whose manifest alone declares the flag. The
+    // phone and car never take the streamed feed paths below.
+    private val isWatch: Boolean by lazy { Util.getAppPlatform(context) == AppPlatform.WearOs }
 
     data class PodcastSubscribe(val podcastUuid: String, val sync: Boolean, val shouldAutoDownload: Boolean)
 
@@ -163,6 +170,13 @@ class SubscribeManager @Inject constructor(
             subscriptionChangedRelay.accept(uuid)
             return
         }
+        // PodHopper watch: read the feed a batch at a time so a large feed fits in a watch's memory.
+        if (isWatch) {
+            if (addFeedStreamingBlocking(feedUrl, subscribed = true) != null) {
+                subscriptionChangedRelay.accept(uuid)
+            }
+            return
+        }
         val parsed = feedParser.parse(feedUrl) ?: return
         podcastDao.insertBlocking(parsed.podcast)
         episodeDao.insertAllBlocking(parsed.episodes)
@@ -184,11 +198,76 @@ class SubscribeManager @Inject constructor(
         if (existing != null) {
             return uuid
         }
+        // PodHopper watch: read the feed a batch at a time so a large feed fits in a watch's memory.
+        if (isWatch) {
+            return addFeedStreamingBlocking(feedUrl, subscribed = false)
+        }
         val parsed = feedParser.parse(feedUrl) ?: return null
         parsed.podcast.isSubscribed = false
         podcastDao.insertBlocking(parsed.podcast)
         episodeDao.insertAllBlocking(parsed.episodes)
         return parsed.podcast.uuid
+    }
+
+    /**
+     * PodHopper watch: stores the podcast at [feedUrl] and its episodes from a streamed read, writing
+     * each batch of episodes as it arrives instead of holding the whole feed. The end state matches
+     * the one shot path: the podcast row (with [subscribed] and the latest episode) and every episode.
+     * If the read fails part way, the podcast row and every episode this read inserted are removed
+     * again, so a failure leaves nothing behind, exactly like the one shot path, and a later refresh
+     * cannot mistake the rest of the feed for new episodes. Only called for a podcast that is not
+     * stored yet. Returns the podcast uuid, or null if the feed could not be read.
+     */
+    private fun addFeedStreamingBlocking(feedUrl: String, subscribed: Boolean): String? {
+        var podcastInserted = false
+        val insertedEpisodeUuids = ArrayList<String>()
+        val result = feedParser.stream(feedUrl, FeedParser.STREAM_BATCH_SIZE) { podcast, episodes ->
+            if (!podcastInserted) {
+                podcast.isSubscribed = subscribed
+                podcastDao.insertBlocking(podcast)
+                podcastInserted = true
+            }
+            val alreadyStored = runBlocking { episodeDao.findByUuids(episodes.map { it.uuid }) }
+                .mapTo(HashSet()) { it.uuid }
+            val newEpisodes = episodes.filterNot { it.uuid in alreadyStored }
+            if (newEpisodes.isNotEmpty()) {
+                episodeDao.insertAllBlocking(newEpisodes)
+                newEpisodes.mapTo(insertedEpisodeUuids) { it.uuid }
+            }
+        }
+        return when (result) {
+            is FeedParser.StreamResult.Success -> {
+                val podcast = result.podcast
+                podcast.isSubscribed = subscribed
+                if (podcastInserted) {
+                    podcastDao.updateBlocking(podcast)
+                } else {
+                    podcastDao.insertBlocking(podcast)
+                }
+                podcast.uuid
+            }
+
+            is FeedParser.StreamResult.Failure -> {
+                if (podcastInserted) {
+                    removePartialFeedBlocking(feedParser.podcastUuidForFeed(feedUrl), insertedEpisodeUuids)
+                }
+                null
+            }
+        }
+    }
+
+    /** PodHopper watch: undoes a streamed read that failed part way (see [addFeedStreamingBlocking]). */
+    private fun removePartialFeedBlocking(podcastUuid: String, episodeUuids: List<String>) {
+        runBlocking {
+            episodeUuids.chunked(FeedParser.STREAM_BATCH_SIZE).forEach { chunk ->
+                val stored = episodeDao.findByUuids(chunk)
+                if (stored.isNotEmpty()) {
+                    episodeDao.deleteAll(stored)
+                }
+            }
+        }
+        podcastDao.deleteByUuidBlocking(podcastUuid)
+        LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Feed stream failed part way, removed partial podcast $podcastUuid")
     }
 
     /**

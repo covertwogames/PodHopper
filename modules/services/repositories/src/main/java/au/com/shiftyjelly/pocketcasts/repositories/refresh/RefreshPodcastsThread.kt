@@ -175,7 +175,17 @@ class RefreshPodcastsThread(
         val podcasts = podcastManager.findSubscribedBlocking()
         val startTime = SystemClock.elapsedRealtime()
         // PodHopper: refresh by re-parsing each subscribed feed on-device, no Pocket Casts server.
-        val response = feedRefresher.refreshPodcastsLocally(podcasts)
+        // On the watch, feeds are read one at a time and a batch at a time, keeping only episodes
+        // not already stored, because reading every feed whole at once does not fit in a watch's
+        // memory. Phone and car are unchanged.
+        val response = if (Util.isWearOs(context)) {
+            val episodeDao = entryPoint.appDatabase().episodeDao()
+            feedRefresher.refreshPodcastsStreaming(podcasts) { uuids ->
+                runBlocking { episodeDao.findByUuids(uuids) }.mapTo(HashSet()) { it.uuid }
+            }
+        } else {
+            feedRefresher.refreshPodcastsLocally(podcasts)
+        }
         val elapsedTime = String.format("%d ms", SystemClock.elapsedRealtime() - startTime)
         LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - podcasts parsed locally - $elapsedTime")
         processRefreshResponse(response)
@@ -302,12 +312,16 @@ class RefreshPodcastsThread(
         for (podcastUuid in result.getPodcastsWithUpdates()) {
             val podcast = podcastManager.findPodcastByUuidBlocking(podcastUuid) ?: continue
             var episodes = result.getUpdatesForPodcast(podcastUuid)
-            if (episodes == null || episodes.isEmpty()) {
+            // PodHopper: the watch's streamed refresh passes only the episodes not already stored,
+            // plus the feed's total episode count. Everywhere else there is no separate count and the
+            // list is the whole feed, so this is the list size, exactly as before.
+            val feedEpisodeCount = result.getTotalEpisodeCount(podcastUuid) ?: episodes?.size ?: 0
+            if (episodes == null || feedEpisodeCount == 0) {
                 continue // no updates
             }
 
             // only download the meta data for this episode for the first 10 episodes, after that we'd overwhelm the users phone
-            val downloadMetaData = !podcast.isAutoDownloadNewEpisodes && (episodes.size + newEpisodeCount < 10)
+            val downloadMetaData = !podcast.isAutoDownloadNewEpisodes && (feedEpisodeCount + newEpisodeCount < 10)
             val addedDate = Date()
             for (episode in episodes) {
                 episode.addedDate = addedDate

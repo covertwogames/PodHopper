@@ -1,6 +1,7 @@
 package au.com.shiftyjelly.pocketcasts.repositories.refresh
 
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.FeedParser
 import au.com.shiftyjelly.pocketcasts.servers.RefreshResponse
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
@@ -61,6 +62,43 @@ class FeedRefreshManager @Inject constructor(
         for (update in updates) {
             if (update != null) {
                 response.addUpdate(update.first, update.second)
+            }
+        }
+        return response
+    }
+
+    /**
+     * PodHopper watch: the same refresh as [refreshPodcastsLocally], sized for a watch's small per-app
+     * memory limit. Feeds are read one at a time and a batch of episodes at a time, and only episodes
+     * [findStoredUuids] reports as not already stored are kept, so memory holds one feed's new
+     * episodes rather than every episode of every feed at once. Each feed's total episode count is
+     * recorded alongside, so the refresh pipeline makes exactly the decisions it makes from a full
+     * list. A feed that cannot be read is skipped and logged, as in [refreshPodcastsLocally].
+     */
+    fun refreshPodcastsStreaming(
+        podcasts: List<Podcast>,
+        findStoredUuids: (List<String>) -> Set<String>,
+    ): RefreshResponse {
+        val response = RefreshResponse()
+        for (podcast in podcasts) {
+            val feedUrl = podcast.podcastUrl
+            if (feedUrl.isNullOrBlank()) {
+                continue
+            }
+            val newEpisodes = ArrayList<PodcastEpisode>()
+            val result = feedParser.stream(feedUrl, FeedParser.STREAM_BATCH_SIZE) { _, episodes ->
+                val stored = findStoredUuids(episodes.map { it.uuid })
+                episodes.filterNotTo(newEpisodes) { it.uuid in stored }
+            }
+            when (result) {
+                is FeedParser.StreamResult.Success -> if (result.episodeCount > 0) {
+                    response.addUpdate(podcast.uuid, newEpisodes)
+                    response.setTotalEpisodeCount(podcast.uuid, result.episodeCount)
+                }
+
+                is FeedParser.StreamResult.Failure -> {
+                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - skipped ${podcast.uuid}, feed unavailable")
+                }
             }
         }
         return response
