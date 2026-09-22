@@ -25,7 +25,6 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChipDefaults
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
-import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.wear.theme.WearAppTheme
 import au.com.shiftyjelly.pocketcasts.wear.ui.component.ScreenHeaderChip
 import au.com.shiftyjelly.pocketcasts.wear.ui.component.SectionHeaderChip
@@ -47,7 +46,6 @@ object SettingsScreen {
 
 @Composable
 fun SettingsScreen(
-    signInClick: () -> Unit,
     navigateToPrivacySettings: () -> Unit,
     navigateToAbout: () -> Unit,
     navigateToHelp: () -> Unit,
@@ -66,7 +64,6 @@ fun SettingsScreen(
             state = state,
             onWarnOnMeteredChange = { viewModel.setWarnOnMeteredNetwork(it) },
             onRefreshInBackgroundChange = { viewModel.setRefreshPodcastsInBackground(it) },
-            signInClick = signInClick,
             onSignOutClick = viewModel::signOut,
             onRefreshClick = viewModel::refresh,
             onPrivacyClick = navigateToPrivacySettings,
@@ -82,7 +79,6 @@ private fun Content(
     state: SettingsViewModel.State,
     onWarnOnMeteredChange: (Boolean) -> Unit,
     onRefreshInBackgroundChange: (Boolean) -> Unit,
-    signInClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onRefreshClick: () -> Unit,
     onPrivacyClick: () -> Unit,
@@ -183,27 +179,16 @@ private fun Content(
             )
         }
 
-        item {
-            when (val signInState = state.signInState) {
-                is SignInState.SignedIn -> {
-                    WatchListChip(
-                        title = stringResource(LR.string.log_out),
-                        secondaryLabel = signInState.email,
-                        iconRes = IR.drawable.ic_signout,
-                        onClick = onSignOutClick,
-                    )
-                }
-
-                is SignInState.SignedOut -> {
-                    WatchListChip(
-                        title = stringResource(LR.string.log_in),
-                        iconRes = IR.drawable.signin,
-                        onClick = signInClick,
-                    )
-                }
-
-                // Not yet known; the sign-in chip appears once the state flow emits.
-                null -> Unit
+        // PodHopper: the watch only reaches Settings while signed in (signed out it shows the pairing
+        // screen), so only the sign-out row is needed. Signing out returns the watch to pairing.
+        if (state.isSignedIn) {
+            item {
+                WatchListChip(
+                    title = stringResource(LR.string.log_out),
+                    secondaryLabel = state.email,
+                    iconRes = IR.drawable.ic_signout,
+                    onClick = onSignOutClick,
+                )
             }
         }
 
@@ -290,15 +275,12 @@ private fun SettingsScreenPreview_unchecked() {
         Content(
             scrollState = ScalingLazyColumnState(),
             state = SettingsViewModel.State(
-                signInState = SignInState.SignedIn(
-                    email = "matt@pocketcasts.com",
-                    subscription = null,
-                ),
+                isSignedIn = true,
+                email = "you@example.com",
                 showDataWarning = false,
                 refreshInBackground = false,
                 refreshState = null,
             ),
-            signInClick = {},
             onWarnOnMeteredChange = {},
             onRefreshInBackgroundChange = {},
             onSignOutClick = {},
@@ -321,15 +303,12 @@ private fun SettingsScreenPreview_checked() {
         Content(
             scrollState = ScalingLazyColumnState(),
             state = SettingsViewModel.State(
-                signInState = SignInState.SignedIn(
-                    email = "matt@pocketcasts.com",
-                    subscription = null,
-                ),
+                isSignedIn = true,
+                email = "you@example.com",
                 showDataWarning = true,
                 refreshInBackground = true,
                 refreshState = null,
             ),
-            signInClick = {},
             onWarnOnMeteredChange = {},
             onRefreshInBackgroundChange = {},
             onSignOutClick = {},

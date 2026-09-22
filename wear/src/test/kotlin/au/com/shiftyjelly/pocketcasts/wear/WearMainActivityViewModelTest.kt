@@ -1,41 +1,28 @@
 package au.com.shiftyjelly.pocketcasts.wear
 
 import android.content.Context
-import au.com.shiftyjelly.pocketcasts.account.watchsync.WatchSync
-import au.com.shiftyjelly.pocketcasts.account.watchsync.WatchSyncAuthData
-import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
-import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.SupabaseClient
 import au.com.shiftyjelly.pocketcasts.sharedtest.MainCoroutineRule
 import au.com.shiftyjelly.pocketcasts.wear.networking.ConnectivityStateManager
-import au.com.shiftyjelly.pocketcasts.wear.networking.PhoneConnectionMonitor
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.WatchSyncError
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.WatchSyncState
-import com.google.android.horologist.auth.data.tokenshare.TokenBundleRepository
-import io.reactivex.Flowable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * Unit tests for WearMainActivityViewModel.
- *
- * Note: These tests focus on direct method calls and state management
- * rather than testing the complex flow collection logic in the init block,
- * which is better suited for integration tests.
+ * Unit tests for WearMainActivityViewModel: the watch is signed in exactly when a PodHopper session
+ * is stored, and follows that session as pairing sets it and signing out clears it.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WearMainActivityViewModelTest {
@@ -43,13 +30,7 @@ class WearMainActivityViewModelTest {
     val coroutineRule = MainCoroutineRule(StandardTestDispatcher())
 
     @Mock
-    private lateinit var playbackManager: PlaybackManager
-
-    @Mock
     private lateinit var podcastManager: PodcastManager
-
-    @Mock
-    private lateinit var userManager: UserManager
 
     @Mock
     private lateinit var settings: Settings
@@ -58,30 +39,20 @@ class WearMainActivityViewModelTest {
     private lateinit var context: Context
 
     @Mock
-    private lateinit var tokenBundleRepository: TokenBundleRepository<WatchSyncAuthData?>
-
-    @Mock
-    private lateinit var watchSync: WatchSync
-
-    @Mock
-    private lateinit var phoneConnectionMonitor: PhoneConnectionMonitor
+    private lateinit var supabaseClient: SupabaseClient
 
     @Mock
     private lateinit var connectivityStateManager: ConnectivityStateManager
 
-    private lateinit var viewModel: WearMainActivityViewModel
+    private val loginStateFlow = MutableStateFlow(false)
 
-    // Use MutableStateFlow for connectivity so .sample() doesn't block
+    // Use MutableStateFlow for connectivity so the debounce doesn't block
     private val connectivityFlow = MutableStateFlow(true)
 
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-
-        whenever(userManager.getSignInState()).thenReturn(
-            Flowable.just(SignInState.SignedOut),
-        )
-        whenever(tokenBundleRepository.flow).thenReturn(flowOf(null))
+        whenever(supabaseClient.loginState).thenReturn(loginStateFlow)
         whenever(connectivityStateManager.isConnected).thenReturn(connectivityFlow)
     }
 
@@ -90,131 +61,68 @@ class WearMainActivityViewModelTest {
         testScheduler.advanceUntilIdle()
     }
 
-    private suspend fun setupPhoneConnectionMock() {
-        whenever(phoneConnectionMonitor.isPhoneConnected()).thenReturn(true)
+    @Test
+    fun `starts signed in when a PodHopper session is stored`() = runTest {
+        whenever(supabaseClient.isLoggedIn()).thenReturn(true)
+        loginStateFlow.value = true
+
+        val viewModel = createViewModel()
+
+        assertTrue(viewModel.state.value.isSignedIn)
     }
 
     @Test
-    fun `initial state has correct default values`() = runTest {
-        // Given
-        setupPhoneConnectionMock()
+    fun `starts signed out when no PodHopper session is stored`() = runTest {
+        whenever(supabaseClient.isLoggedIn()).thenReturn(false)
 
-        // When
-        viewModel = createViewModel()
-        testScheduler.advanceTimeBy(2100)
-        testScheduler.runCurrent()
+        val viewModel = createViewModel()
+        testScheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertEquals(WatchSyncState.Syncing, state.syncState)
-        assertEquals(SignInState.SignedOut, state.signInState)
-        assertEquals(false, state.showLoggingInScreen)
+        assertFalse(viewModel.state.value.isSignedIn)
     }
 
     @Test
-    fun `onSignInConfirmationActionHandled sets showLoggingInScreen to false`() = runTest {
-        // Given
-        setupPhoneConnectionMock()
-        viewModel = createViewModel()
-        testScheduler.advanceTimeBy(2100)
-        testScheduler.runCurrent()
+    fun `pairing flips the watch to signed in`() = runTest {
+        whenever(supabaseClient.isLoggedIn()).thenReturn(false)
+        val viewModel = createViewModel()
+        testScheduler.advanceUntilIdle()
 
-        // Manually update state to simulate successful login
-        viewModel.state.value.copy(
-            showLoggingInScreen = true,
-            syncState = WatchSyncState.Success,
-        )
+        loginStateFlow.value = true
+        testScheduler.advanceUntilIdle()
 
-        // When
-        viewModel.onSignInConfirmationActionHandled()
-
-        // Then
-        assertEquals(false, viewModel.state.value.showLoggingInScreen)
+        assertTrue(viewModel.state.value.isSignedIn)
     }
 
     @Test
-    fun `signOut delegates to UserManager`() = runTest {
-        // Given
-        setupPhoneConnectionMock()
-        viewModel = createViewModel()
-        testScheduler.advanceTimeBy(2100)
-        testScheduler.runCurrent()
+    fun `signing out flips the watch to signed out`() = runTest {
+        whenever(supabaseClient.isLoggedIn()).thenReturn(true)
+        loginStateFlow.value = true
+        val viewModel = createViewModel()
+        testScheduler.advanceUntilIdle()
 
-        // When
-        viewModel.signOut()
+        loginStateFlow.value = false
+        testScheduler.advanceUntilIdle()
 
-        // Then
-        verify(userManager).signOut(playbackManager, wasInitiatedByUser = false)
+        assertFalse(viewModel.state.value.isSignedIn)
     }
 
     @Test
-    fun `retrySync can be called without error`() = runTest {
-        // Given
-        setupPhoneConnectionMock()
-        viewModel = createViewModel()
-        testScheduler.advanceTimeBy(2100)
-        testScheduler.runCurrent()
+    fun `connectivity changes are reflected after the debounce`() = runTest {
+        whenever(supabaseClient.isLoggedIn()).thenReturn(true)
+        val viewModel = createViewModel()
+        testScheduler.advanceUntilIdle()
 
-        // When - should not throw
-        viewModel.retrySync()
+        connectivityFlow.value = false
+        testScheduler.advanceUntilIdle()
 
-        // Then - verify state is reset to Syncing after retry
-        assertEquals(WatchSyncState.Syncing, viewModel.state.value.syncState)
-    }
-
-    @Test
-    fun `restartSyncIfNeeded restarts sync when in Failed state`() = runTest {
-        // Given
-        whenever(phoneConnectionMonitor.isPhoneConnected()).thenReturn(false)
-        viewModel = createViewModel()
-        testScheduler.advanceTimeBy(2100)
-        testScheduler.runCurrent()
-
-        // Verify we're in Failed state due to no phone connection
-        assertEquals(
-            WatchSyncState.Failed(WatchSyncError.NoPhoneConnection),
-            viewModel.state.value.syncState,
-        )
-
-        // Now mock phone as connected for restart
-        whenever(phoneConnectionMonitor.isPhoneConnected()).thenReturn(true)
-
-        // When
-        viewModel.restartSyncIfNeeded()
-        testScheduler.advanceTimeBy(100)
-        testScheduler.runCurrent()
-
-        // Then - sync should have restarted and be in Syncing state
-        assertEquals(WatchSyncState.Syncing, viewModel.state.value.syncState)
-    }
-
-    @Test
-    fun `restartSyncIfNeeded does not restart when already syncing`() = runTest {
-        // Given
-        setupPhoneConnectionMock()
-        viewModel = createViewModel()
-        testScheduler.advanceTimeBy(2100)
-        testScheduler.runCurrent()
-
-        // Verify we're in Syncing state
-        assertEquals(WatchSyncState.Syncing, viewModel.state.value.syncState)
-
-        // When - calling restartSyncIfNeeded should be a no-op
-        viewModel.restartSyncIfNeeded()
-
-        // Then - still syncing, no error
-        assertEquals(WatchSyncState.Syncing, viewModel.state.value.syncState)
+        assertFalse(viewModel.state.value.isConnected)
     }
 
     private fun createViewModel() = WearMainActivityViewModel(
-        playbackManager = playbackManager,
         podcastManager = podcastManager,
-        userManager = userManager,
         settings = settings,
         context = context,
-        tokenBundleRepository = tokenBundleRepository,
-        watchSync = watchSync,
-        phoneConnectionMonitor = phoneConnectionMonitor,
+        supabaseClient = supabaseClient,
         connectivityStateManager = connectivityStateManager,
     )
 }

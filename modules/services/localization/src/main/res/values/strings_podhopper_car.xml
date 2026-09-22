@@ -19,7 +19,7 @@
 
     <!-- Pairing screen -->
     <string name="podhopper_car_pairing_title">Sign in to PodHopper</string>
-    <string name="podhopper_car_pairing_instructions">On your phone:\n\n1. Open PodHopper\n2. Go to Settings, then Sync Account to Car App\n3. Enter the code below</string>
+    <string name="podhopper_car_pairing_instructions">On your phone:\n\n1. Open PodHopper\n2. Go to Settings, then Sync Account to Car or Watch\n3. Enter the code below</string>
     <string name="podhopper_car_pairing_code_label">Your code</string>
     <string name="podhopper_car_pairing_waiting">Waiting for your phone...</string>
     <string name="podhopper_car_pairing_success">You are signed in. Loading your podcasts...</string>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PodHopper: the watch sign-in (pairing) screen. -->
+    <string name="podhopper_watch_pairing_title">Sign in to PodHopper</string>
+    <string name="podhopper_watch_pairing_instructions">On your phone, open PodHopper, go to Settings, then Sync Account to Car or Watch, and enter this code.</string>
+    <string name="podhopper_watch_pairing_waiting">Waiting for your phone...</string>
+    <string name="podhopper_watch_pairing_expired">That code expired. Get a new one to try again.</string>
+    <string name="podhopper_watch_pairing_error">Could not reach PodHopper. Check the watch\'s connection and try again.</string>
+    <string name="podhopper_watch_pairing_retry">Get a new code</string>
+    <string name="podhopper_watch_pairing_success">Signed in</string>
+</resources>

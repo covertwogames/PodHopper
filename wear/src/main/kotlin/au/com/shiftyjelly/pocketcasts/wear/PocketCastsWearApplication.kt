@@ -17,6 +17,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackServiceToggle
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
 import au.com.shiftyjelly.pocketcasts.shared.AppLifecycleObserver
 import au.com.shiftyjelly.pocketcasts.shared.DownloadStatisticsReporter
@@ -128,6 +129,11 @@ class PocketCastsWearApplication :
             }
             runStartupStep("download monitoring") {
                 downloadStatusObserver.monitorDownloadStatus()
+            }
+            runStartupStep("PodHopper sync scheduling") {
+                // PodHopper: periodic cross-device sync so positions and completions from other
+                // devices land even while the app is closed, as on the phone and car.
+                PodHopperSyncWorker.schedulePeriodicWork(application)
             }
             runStartupStep("playback stats scheduling") {
                 PlaybackStatsSyncWorker.scheduleOneTimeWork(application)

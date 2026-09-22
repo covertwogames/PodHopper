@@ -3,7 +3,6 @@ package au.com.shiftyjelly.pocketcasts.wear.ui.settings
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.wear.compose.navigation.composable
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.AUTHENTICATION_SUB_GRAPH
 
 fun NavGraphBuilder.settingsRoutes(navController: NavController) {
     settingsUrlScreens()
@@ -12,7 +11,6 @@ fun NavGraphBuilder.settingsRoutes(navController: NavController) {
         route = SettingsScreen.ROUTE,
     ) {
         SettingsScreen(
-            signInClick = { navController.navigate(AUTHENTICATION_SUB_GRAPH) },
             navigateToPrivacySettings = { navController.navigate(PrivacySettingsScreen.ROUTE) },
             navigateToAbout = { navController.navigate(WearAboutScreen.ROUTE) },
             navigateToHelp = { navController.navigate(HelpScreen.ROUTE) },

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="podhopper_car_sync_title">Sync Account to Car App</string>
+    <string name="podhopper_car_sync_title">Sync Account to Car or Watch</string>
     <string name="podhopper_car_sync_logged_out">This option requires you to be logged into a PodHopper account. Tap on the Profile page and login or create your account first.</string>
-    <string name="podhopper_car_sync_instructions">Open PodHopper on your car and it will show a pairing code. Enter that code below to sign your car into your PodHopper account.</string>
+    <string name="podhopper_car_sync_instructions">Open PodHopper on your car or watch and it will show a pairing code. Enter that code below to sign that device into your PodHopper account.</string>
     <string name="podhopper_car_sync_code_hint">Pairing code</string>
-    <string name="podhopper_car_sync_button">Pair Car</string>
-    <string name="podhopper_car_sync_submitting">Pairing your car...</string>
-    <string name="podhopper_car_sync_success">Your car has been paired successfully.</string>
-    <string name="podhopper_car_sync_error">Pairing failed. Check the code on your car and try again.</string>
+    <string name="podhopper_car_sync_button">Pair Device</string>
+    <string name="podhopper_car_sync_submitting">Pairing your device...</string>
+    <string name="podhopper_car_sync_success">Your device has been paired successfully.</string>
+    <string name="podhopper_car_sync_error">Pairing failed. Check the code on your car or watch and try again.</string>
 </resources>

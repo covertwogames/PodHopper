@@ -1,24 +1,20 @@
 package au.com.shiftyjelly.pocketcasts.wear
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -29,16 +25,12 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavHostState
 import androidx.wear.tooling.preview.devices.WearDevices
-import au.com.shiftyjelly.pocketcasts.models.type.SignInState
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
 import au.com.shiftyjelly.pocketcasts.wear.theme.WearAppTheme
 import au.com.shiftyjelly.pocketcasts.wear.ui.FilesScreen
-import au.com.shiftyjelly.pocketcasts.wear.ui.LoggingInScreen
-import au.com.shiftyjelly.pocketcasts.wear.ui.ScrollToTop
 import au.com.shiftyjelly.pocketcasts.wear.ui.WatchListScreen
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.AUTHENTICATION_SUB_GRAPH
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.RequirePlusScreen
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.WatchSyncState
-import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.authenticationNavGraph
+import au.com.shiftyjelly.pocketcasts.wear.ui.authentication.PairingScreen
 import au.com.shiftyjelly.pocketcasts.wear.ui.component.NowPlayingPager
 import au.com.shiftyjelly.pocketcasts.wear.ui.component.TimeTextWithConnectivity
 import au.com.shiftyjelly.pocketcasts.wear.ui.downloads.DownloadsScreen
@@ -56,13 +48,17 @@ import au.com.shiftyjelly.pocketcasts.wear.ui.settings.settingsRoutes
 import au.com.shiftyjelly.pocketcasts.wear.ui.starred.StarredScreen
 import com.google.android.horologist.compose.layout.AppScaffold
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
-import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: WearMainActivityViewModel by viewModels()
+
+    @Inject lateinit var podHopperPositionSync: PodHopperPositionSync
+
+    @Inject lateinit var podHopperSubscriptionSync: PodHopperSubscriptionSync
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,56 +68,65 @@ class MainActivity : ComponentActivity() {
                 val state by viewModel.state.collectAsState()
 
                 WearApp(
-                    signInState = state.signInState,
-                    showLoggingInScreen = state.showLoggingInScreen,
-                    syncState = state.syncState,
+                    isSignedIn = state.isSignedIn,
                     isConnected = state.isConnected,
-                    onShowLoginScreen = viewModel::onSignInConfirmationActionHandled,
-                    onRetrySync = viewModel::retrySync,
-                    onSyncScreenVisible = viewModel::restartSyncIfNeeded,
-                    signOut = viewModel::signOut,
+                    onNavigate = podHopperSubscriptionSync::pollSubscriptions,
                 )
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        // PodHopper: pull the latest cross device positions when the app comes to the foreground.
+        podHopperPositionSync.pullLatestPositions()
+
+        // PodHopper: pull subscription changes too, so a podcast added on another device shows up
+        // here without subscribing to anything on the watch.
+        podHopperSubscriptionSync.pullSubscriptions()
+
+        // PodHopper: while the app is in the foreground, poll every 30s so an open watch notices
+        // subscription changes from other devices without needing to be reopened.
+        podHopperSubscriptionSync.startPeriodicSync()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.refreshPodcasts()
     }
+
+    override fun onStop() {
+        super.onStop()
+
+        // PodHopper: stop the foreground subscription poll loop while backgrounded.
+        podHopperSubscriptionSync.stopPeriodicSync()
+    }
 }
 
 @Composable
 private fun WearApp(
-    signInState: SignInState,
-    showLoggingInScreen: Boolean,
-    syncState: WatchSyncState,
+    isSignedIn: Boolean,
     isConnected: Boolean,
-    onShowLoginScreen: () -> Unit,
-    onRetrySync: () -> Unit,
-    onSyncScreenVisible: () -> Unit,
-    signOut: () -> Unit,
+    onNavigate: () -> Unit,
 ) {
     val navController = rememberSwipeDismissableNavController()
     val swipeToDismissState = rememberSwipeToDismissBoxState()
     val navState = rememberSwipeDismissableNavHostState(swipeToDismissState)
 
-    if (showLoggingInScreen) {
-        navController.navigate(LoggingInScreen.ROUTE_WITH_DELAY)
-        onShowLoginScreen()
+    // PodHopper: check for subscription changes from other devices whenever the user navigates, as
+    // the phone does. Throttled, and a no-op while signed out, inside the sync class.
+    val currentOnNavigate by rememberUpdatedState(onNavigate)
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, _, _ -> currentOnNavigate() }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose { navController.removeOnDestinationChangedListener(listener) }
     }
 
-    val userCanAccessWatch = signInState.isSignedInAsPlusOrPatron
-
-    val waitingForSignIn = remember { mutableStateOf(false) }
-    if (!userCanAccessWatch) {
-        waitingForSignIn.value = true
-    }
-
-    // Wrap in a State so that composable destinations inside the NavHost can read the latest value even though the nav graph is cached.
-    val currentSyncState = rememberUpdatedState(syncState)
-
-    val startDestination = if (userCanAccessWatch) WatchListScreen.ROUTE else RequirePlusScreen.ROUTE
+    // PodHopper: the watch needs a PodHopper account, so it shows the pairing screen until one is
+    // signed in. Signing in or out changes the start destination, which resets the back stack, so
+    // pairing lands on the main screen and signing out returns to pairing.
+    val startDestination = if (isSignedIn) WatchListScreen.ROUTE else PairingScreen.ROUTE
 
     AppScaffold(
         timeText = {
@@ -135,11 +140,9 @@ private fun WearApp(
                 state = navState,
             ) {
                 composable(
-                    route = RequirePlusScreen.ROUTE,
+                    route = PairingScreen.ROUTE,
                 ) {
-                    RequirePlusScreen(
-                        onContinueToLogin = { navController.navigate(AUTHENTICATION_SUB_GRAPH) },
-                    )
+                    PairingScreen()
                 }
 
                 composable(
@@ -319,79 +322,11 @@ private fun WearApp(
 
                 settingsRoutes(navController)
 
-                authenticationNavGraph(
-                    navController = navController,
-                    onEmailSignInSuccess = {
-                        navController.navigate(LoggingInScreen.ROUTE)
-                    },
-                    syncState = currentSyncState,
-                    onRetrySync = onRetrySync,
-                    onSyncScreenVisible = onSyncScreenVisible,
-                )
-
-                loggingInScreens(
-                    onClose = {
-                        when (startDestination) {
-                            WatchListScreen.ROUTE -> {
-                                val popped = navController.popBackStack(
-                                    route = WatchListScreen.ROUTE,
-                                    inclusive = false,
-                                )
-                                if (popped) {
-                                    ScrollToTop.initiate(navController)
-                                }
-                            }
-
-                            RequirePlusScreen.ROUTE -> {
-                                navController.popBackStack(
-                                    route = RequirePlusScreen.ROUTE,
-                                    inclusive = false,
-                                )
-                            }
-
-                            else -> throw IllegalStateException("Unexpected start destination $startDestination")
-                        }
-                    },
-                )
-
                 composable(
                     route = EffectsScreen.ROUTE,
                 ) {
                     EffectsScreen()
                 }
-            }
-        }
-    }
-
-    when (signInState) {
-        is SignInState.SignedOut -> Unit
-
-        // Do nothing
-
-        is SignInState.SignedIn -> {
-            val subscription = signInState.subscription
-            if (subscription == null) {
-                // This gets the user back to the start destination if they logged in as free. The
-                // start destination should have been reset to the RequirePlusScreen already.
-                signOut()
-                val popped = navController.popBackStack(startDestination, inclusive = false)
-                if (popped) {
-                    ScrollToTop.initiate(navController)
-                }
-                val email = if (signInState.email.length > 16) {
-                    buildString {
-                        append(signInState.email.substring(0, 6))
-                        append("…")
-                        append(signInState.email.takeLast(6))
-                    }
-                } else {
-                    signInState.email
-                }
-                val message = stringResource(LR.string.log_in_free_account, email)
-                Toast.makeText(LocalContext.current, message, Toast.LENGTH_LONG).show()
-            } else if (waitingForSignIn.value) {
-                navController.navigate(LoggingInScreen.ROUTE)
-                waitingForSignIn.value = false
             }
         }
     }
@@ -418,35 +353,12 @@ fun PodcastsScreenContent(
     }
 }
 
-private fun NavGraphBuilder.loggingInScreens(
-    onClose: () -> Unit,
-) {
-    composable(LoggingInScreen.ROUTE) {
-        LoggingInScreen(onClose = onClose)
-    }
-
-    composable(LoggingInScreen.ROUTE_WITH_DELAY) {
-        LoggingInScreen(
-            onClose = onClose,
-            // Because this login is not triggered by the user, make sure that the
-            // logging in screen is shown for enough time for the user to understand
-            // what is happening.
-            withMinimumDelay = true,
-        )
-    }
-}
-
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable
 private fun DefaultPreview() {
     WearApp(
-        signInState = SignInState.SignedOut,
-        showLoggingInScreen = false,
-        syncState = WatchSyncState.Syncing,
+        isSignedIn = false,
         isConnected = true,
-        onShowLoginScreen = {},
-        onRetrySync = {},
-        onSyncScreenVisible = {},
-        signOut = {},
+        onNavigate = {},
     )
 }
