@@ -79,16 +79,11 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.LinkInteractionListener
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Constraints
@@ -142,7 +137,6 @@ internal fun PodcastHeader(
     isDescriptionExpanded: Boolean,
     contentPadding: PaddingValues,
     useBlurredArtwork: Boolean,
-    onClickCategory: () -> Unit,
     onClickRating: () -> Unit,
     onClickFollow: () -> Unit,
     onClickUnfollow: () -> Unit,
@@ -210,7 +204,6 @@ internal fun PodcastHeader(
                 folderIcon = folderIcon,
                 isHeaderExpanded = isHeaderExpanded,
                 onClickTitle = onToggleHeader,
-                onClickCategory = onClickCategory,
                 onClickFollow = onClickFollow,
                 onClickUnfollow = onClickUnfollow,
                 onClickFolder = onClickFolder,
@@ -249,7 +242,6 @@ private fun PodcastControls(
     folderIcon: PodcastFolderIcon,
     isHeaderExpanded: Boolean,
     onClickTitle: () -> Unit,
-    onClickCategory: () -> Unit,
     onClickRating: () -> Unit,
     onClickFollow: () -> Unit,
     onClickUnfollow: () -> Unit,
@@ -277,7 +269,6 @@ private fun PodcastControls(
                 category = category,
                 author = author,
                 explicit = explicit,
-                onClickCategory = onClickCategory,
             )
         }
         TextH20(
@@ -324,32 +315,19 @@ private fun PodcastControls(
     }
 }
 
+// PodHopper: the category is plain text. Upstream it linked to Pocket Casts' category
+// browsing, which PodHopper's own add-podcast tab does not provide.
 @Composable
 private fun PodcastCategoriesLabel(
     category: String,
     author: String,
     explicit: Boolean,
-    onClickCategory: () -> Unit,
 ) {
     val showExplicitIndicator by FeatureFlag.isEnabledFlow(Feature.EXPLICIT_PODCAST_INDICATOR).collectAsStateWithLifecycle()
-    val text = remember(category, author, explicit, onClickCategory, showExplicitIndicator) {
+    val text = remember(category, author, explicit, showExplicitIndicator) {
         val text = listOf(category, author).filter(String::isNotBlank).joinToString(separator = " · ")
         buildAnnotatedString {
             append(text)
-            if (category.isNotBlank()) {
-                addLink(
-                    LinkAnnotation.Clickable(
-                        tag = "category",
-                        linkInteractionListener = LinkInteractionListener { onClickCategory() },
-                        styles = TextLinkStyles(
-                            style = SpanStyle(textDecoration = TextDecoration.None),
-                            focusedStyle = SpanStyle(textDecoration = TextDecoration.Underline),
-                        ),
-                    ),
-                    start = 0,
-                    end = category.length,
-                )
-            }
             if (showExplicitIndicator && explicit) {
                 if (text.isNotBlank() || category.isNotBlank()) {
                     append(" · ")
@@ -1009,7 +987,6 @@ private fun PodcastHeaderPreview(
                     bottom = 16.dp,
                 ),
                 useBlurredArtwork = false,
-                onClickCategory = {},
                 onClickRating = {},
                 onClickFollow = { isFollowed = true },
                 onClickUnfollow = { isFollowed = false },

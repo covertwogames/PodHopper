@@ -60,7 +60,6 @@ import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.PodcastViewModel.Podcas
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.model.AutoPlaySource
 import au.com.shiftyjelly.pocketcasts.reimagine.timestamp.ShareEpisodeTimestampFragment
-import au.com.shiftyjelly.pocketcasts.repositories.categories.CategoriesManager
 import au.com.shiftyjelly.pocketcasts.repositories.images.PodcastImageColorAnalyzer
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeRowDataProvider
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
@@ -97,7 +96,6 @@ import com.automattic.eventhorizon.FolderChooseFolderTappedEvent
 import com.automattic.eventhorizon.FolderChooseShownEvent
 import com.automattic.eventhorizon.FolderPodcastModalOptionTappedEvent
 import com.automattic.eventhorizon.FolderPodcastModalOptionType
-import com.automattic.eventhorizon.PodcastScreenCategoryTappedEvent
 import com.automattic.eventhorizon.PodcastScreenFolderTappedEvent
 import com.automattic.eventhorizon.PodcastScreenOptionsTappedEvent
 import com.automattic.eventhorizon.PodcastScreenPodcastDetailsLinkTappedEvent
@@ -169,9 +167,6 @@ class PodcastFragment : BaseFragment() {
 
     @Inject
     lateinit var colorAnalyzer: PodcastImageColorAnalyzer
-
-    @Inject
-    lateinit var categoriesManager: CategoriesManager
 
     @Inject
     lateinit var swipeRowActionsFactory: SwipeRowActions.Factory
@@ -765,20 +760,6 @@ class PodcastFragment : BaseFragment() {
                     podcastUuid = podcast.uuid,
                     fragmentManager = parentFragmentManager,
                 )
-            },
-            onClickCategory = { podcast ->
-                val categoryId = podcast.getFirstCategoryId()
-                if (categoryId != null) {
-                    eventHorizon.track(
-                        PodcastScreenCategoryTappedEvent(
-                            category = podcast.getFirstCategoryUnlocalised(),
-                        ),
-                    )
-                    categoriesManager.selectCategory(categoryId)
-                    val hostListener = (requireActivity() as FragmentHostListener)
-                    hostListener.closeToRoot()
-                    hostListener.openTab(VR.id.navigation_discover)
-                }
             },
             onClickWebsite = { podcast ->
                 podcast.podcastUrl?.let { url ->
