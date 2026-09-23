@@ -148,7 +148,6 @@ private fun onLoginToExistingAccount(
         is OnboardingFlow.AccountEncouragement,
         is OnboardingFlow.InitialOnboarding,
         is OnboardingFlow.LoggedOut,
-        is OnboardingFlow.EngageSdk,
         -> exitOnboarding(OnboardingExitInfo.ShowPlusPromotion)
 
         is OnboardingFlow.ReferralLoginOrSignUp -> exitOnboarding(OnboardingExitInfo.Simple)

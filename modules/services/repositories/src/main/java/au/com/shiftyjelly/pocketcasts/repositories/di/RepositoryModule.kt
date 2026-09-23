@@ -29,8 +29,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
 import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSync
 import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSyncImpl
-import au.com.shiftyjelly.pocketcasts.repositories.external.ExternalDataManager
-import au.com.shiftyjelly.pocketcasts.repositories.external.ExternalDataManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.history.upnext.UpNextHistoryManager
 import au.com.shiftyjelly.pocketcasts.repositories.history.upnext.UpNextHistoryManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationDrawer
@@ -199,9 +197,6 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun provideChapterManager(chapterManagerImpl: ChapterManagerImpl): ChapterManager
-
-    @Binds
-    abstract fun provideExternalDataManager(externalDataManagerImpl: ExternalDataManagerImpl): ExternalDataManager
 
     @Binds
     abstract fun provideMediaDurationExtractor(mediaDurationExtractorImpl: MediaDurationExtractorImpl): MediaDurationExtractor

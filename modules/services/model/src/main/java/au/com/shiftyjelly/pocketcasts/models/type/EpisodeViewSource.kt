@@ -10,18 +10,6 @@ enum class EpisodeViewSource(
         key = "discover",
         analyticsValue = EpisodeViewSourceType.Discover,
     ),
-    ENGAGE_SDK_CONTINUATION(
-        key = "engage_sdk_continuation",
-        analyticsValue = EpisodeViewSourceType.EngageSdkContinuation,
-    ),
-    ENGAGE_SDK_FEATURED(
-        key = "engage_sdk_featured",
-        analyticsValue = EpisodeViewSourceType.EngageSdkFeatured,
-    ),
-    ENGAGE_SDK_RECOMMENDATIONS(
-        key = "engage_sdk_recommendations",
-        analyticsValue = EpisodeViewSourceType.EngageSdkRecommendations,
-    ),
     FILES(
         key = "files",
         analyticsValue = EpisodeViewSourceType.Files,

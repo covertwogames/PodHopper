@@ -24,11 +24,6 @@ sealed interface OnboardingFlow : Parcelable {
     }
 
     @Parcelize
-    data object EngageSdk : OnboardingFlow {
-        override val analyticsValue get() = OnboardingFlowType.EngageSdk
-    }
-
-    @Parcelize
     data class PlusAccountUpgrade(
         override val source: OnboardingUpgradeSource,
         override val preselectedTier: SubscriptionTier,

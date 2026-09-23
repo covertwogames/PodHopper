@@ -70,7 +70,6 @@ object OnboardingFlowRoutes {
         is OnboardingFlow.Welcome,
         is OnboardingFlow.PlusAccountUpgradeNeedsLogin,
         is OnboardingFlow.InitialOnboarding,
-        is OnboardingFlow.EngageSdk,
         is OnboardingFlow.ReferralLoginOrSignUp,
         -> ROUTE_INTRO_CAROUSEL
 
@@ -128,7 +127,6 @@ object OnboardingFlowRoutes {
 
                         is OnboardingFlow.InitialOnboarding,
                         is OnboardingFlow.LoggedOut,
-                        is OnboardingFlow.EngageSdk,
                         is OnboardingFlow.ReferralLoginOrSignUp,
                         -> exitOnboarding(OnboardingExitInfo.Simple)
                     }
@@ -283,7 +281,6 @@ object OnboardingFlowRoutes {
 
                         // Not a startDestination, default value should not be set.
                         is OnboardingFlow.AccountEncouragement,
-                        is OnboardingFlow.EngageSdk,
                         is OnboardingFlow.InitialOnboarding,
                         is OnboardingFlow.LoggedOut,
                         is OnboardingFlow.PlusAccountUpgradeNeedsLogin,

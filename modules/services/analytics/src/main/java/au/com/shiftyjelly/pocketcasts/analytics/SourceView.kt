@@ -54,22 +54,6 @@ enum class SourceView(
         key = "downloads",
         analyticsValue = SourceViewType.Downloads,
     ),
-    ENGAGE_SDK_CONTINUATION(
-        key = "engage_sdk_continuation",
-        analyticsValue = SourceViewType.EngageSdkContinuation,
-    ),
-    ENGAGE_SDK_FEATURED(
-        key = "engage_sdk_featured",
-        analyticsValue = SourceViewType.EngageSdkFeatured,
-    ),
-    ENGAGE_SDK_RECOMMENDATIONS(
-        key = "engage_sdk_recommendations",
-        analyticsValue = SourceViewType.EngageSdkRecommendations,
-    ),
-    ENGAGE_SDK_SIGN_IN(
-        key = "engage_sdk_sign_in",
-        analyticsValue = SourceViewType.EngageSdkSignIn,
-    ),
     EPISODE_DETAILS(
         key = "episode_details",
         analyticsValue = SourceViewType.EpisodeDetails,

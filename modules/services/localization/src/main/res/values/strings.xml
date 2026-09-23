@@ -2550,12 +2550,6 @@
     <string name="suggested_folders_plus_prompt">Organize your shows, with Pocket&#160;Casts&#160;Plus, and more</string>
     <string name="up_next_shuffle_plus_prompt">Shuffle your episodes with Pocket&#160;Casts&#160;Plus, and more</string>
 
-    <!-- Engage SDK -->
-    <string name="engage_sdk_recently_played" translatable="false">@string/nova_launcher_recently_played</string>
-    <string name="engage_sdk_new_releases" translatable="false">@string/nova_launcher_new_releases</string>
-    <string name="engage_sdk_trending" translatable="false">@string/discover_trending</string>
-    <string name="engage_sdk_sign_in" translatable="false">@string/sign_in</string>
-
     <!-- Referrals -->
     <string name="gift">Gift</string>
     <string name="referrals_activate_my_pass">Activate my pass</string>

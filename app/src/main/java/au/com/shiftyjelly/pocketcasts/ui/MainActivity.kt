@@ -1744,11 +1744,7 @@ class MainActivity :
                 }
 
                 is SignInDeepLink -> {
-                    val onboardingFlow = when (SourceView.fromString(deepLink.sourceView)) {
-                        SourceView.ENGAGE_SDK_SIGN_IN -> OnboardingFlow.EngageSdk
-                        else -> OnboardingFlow.LoggedOut
-                    }
-                    openOnboardingFlow(onboardingFlow)
+                    openOnboardingFlow(OnboardingFlow.LoggedOut)
                 }
 
                 is ThemesDeepLink -> {

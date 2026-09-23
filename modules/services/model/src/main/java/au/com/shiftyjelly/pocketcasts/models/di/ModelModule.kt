@@ -8,7 +8,6 @@ import au.com.shiftyjelly.pocketcasts.models.db.dao.ChapterDao
 import au.com.shiftyjelly.pocketcasts.models.db.dao.EndOfYearDao
 import au.com.shiftyjelly.pocketcasts.models.db.dao.EpisodeChatDao
 import au.com.shiftyjelly.pocketcasts.models.db.dao.EpisodeDao
-import au.com.shiftyjelly.pocketcasts.models.db.dao.ExternalDataDao
 import au.com.shiftyjelly.pocketcasts.models.db.dao.PlaybackStatsDao
 import au.com.shiftyjelly.pocketcasts.models.db.dao.PlaylistDao
 import au.com.shiftyjelly.pocketcasts.models.db.dao.PodcastDao
@@ -69,9 +68,6 @@ object ModelModule {
 
     @Provides
     fun provideTranscriptDao(database: AppDatabase): TranscriptDao = database.transcriptDao()
-
-    @Provides
-    fun provideExternalDataDao(database: AppDatabase): ExternalDataDao = database.externalDataDao()
 
     @Provides
     fun endOfYearDao(database: AppDatabase): EndOfYearDao = database.endOfYearDao()

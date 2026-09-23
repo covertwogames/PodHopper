@@ -107,15 +107,6 @@ enum class Feature(
         hasDevToggle = true,
         addedOn = LocalDate.parse("2024-09-26"),
     ),
-    ENGAGE_SDK(
-        key = "engage_sdk",
-        title = "Integrate Pocket Casts with Engage SDK",
-        defaultValue = true,
-        tier = FeatureTier.Free,
-        hasFirebaseRemoteFlag = true,
-        hasDevToggle = false,
-        addedOn = LocalDate.parse("2024-08-20"),
-    ),
     LIBRO_FM(
         key = "libro_fm",
         title = "Libro FM in Upsell",
