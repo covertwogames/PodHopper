@@ -6,6 +6,7 @@ import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingSubsc
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.ExperimentProvider
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.TrialCtaCopyTreatment
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.getTrialCtaCopyTreatment
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.models.type.SubscriptionPlatform
 import au.com.shiftyjelly.pocketcasts.payment.BillingCycle
@@ -20,7 +21,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.utils.Gravatar
 import au.com.shiftyjelly.pocketcasts.utils.toDurationFromNow
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.NewsletterOptInChangedEvent
 import com.automattic.eventhorizon.NewsletterSourceType

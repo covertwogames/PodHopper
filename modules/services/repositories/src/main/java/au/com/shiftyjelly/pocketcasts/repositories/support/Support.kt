@@ -135,51 +135,6 @@ class Support @Inject constructor(
         return intent
     }
 
-    suspend fun emailWearLogsToSupportIntent(logBytes: ByteArray, context: Context): Intent {
-        val subject = "Android wear support"
-        val intro = "Hi there, just needed help with something..."
-        val intent = Intent(Intent.ACTION_SEND)
-
-        withContext(Dispatchers.IO) {
-            intent.type = "text/html"
-            intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("info@covertwogames.com"))
-            intent.putExtra(
-                Intent.EXTRA_SUBJECT,
-                "$subject v${settings.getVersion()} ${getAccountType()}",
-            )
-
-            try {
-                val emailFolder = File(context.filesDir, "email")
-                emailFolder.mkdirs()
-                val debugFile = File(emailFolder, "debug_wear.txt")
-
-                debugFile.writeBytes(logBytes)
-                val fileUri =
-                    FileUtil.createUriWithReadPermissions(context, debugFile, intent)
-                intent.putExtra(Intent.EXTRA_STREAM, fileUri)
-                intent.putExtra(
-                    Intent.EXTRA_TEXT,
-                    HtmlCompat.fromHtml(
-                        "$intro<br/><br/>",
-                        HtmlCompat.FROM_HTML_MODE_COMPACT,
-                    ),
-                )
-            } catch (e: Exception) {
-                Timber.e(e)
-
-                val debugStr = buildString {
-                    append(intro)
-                    append("<br/><br/><br/><br/><br/><br/><br/>")
-                    append(String(logBytes))
-                }
-
-                intent.putExtra(Intent.EXTRA_TEXT, debugStr)
-            }
-        }
-
-        return intent
-    }
-
     private fun getAccountType() = when (settings.cachedSubscription.value?.tier) {
         SubscriptionTier.Patron -> "Patron Account"
         SubscriptionTier.Plus -> "Plus Account"

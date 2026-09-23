@@ -5,12 +5,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.sentry)
     alias(libs.plugins.compose.compiler)
-}
-
-sentry {
-    projectName = project.findProperty("sentryWearProject")?.toString()
 }
 
 android {
@@ -35,10 +30,6 @@ android {
 
         named("release") {
             manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
-
-            if (project.findProperty("sentryWearProject")?.toString().isNullOrBlank()) {
-                println("WARNING: Sentry configuration not found. The ProGuard mapping files won't be uploaded.")
-            }
         }
     }
 
@@ -75,7 +66,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.palette)
-    implementation(libs.automattic.crashlogging)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.compose.activity)
@@ -93,17 +83,13 @@ dependencies {
     implementation(libs.dagger.hilt.android)
     implementation(libs.dagger.hilt.core)
     implementation(libs.datastore)?.because("Force using the latest datastore version to stop the app crashing with Glance widgets. Glance and Horologist libraries both include this library. Pull request https://github.com/Automattic/pocket-casts-android/pull/4031.")
-    implementation(libs.encryptedlogging)
     implementation(libs.guava)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)
     implementation(libs.horologist.audio)
     implementation(libs.horologist.audio.ui)
-    implementation(libs.horologist.auth.data)
-    implementation(libs.horologist.auth.data.phone)
     implementation(libs.horologist.compose.layout)
     implementation(libs.horologist.compose.material)
-    implementation(libs.horologist.datalayer)
     implementation(libs.horologist.media)
     implementation(libs.horologist.media.ui)
     implementation(libs.horologist.media3.outputswitcher)
@@ -125,7 +111,6 @@ dependencies {
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)
     implementation(libs.wear.input)
-    implementation(libs.wear.remote.interactions)
     implementation(libs.wear.tooling.preview)
     implementation(libs.work.runtime)
 

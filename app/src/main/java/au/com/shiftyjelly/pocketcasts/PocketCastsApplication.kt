@@ -8,7 +8,6 @@ import androidx.work.Configuration
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsController
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.ExperimentProvider
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
-import au.com.shiftyjelly.pocketcasts.crashlogging.InitializeRemoteLogging
 import au.com.shiftyjelly.pocketcasts.models.db.dao.UpNextDao
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodeDownloadStatus
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -100,7 +99,6 @@ class PocketCastsApplication :
 
     @Inject lateinit var coilImageLoader: ImageLoader
 
-
     @Inject lateinit var analyticsController: AnalyticsController
 
     @Inject lateinit var downloadStatisticsReporter: DownloadStatisticsReporter
@@ -113,8 +111,6 @@ class PocketCastsApplication :
     @Inject lateinit var upNextDao: UpNextDao
 
     @Inject lateinit var sleepTimerRestartWhenShakingDevice: SleepTimerRestartWhenShakingDevice
-
-    @Inject lateinit var initializeRemoteLogging: InitializeRemoteLogging
 
     @Inject lateinit var databaseExportHelper: DatabaseExportHelper
 
@@ -179,8 +175,6 @@ class PocketCastsApplication :
             ),
         )
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
-
-        initializeRemoteLogging()
     }
 
     override val workManagerConfiguration: Configuration

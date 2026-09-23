@@ -75,17 +75,11 @@ Language: en_GB
     <string name="empty_play_state">Pick an episode to begin</string>
     <string name="settings_beta_features">Beta features</string>
     <string name="settings_watch_logs">Watch logs</string>
-    <string name="settings_help_phone_unavailable_message">Please try again when your phone is connected to your watch.</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">If your phone is currently paired, it will show a pop-up with your logs</string>
     <string name="settings_help_send_logs_to_phone">Send Logs To Phone</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">Please pair your watch with a phone that has Pocket Casts installed before proceeding.</string>
-    <string name="settings_help_contact_support_no_phone_connection">Please pair your watch with a phone that has Pocket Casts installed to view your logs or contact support</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">If your phone is currently paired, it will show a pop-up to email support with your logs attached</string>
     <string name="podcast_loading">Loading your podcasts</string>
-    <string name="settings_could_not_open_on_phone">Unable to open on phone</string>
     <string name="settings_about_terms_of_service_available_at">Our Terms of service are available at %s</string>
     <string name="settings_about_privacy_policy_available_at">Our Privacy policy is available at %s</string>
-    <string name="settings_open_on_phone">Open on phone</string>
     <string name="error_server_failed">Internal server error occurred. Please try again later.</string>
     <string name="error_invalid_email_address">Please enter a valid email address.</string>
     <string name="error_invalid_password_length">Please enter a password that is at least 6 characters long.</string>

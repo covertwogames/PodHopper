@@ -27,9 +27,7 @@ dependencies {
     api(projects.modules.services.repositories)
     api(projects.modules.services.utils)
 
-    implementation(libs.coroutines.play.services)
     implementation(libs.lifecycle.process)
-    implementation(libs.play.wearable)
     implementation(libs.timber)
 
     testImplementation(libs.coroutines.test)

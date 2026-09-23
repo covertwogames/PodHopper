@@ -64,12 +64,12 @@ import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract.OnboardingFinish
 import au.com.shiftyjelly.pocketcasts.account.onboarding.podhopper.PodHopperOnboardingActivity
-import au.com.shiftyjelly.pocketcasts.account.watchsync.WatchSync
 import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.compose.AppTheme
 import au.com.shiftyjelly.pocketcasts.compose.components.AnimatedNonNullVisibility
 import au.com.shiftyjelly.pocketcasts.compose.components.PlaybackErrorInfoBar
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.databinding.ActivityMainBinding
 import au.com.shiftyjelly.pocketcasts.deeplink.AddBookmarkDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.AppOpenDeepLink
@@ -160,11 +160,11 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextSource
 import au.com.shiftyjelly.pocketcasts.repositories.playlist.Playlist
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
-import au.com.shiftyjelly.pocketcasts.repositories.search.ItunesFeedSearcher
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
+import au.com.shiftyjelly.pocketcasts.repositories.search.ItunesFeedSearcher
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.search.AddPodcastFragment
 import au.com.shiftyjelly.pocketcasts.search.SearchFragment
@@ -196,7 +196,6 @@ import au.com.shiftyjelly.pocketcasts.views.helper.HasBackstack
 import au.com.shiftyjelly.pocketcasts.views.helper.OffsettingBottomSheetCallback
 import au.com.shiftyjelly.pocketcasts.views.helper.UiUtil
 import au.com.shiftyjelly.pocketcasts.views.helper.WarningsHelper
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.DiscoverTabOpenedEvent
 import com.automattic.eventhorizon.EndOfYearModalDismissedEvent
 import com.automattic.eventhorizon.EndOfYearModalShownEvent
@@ -300,9 +299,6 @@ class MainActivity :
 
     @Inject
     lateinit var syncManager: SyncManager
-
-    @Inject
-    lateinit var watchSync: WatchSync
 
     @Inject
     lateinit var notificationHelper: NotificationHelper
@@ -1155,9 +1151,6 @@ class MainActivity :
 
                 settings.setTrialFinishedSeen(true)
             }
-
-            // Result is intentionally ignored; failures are logged internally by sendAuthToDataLayer
-            lifecycleScope.launch { watchSync.sendAuthToDataLayer() }
         }
 
         lifecycleScope.launch {

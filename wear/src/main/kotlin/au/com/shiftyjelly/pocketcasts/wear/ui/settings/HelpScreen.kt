@@ -1,18 +1,10 @@
 package au.com.shiftyjelly.pocketcasts.wear.ui.settings
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
 import au.com.shiftyjelly.pocketcasts.wear.ui.component.ScreenHeaderChip
 import au.com.shiftyjelly.pocketcasts.wear.ui.component.WatchListChip
 import com.google.android.horologist.compose.layout.ScalingLazyColumn
@@ -26,8 +18,7 @@ object HelpScreen {
 
 @Composable
 fun HelpScreen(viewModel: HelpScreenViewModel = hiltViewModel()) {
-    val state = viewModel.state.collectAsState().value
-    val statusMessage by viewModel.statusMessage.collectAsState()
+    val shareLogsLabel by viewModel.shareLogsLabel.collectAsState()
     val columnState = rememberResponsiveColumnState()
 
     ScreenScaffold(
@@ -38,55 +29,13 @@ fun HelpScreen(viewModel: HelpScreenViewModel = hiltViewModel()) {
                 ScreenHeaderChip(text = LR.string.settings_title_help)
             }
 
-            if (state == null) {
-                return@ScalingLazyColumn
-            } else if (state.isPhoneAvailable) {
-                phoneAvailableContent(
-                    statusMessage = statusMessage,
-                    onEmailLogsToSupport = { viewModel.emailLogsToSupport() },
+            // PodHopper: uploads this watch's log directly, so it works with or without the phone.
+            item {
+                WatchListChip(
+                    title = stringResource(shareLogsLabel),
+                    onClick = { viewModel.shareLogs() },
                 )
-            } else {
-                noPhoneAvailableContent()
             }
         }
-    }
-}
-
-private fun ScalingLazyListScope.phoneAvailableContent(
-    statusMessage: Int,
-    onEmailLogsToSupport: () -> Unit,
-) {
-    item {
-        Text(
-            text = stringResource(id = statusMessage),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.caption3,
-            color = MaterialTheme.colors.onSecondary,
-        )
-    }
-
-    item {
-        Spacer(Modifier.height(8.dp))
-    }
-
-    item {
-        WatchListChip(
-            title = stringResource(LR.string.settings_help_contact_support),
-            onClick = onEmailLogsToSupport,
-        )
-    }
-}
-
-private fun ScalingLazyListScope.noPhoneAvailableContent() {
-    item {
-        Text(
-            text = stringResource(id = LR.string.settings_help_contact_support_no_phone_connection),
-            textAlign = TextAlign.Center,
-        )
-    }
-
-    item {
-        // Make sure that the bottom of the text can be scrolled onto the screen of a circular watch
-        Spacer(Modifier.height(24.dp))
     }
 }

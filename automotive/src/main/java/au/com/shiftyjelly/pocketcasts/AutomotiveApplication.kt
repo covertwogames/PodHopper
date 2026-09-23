@@ -10,10 +10,10 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsController
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.ExperimentProvider
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
-import au.com.shiftyjelly.pocketcasts.crashlogging.InitializeRemoteLogging
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserver
 import au.com.shiftyjelly.pocketcasts.repositories.jobs.VersionMigrationsWorker
@@ -21,7 +21,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
-import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDiagnostics
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
@@ -76,8 +75,6 @@ class AutomotiveApplication :
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
-    @Inject lateinit var initializeRemoteLogging: InitializeRemoteLogging
-
     @Inject lateinit var analyticsController: AnalyticsController
 
     @Inject lateinit var experimentProvider: ExperimentProvider
@@ -109,7 +106,6 @@ class AutomotiveApplication :
         setupFeatureFlags()
 
         RxJavaUncaughtExceptionHandling.setUp()
-        setupRemoteLogging()
         setupLogging()
         setupAnalytics()
         setupApp()
@@ -154,8 +150,10 @@ class AutomotiveApplication :
         // force the Automotive app into car mode as some car companies send the UI mode as normal, this makes sure the car resources such as layout-car are used.
         this.getSystemService<UiModeManager>()?.enableCarMode(0)
 
-        PlaybackStatsSyncWorker.scheduleOneTimeWork(this)
-        PlaybackStatsSyncWorker.schedulePeriodicWork(this)
+        // PodHopper: the Pocket Casts listening-stats job was removed (it only ran with a Pocket Casts
+        // login, which PodHopper never has). Cancel any copy an earlier build queued, so WorkManager
+        // stops trying to run a worker class that no longer exists.
+        WorkManager.getInstance(this).cancelAllWorkByTag("playback_stats_sync_worker")
         // PodHopper: periodic cross-device sync on the car too, so completions and positions from
         // the phone land between drives, not only at session connect.
         PodHopperSyncWorker.schedulePeriodicWork(this)
@@ -206,10 +204,6 @@ class AutomotiveApplication :
                 }
             },
         )
-    }
-
-    private fun setupRemoteLogging() {
-        initializeRemoteLogging()
     }
 
     private fun setupLogging() {

@@ -16,9 +16,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     ksp(libs.moshi.kotlin.codegen)
 
-    api(libs.automattic.crashlogging)
     api(libs.dagger.hilt.android)
-    api(libs.encryptedlogging)
 
     api(projects.modules.services.coroutines)
 

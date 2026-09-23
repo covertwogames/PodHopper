@@ -22,7 +22,6 @@ dependencies {
     api(libs.androidx.cardview)
     api(libs.androidx.constraintlayout)
     api(libs.androidx.recyclerview)
-    api(libs.automattic.crashlogging)
     api(libs.dagger.hilt.android)
     api(libs.hilt.work)
     api(libs.material)

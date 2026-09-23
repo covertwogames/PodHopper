@@ -908,16 +908,10 @@ Language: nl
     <string name="empty_play_state">Kies een aflevering om te beginnen</string>
     <string name="settings_beta_features">Bèta-functies</string>
     <string name="settings_watch_logs">Horloge-logboeken</string>
-    <string name="settings_help_phone_unavailable_message">Probeer het opnieuw wanneer je telefoon is verbonden met je horloge.</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">Als je telefoon is gekoppeld, krijg je een pop-up met je logboeken te zien</string>
     <string name="settings_help_send_logs_to_phone">Logboeken naar telefoon verzenden</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">Koppel je horloge met een telefoon waarop Pocket Casts is geïnstalleerd voordat je verdergaat.</string>
-    <string name="settings_help_contact_support_no_phone_connection">Koppel je horloge met een telefoon waarop Pocket Casts is geïnstalleerd om je logboeken weer te geven of neem contact op met de klantenservice</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">Als je telefoon is gekoppeld, krijg je een pop-up met e-mailondersteuning te zien met je logboeken in de bijlage</string>
     <string name="podcast_loading">Je podcasts laden</string>
     <string name="podcasts_subscribe_on_phone">Abonneer je podcasts op je telefoon en bekijk ze hier.</string>
-    <string name="settings_could_not_open_on_phone">Kan niet worden geopend op telefoon</string>
-    <string name="settings_open_on_phone">Openen op telefoon</string>
     <string name="settings_about_privacy_policy_available_at">Onze privacyverklaring is beschikbaar via %s</string>
     <string name="settings_about_terms_of_service_available_at">Onze gebruiksvoorwaarden zijn beschikbaar via %s</string>
     <string name="error_server_failed">Er heeft zich een interne serverfout voorgedaan. Probeer later opnieuw.</string>

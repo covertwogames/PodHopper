@@ -20,6 +20,7 @@ import androidx.media3.datasource.HttpDataSource
 import androidx.work.NetworkType
 import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.localization.BuildConfig
 import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
@@ -70,7 +71,6 @@ import au.com.shiftyjelly.pocketcasts.utils.extensions.isPositive
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.AutoplayFinishedLastEpisodeEvent
 import com.automattic.eventhorizon.EpisodeAddedToUpNextEvent
 import com.automattic.eventhorizon.EpisodeBulkAddToUpNextEvent

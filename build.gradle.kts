@@ -11,9 +11,6 @@ import com.automattic.android.measure.reporters.SlowSlowTasksMetricsReporter
 import com.diffplug.gradle.spotless.SpotlessTask
 import com.google.devtools.ksp.gradle.KspExtension
 import com.google.devtools.ksp.gradle.KspGradleSubplugin
-import io.sentry.android.gradle.extensions.InstrumentationFeature
-import io.sentry.android.gradle.extensions.SentryPluginExtension
-import java.util.EnumSet
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin
@@ -27,7 +24,6 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.aboutlibraries) apply false
     alias(libs.plugins.spotless)
-    alias(libs.plugins.sentry) apply false
     alias(libs.plugins.kotlin.parcelize) apply false
     alias(libs.plugins.measure.builds)
     alias(libs.plugins.protobuf) apply false
@@ -211,14 +207,7 @@ subprojects {
         }
     }
 
-    plugins.withId(rootProject.libs.plugins.sentry.get().pluginId) {
-        applyCommonSentryConfiguration()
-    }
-
     configurations.configureEach {
-        // Exclude the NDK from the Sentry Android SDK as we don't use it.
-        exclude("io.sentry", "sentry-android-ndk")
-
         // https://github.com/android/android-test/issues/999
         if (name == "androidTestImplementation") {
             exclude("com.google.protobuf", "protobuf-lite")
@@ -272,10 +261,7 @@ subprojects {
                 buildConfigField("String", "VERSION_NAME", "\"${project.property("versionName")}\"")
                 buildConfigField("String", "SETTINGS_ENCRYPT_SECRET", "\"${project.property("settingsEncryptSecret")}\"")
                 buildConfigField("String", "SHARING_SERVER_SECRET", "\"${project.property("sharingServerSecret")}\"")
-                buildConfigField("String", "SENTRY_DSN", "\"${project.property("pocketcastsSentryDsn")}\"")
                 buildConfigField("String", "BUILD_PLATFORM", "\"${project.property("buildPlatform")}\"")
-                buildConfigField("String", "ENCRYPTION_KEY", "\"${project.property("encryptionKey")}\"")
-                buildConfigField("String", "APP_SECRET", "\"${project.property("appSecret")}\"")
                 buildConfigField("String", "META_APP_ID", "\"${project.property("metaAppId")}\"")
 
                 buildConfigField("String", "SERVER_MAIN_URL", "\"https://refresh.pocketcasts.com\"")
@@ -481,24 +467,6 @@ subprojects {
     }
 }
 
-fun Project.applyCommonSentryConfiguration() {
-    extensions.getByType(SentryPluginExtension::class.java).apply {
-        authToken = project.findProperty("sentryAuthToken")?.toString()
-        org = project.findProperty("sentryOrg")?.toString()
-
-        val shouldUploadDebugFiles = System.getenv()["CI"].toBoolean() &&
-            !project.properties["skipSentryProguardMappingUpload"]?.toString().toBoolean()
-        includeProguardMapping = shouldUploadDebugFiles
-        includeSourceContext = shouldUploadDebugFiles
-
-        tracingInstrumentation {
-            features.set(EnumSet.allOf(InstrumentationFeature::class.java) - InstrumentationFeature.OKHTTP)
-        }
-        autoInstallation.enabled = false
-        includeDependenciesReport = false
-        ignoredBuildTypes = setOf("debug", "debugProd", "prototype")
-    }
-}
 
 tasks.register("aggregatedLintRelease") {
     group = "verification"

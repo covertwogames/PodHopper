@@ -1,8 +1,8 @@
 package au.com.shiftyjelly.pocketcasts.views.review
 
 import androidx.appcompat.app.AppCompatActivity
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.AppStoreReviewRequestedEvent
 import com.automattic.eventhorizon.EventHorizon
 import com.google.android.play.core.review.ReviewManager

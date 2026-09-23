@@ -542,17 +542,11 @@ Language: el_GR
     <string name="player_play_failed_check_internet">Αδυναμία φόρτωσης podcast. Παρακαλώ έλεγξε τη σύνδεση στο διαδίκτυο και δοκίμασε ξανά.</string>
     <string name="settings_beta_features">Βeta χαρακτηριστικά</string>
     <string name="settings_help_send_logs_to_phone">Αποστολή αρχείων καταγραφής στο τηλέφωνο</string>
-    <string name="settings_help_phone_unavailable_message">Παρακαλώ δοκίμασε ξανά όταν το τηλέφωνό σου είναι συνδεδεμένο με το ρολόι σου.</string>
     <string name="settings_watch_logs">Καταγραφές ρολογιού</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">Αν το τηλέφωνό σου είναι αυτή τη στιγμή συνδεδεμένο, θα εμφανιστεί ένα αναδυόμενο παράθυρο με τα αρχεία καταγραφής σου</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">Σύνδεσε το ρολόι σου με ένα τηλέφωνο που έχει εγκατεστημένο το Pocket Casts πριν προχωρήσεις.</string>
-    <string name="settings_help_contact_support_no_phone_connection">Παρακαλώ σύνδεσε το ρολόι σου με ένα τηλέφωνο που έχει εγκατεστημένο το Pocket Casts για να δεις τις καταγραφές σου ή να επικοινωνήσεις με την υποστήριξη.</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">Αν το τηλέφωνό σου είναι αυτή τη στιγμή συνδεδεμένο, θα εμφανιστεί ένα αναδυόμενο παράθυρο για να στείλεις email υποστήριξης με τα αρχεία καταγραφής σου επισυναπτόμενα.</string>
     <string name="podcast_loading">Φόρτωση των podcasts σου</string>
     <string name="podcasts_subscribe_on_phone">Ακολούθησε τα podcasts στο τηλέφωνό σου και θα εμφανιστούν εδώ.</string>
-    <string name="settings_could_not_open_on_phone">Αδυναμία ανοίγματος στο τηλέφωνο</string>
     <string name="settings_about_terms_of_service_available_at">Οι Όροι υπηρεσίας μας είναι διαθέσιμοι στο %s</string>
-    <string name="settings_open_on_phone">Άνοιγμα στο τηλέφωνο</string>
     <string name="settings_about_privacy_policy_available_at">Η Πολιτική Απορρήτου μας είναι διαθέσιμη στο %s</string>
     <string name="error_invalid_email_address">Παρακαλούμε δώσε μια έγκυρη διεύθυνση email.</string>
     <string name="error_invalid_password_length">Παρακαλούμε εισήγαγε έναν κωδικό πρόσβασης με τουλάχιστον 6 χαρακτήρες.</string>

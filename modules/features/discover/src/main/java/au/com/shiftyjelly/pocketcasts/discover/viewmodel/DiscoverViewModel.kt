@@ -3,6 +3,7 @@ package au.com.shiftyjelly.pocketcasts.discover.viewmodel
 import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import au.com.shiftyjelly.pocketcasts.analytics.SourceView
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.discover.view.CategoryAdRow
 import au.com.shiftyjelly.pocketcasts.discover.view.ChangeRegionRow
 import au.com.shiftyjelly.pocketcasts.discover.view.MostPopularPodcastsByCategoryRow
@@ -26,7 +27,6 @@ import au.com.shiftyjelly.pocketcasts.servers.model.ListType
 import au.com.shiftyjelly.pocketcasts.servers.model.NetworkLoadableList
 import au.com.shiftyjelly.pocketcasts.servers.model.SponsoredPodcast
 import au.com.shiftyjelly.pocketcasts.servers.model.transformWithRegion
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.DiscoverShownEvent
 import com.automattic.eventhorizon.EventHorizon
 import dagger.hilt.android.lifecycle.HiltViewModel

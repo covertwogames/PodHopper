@@ -2,14 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.sentry)
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.aboutlibraries.android)
     alias(libs.plugins.compose.compiler)
-}
-
-sentry {
-    projectName = project.findProperty("sentryAutomotiveProject")?.toString()
 }
 
 android {
@@ -40,10 +35,6 @@ android {
 
         named("release") {
             manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
-
-            if (project.findProperty("sentryAutomotiveProject")?.toString().isNullOrBlank()) {
-                println("WARNING: Sentry configuration not found. The ProGuard mapping files won't be uploaded.")
-            }
         }
     }
 
@@ -72,7 +63,6 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.viewpager)
-    implementation(libs.automattic.crashlogging)
     implementation(libs.coil)
     implementation(libs.compose.material)
     implementation(libs.compose.ui)
@@ -82,7 +72,6 @@ dependencies {
     implementation(libs.coroutines.rx2)
     implementation(libs.dagger.hilt.android)
     implementation(libs.dagger.hilt.core)
-    implementation(libs.encryptedlogging)
     implementation(libs.fragment.compose)
     implementation(libs.guava)
     implementation(libs.hilt.work)

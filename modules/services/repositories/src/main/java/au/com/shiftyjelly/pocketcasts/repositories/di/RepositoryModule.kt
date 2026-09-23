@@ -4,8 +4,6 @@ import android.content.Context
 import androidx.work.WorkerFactory
 import au.com.shiftyjelly.pocketcasts.analytics.AccountStatusInfo
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsListener
-import au.com.shiftyjelly.pocketcasts.crashlogging.CrashReportPermissionCheck
-import au.com.shiftyjelly.pocketcasts.crashlogging.ObserveUser
 import au.com.shiftyjelly.pocketcasts.models.to.TranscriptType
 import au.com.shiftyjelly.pocketcasts.payment.PurchaseApprover
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -86,12 +84,10 @@ import au.com.shiftyjelly.pocketcasts.repositories.transcript.TranscriptManager
 import au.com.shiftyjelly.pocketcasts.repositories.transcript.TranscriptManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.transcript.TranscriptParser
 import au.com.shiftyjelly.pocketcasts.repositories.transcript.WebVttParser
-import au.com.shiftyjelly.pocketcasts.repositories.user.ObserveTrackableUser
 import au.com.shiftyjelly.pocketcasts.repositories.user.StatsManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.StatsManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManagerImpl
-import au.com.shiftyjelly.pocketcasts.repositories.user.UserSettingsCrashReportPermission
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.squareup.moshi.Moshi
@@ -203,12 +199,6 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun provideChapterManager(chapterManagerImpl: ChapterManagerImpl): ChapterManager
-
-    @Binds
-    abstract fun provideObserveUser(observeTrackableUser: ObserveTrackableUser): ObserveUser
-
-    @Binds
-    abstract fun provideCrashReportPermissionCheck(userSettingsCrashReportPermission: UserSettingsCrashReportPermission): CrashReportPermissionCheck
 
     @Binds
     abstract fun provideExternalDataManager(externalDataManagerImpl: ExternalDataManagerImpl): ExternalDataManager

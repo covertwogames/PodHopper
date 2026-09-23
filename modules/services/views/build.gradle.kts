@@ -24,7 +24,6 @@ dependencies {
     api(libs.androidx.mediarouter)
     api(libs.androidx.preference.ktx)
     api(libs.androidx.recyclerview)
-    api(libs.automattic.crashlogging)
     api(libs.compose.material)
     api(libs.dagger.hilt.android)
     api(libs.lottie)

@@ -10,7 +10,6 @@ android {
 }
 
 dependencies {
-    api(libs.automattic.crashlogging)
     api(libs.junit)
 
     implementation(libs.coroutines.test)

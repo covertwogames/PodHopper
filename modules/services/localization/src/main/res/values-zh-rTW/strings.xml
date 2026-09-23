@@ -909,16 +909,10 @@ Language: zh_TW
     <string name="empty_play_state">挑選單集以開始</string>
     <string name="settings_beta_features">Beta 功能</string>
     <string name="settings_watch_logs">手錶記錄</string>
-    <string name="settings_help_phone_unavailable_message">請將手機連結至手錶後再試一次。</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">如果你的手機目前已完成配對，手機畫面就會顯示包含記錄的快顯視窗</string>
     <string name="settings_help_send_logs_to_phone">將記錄傳送至手機</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">請將你的手錶與已安裝 Pocket Casts 的手機配對，再繼續操作。</string>
-    <string name="settings_help_contact_support_no_phone_connection">請將你的手錶與已安裝 Pocket Casts 的手機配對，以觀看記錄或聯絡支援團隊</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">如果你的手機目前已完成配對，手機畫面就會顯示快顯視窗，以便你將記錄附加至電子郵件並傳送給支援團隊</string>
     <string name="podcast_loading">正在載入你的 Podcast</string>
     <string name="podcasts_subscribe_on_phone">在手機上追蹤 Podcast，訂閱內容就會顯示於此處。</string>
-    <string name="settings_could_not_open_on_phone">無法在手機上開啟</string>
-    <string name="settings_open_on_phone">在手機上開啟</string>
     <string name="settings_about_privacy_policy_available_at">可在 %s 查看我們的隱私權政策</string>
     <string name="settings_about_terms_of_service_available_at">可在 %s 查看我們的使用條款</string>
     <string name="error_server_failed">發生內部伺服器錯誤。 請稍後再試一次。</string>

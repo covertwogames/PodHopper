@@ -909,16 +909,10 @@ Language: zh_CN
     <string name="empty_play_state">选择一集以开始</string>
     <string name="settings_beta_features">测试版功能</string>
     <string name="settings_watch_logs">Watch 日志</string>
-    <string name="settings_help_phone_unavailable_message">请在手机连接手表后重试。</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">如果您的手机当前已配对，它将显示一个包含日志的弹出窗口</string>
     <string name="settings_help_send_logs_to_phone">将日志发送到手机</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">请先将您的手表与已安装 Pocket Casts 的手机配对，然后再继续。</string>
-    <string name="settings_help_contact_support_no_phone_connection">请将您的手表与已安装 Pocket Casts 的手机配对，以查看您的日志或联系支持人员</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">如果您的手机当前已配对，它将显示一个包含日志的电子邮件支持弹出窗口</string>
     <string name="podcast_loading">正在加载您的播客</string>
     <string name="podcasts_subscribe_on_phone">在您的手机上关注播客，它们就会显示在此处。</string>
-    <string name="settings_could_not_open_on_phone">无法在手机上打开</string>
-    <string name="settings_open_on_phone">在手机上打开</string>
     <string name="settings_about_privacy_policy_available_at">请访问 %s 查看我们的隐私政策</string>
     <string name="settings_about_terms_of_service_available_at">请访问 %s 查看我们的服务条款</string>
     <string name="error_server_failed">发生内部服务器错误。 请稍后重试。</string>

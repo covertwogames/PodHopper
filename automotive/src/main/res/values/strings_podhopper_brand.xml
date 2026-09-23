@@ -89,8 +89,6 @@
     <string name="settings_forums">PodHopper Forums</string>
     <string name="settings_forums_description">Please go to PodHopper\' forums (%1$s) where our support team can help you.</string>
     <string name="settings_get_plus_and_more">Get PodHopper Plus to unlock this feature and more!</string>
-    <string name="settings_help_contact_support_no_phone_connection">Please pair your watch with a phone that has PodHopper installed to view your logs or contact support</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">Please pair your watch with a phone that has PodHopper installed before proceeding.</string>
     <string name="settings_import_file_summary">If you have podcasts in another app or service, PodHopper can import them from an OPML file.</string>
     <string name="settings_notification_offers">PodHopper Offers</string>
     <string name="settings_opml_email_body"><![CDATA[Hi, <br/><br/>Please find attached your freshly exported podcast list in an OPML file. <br/><br/>PodHopper Team]]></string>

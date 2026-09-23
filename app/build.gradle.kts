@@ -3,12 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.sentry)
     alias(libs.plugins.compose.compiler)
-}
-
-sentry {
-    projectName = project.findProperty("sentryAndroidProject")?.toString()
 }
 
 android {
@@ -47,10 +42,6 @@ android {
 
         named("release") {
             manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
-
-            if (project.findProperty("sentryAndroidProject")?.toString().isNullOrBlank()) {
-                println("WARNING: Sentry configuration not found. The ProGuard mapping files won't be uploaded.")
-            }
         }
     }
 
@@ -69,7 +60,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.mediarouter)
-    implementation(libs.automattic.crashlogging)
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)
     implementation(libs.compose.ui)
@@ -80,19 +70,15 @@ dependencies {
     implementation(libs.dagger.hilt.android)
     implementation(libs.dagger.hilt.core)
     implementation(libs.datastore)?.because("Force using the latest datastore version to stop the app crashing with Glance widgets. Glance and Horologist libraries both include this library. Pull request https://github.com/Automattic/pocket-casts-android/pull/4031.")
-    implementation(libs.encryptedlogging)
     implementation(libs.fragment.ktx)
     implementation(libs.guava)
     implementation(libs.hilt.work)
-    implementation(libs.horologist.auth.data.phone)
-    implementation(libs.horologist.datalayer)
     implementation(libs.lifecycle.reactivestreams.ktx)
     implementation(libs.material)
     implementation(libs.media3.extractor)
     implementation(libs.moshi)
     implementation(libs.okhttp)
     implementation(libs.play.cast)
-    implementation(libs.play.wearable)
     implementation(libs.retrofit)
     implementation(libs.rx2.java)
     implementation(libs.rx2.kotlin)

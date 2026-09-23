@@ -27,7 +27,6 @@ dependencies {
     api(libs.androidx.constraintlayout)
     api(libs.androidx.preference.ktx)
     api(libs.androidx.recyclerview)
-    api(libs.automattic.crashlogging)
     api(libs.dagger.hilt.android)
     api(libs.material)
 

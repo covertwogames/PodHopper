@@ -2,51 +2,36 @@ package au.com.shiftyjelly.pocketcasts.wear.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import au.com.shiftyjelly.pocketcasts.shared.WatchMessageSendState
-import au.com.shiftyjelly.pocketcasts.shared.WatchPhoneCommunication
-import au.com.shiftyjelly.pocketcasts.shared.WatchPhoneCommunicationState
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDiagnostics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
+/**
+ * PodHopper: the watch Help screen's "Share logs with developers" row. Uploads this watch's log with
+ * the same uploader the phone's About screen and the car use, straight from the watch, so no phone
+ * needs to be nearby. The row's label shows progress and the result, exactly as on the phone.
+ */
 @HiltViewModel
 class HelpScreenViewModel @Inject constructor(
-    private val watchPhoneCommunication: WatchPhoneCommunication.Watch,
+    private val diagnostics: PodHopperCarDiagnostics,
 ) : ViewModel() {
 
-    data class State(val isPhoneAvailable: Boolean)
+    private val _shareLogsLabel = MutableStateFlow(LR.string.podhopper_share_logs_title)
+    val shareLogsLabel: StateFlow<Int> = _shareLogsLabel.asStateFlow()
 
-    private val _statusMessage = MutableStateFlow(LR.string.settings_help_contact_support_wear_requires_nearby_phone)
-    val statusMessage: StateFlow<Int> = _statusMessage.asStateFlow()
-
-    val state: StateFlow<State?> = watchPhoneCommunication.watchPhoneCommunicationStateFlow
-        .map {
-            State(isPhoneAvailable = it == WatchPhoneCommunicationState.AVAILABLE)
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    fun emailLogsToSupport() {
+    fun shareLogs() {
+        if (_shareLogsLabel.value == LR.string.podhopper_share_logs_uploading) {
+            return
+        }
+        _shareLogsLabel.value = LR.string.podhopper_share_logs_uploading
         viewModelScope.launch {
-            val result = watchPhoneCommunication.emailLogsToSupportMessage()
-            val message = when (result) {
-                WatchMessageSendState.QUEUED -> LR.string.settings_help_contact_support_email_sent_to_phone
-                WatchMessageSendState.FAILED_TO_QUEUE -> LR.string.settings_help_phone_unavailable_message
-            }
-
-            if (result == WatchMessageSendState.QUEUED) {
-                // There is a bit of delay between an item being queued and it being received on the phone,
-                // so add a short delay before directing the user to their phone.
-                delay(2.seconds)
-            }
-            _statusMessage.value = message
+            val shared = diagnostics.uploadNow(reason = "manual")
+            _shareLogsLabel.value = if (shared) LR.string.podhopper_share_logs_done else LR.string.podhopper_share_logs_failed
         }
     }
 }

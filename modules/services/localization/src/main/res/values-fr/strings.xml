@@ -911,16 +911,10 @@ Language: fr
     <string name="settings_watch_logs">Journaux de la montre</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">Si votre téléphone est actuellement jumelé avec votre montre, une fenêtre contextuelle avec vos journaux s’affichera.</string>
     <string name="settings_help_send_logs_to_phone">Envoyer les journaux au téléphone</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">Veuillez jumeler votre montre avec un téléphone sur lequel Pocket Casts est installé avant de continuer.</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">Si votre téléphone est actuellement jumelé avec votre montre, une fenêtre contextuelle s’affichera pour envoyer un e-mail à l’assistance avec vos journaux en pièces jointes.</string>
-    <string name="settings_help_phone_unavailable_message">Veuillez réessayer lorsque votre téléphone sera connecté à votre montre.</string>
-    <string name="settings_help_contact_support_no_phone_connection">Veuillez jumeler votre montre avec un téléphone sur lequel Pocket Casts est installé pour afficher vos journaux ou contactez l’assistance</string>
     <string name="podcast_loading">Chargement de vos podcasts</string>
     <string name="podcasts_subscribe_on_phone">Abonnez-vous à des podcasts sur votre téléphone et ils apparaîtront ici.</string>
-    <string name="settings_could_not_open_on_phone">Ouverture impossible sur le téléphone</string>
     <string name="settings_about_privacy_policy_available_at">Notre politique de confidentialité est disponible à l’adresse %s</string>
     <string name="settings_about_terms_of_service_available_at">Nos conditions d’utilisation sont disponibles à l’adresse  %s</string>
-    <string name="settings_open_on_phone">Ouvrir sur le téléphone</string>
     <string name="error_server_failed">Une erreur interne du serveur s’est produite Veuillez réessayer plus tard.</string>
     <string name="error_invalid_password_length">Veuillez saisir un mot de passe d’au moins 6 caractères.</string>
     <string name="error_invalid_email_address">Veuillez saisir une adresse e-mail valide.</string>

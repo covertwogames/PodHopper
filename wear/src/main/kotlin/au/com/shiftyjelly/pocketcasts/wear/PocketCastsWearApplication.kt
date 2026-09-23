@@ -3,11 +3,12 @@ package au.com.shiftyjelly.pocketcasts.wear
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import au.com.shiftyjelly.pocketcasts.BuildConfig
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsController
 import au.com.shiftyjelly.pocketcasts.analytics.experiments.ExperimentProvider
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
-import au.com.shiftyjelly.pocketcasts.crashlogging.InitializeRemoteLogging
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserver
 import au.com.shiftyjelly.pocketcasts.repositories.file.StorageOptions
@@ -18,7 +19,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackServiceToggl
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
-import au.com.shiftyjelly.pocketcasts.repositories.stats.PlaybackStatsSyncWorker
 import au.com.shiftyjelly.pocketcasts.shared.AppLifecycleObserver
 import au.com.shiftyjelly.pocketcasts.shared.DownloadStatisticsReporter
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
@@ -27,7 +27,6 @@ import au.com.shiftyjelly.pocketcasts.utils.log.RxJavaUncaughtExceptionHandling
 import au.com.shiftyjelly.pocketcasts.wear.networking.ConnectivityLogger
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
@@ -59,7 +58,6 @@ class PocketCastsWearApplication :
 
     @Inject lateinit var settings: Settings
 
-
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
     @Inject lateinit var analyticsController: AnalyticsController
@@ -67,8 +65,6 @@ class PocketCastsWearApplication :
     @Inject lateinit var experimentProvider: ExperimentProvider
 
     @Inject lateinit var downloadStatisticsReporter: DownloadStatisticsReporter
-
-    @Inject lateinit var initializeRemoteLogging: InitializeRemoteLogging
 
     @Inject lateinit var connectivityLogger: ConnectivityLogger
 
@@ -88,14 +84,9 @@ class PocketCastsWearApplication :
         // uuid-addressed artwork request fails and the placeholder shows instead.
         SingletonImageLoader.setSafe { coilImageLoader }
         RxJavaUncaughtExceptionHandling.setUp()
-        setupCrashLogging()
         setupLogging()
         setupAnalytics()
         setupApp()
-    }
-
-    private fun setupCrashLogging() {
-        initializeRemoteLogging()
     }
 
     private fun setupLogging() {
@@ -145,9 +136,11 @@ class PocketCastsWearApplication :
                 // devices land even while the app is closed, as on the phone and car.
                 PodHopperSyncWorker.schedulePeriodicWork(application)
             }
-            runStartupStep("playback stats scheduling") {
-                PlaybackStatsSyncWorker.scheduleOneTimeWork(application)
-                PlaybackStatsSyncWorker.schedulePeriodicWork(application)
+            runStartupStep("retired stats job cleanup") {
+                // PodHopper: the Pocket Casts listening-stats job was removed (it only ran with a Pocket
+                // Casts login, which PodHopper never has). Cancel any copy an earlier build queued, so
+                // WorkManager stops trying to run a worker class that no longer exists.
+                WorkManager.getInstance(application).cancelAllWorkByTag("playback_stats_sync_worker")
             }
         }
     }

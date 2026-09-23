@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
+import au.com.shiftyjelly.pocketcasts.crashlogging.CrashLogging
 import au.com.shiftyjelly.pocketcasts.localization.extensions.getStringPlural
 import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
@@ -30,7 +31,6 @@ import au.com.shiftyjelly.pocketcasts.views.helper.CloudDeleteHelper
 import au.com.shiftyjelly.pocketcasts.views.helper.DeleteState
 import au.com.shiftyjelly.pocketcasts.views.helper.PlainShare
 import au.com.shiftyjelly.pocketcasts.views.swipe.AddToPlaylistFragmentFactory
-import com.automattic.android.tracks.crashlogging.CrashLogging
 import com.automattic.eventhorizon.EpisodeBulkArchivedEvent
 import com.automattic.eventhorizon.EpisodeBulkMarkedAsPlayedEvent
 import com.automattic.eventhorizon.EpisodeBulkMarkedAsUnplayedEvent

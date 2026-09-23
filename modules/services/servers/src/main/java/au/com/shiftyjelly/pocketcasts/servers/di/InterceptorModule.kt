@@ -14,9 +14,6 @@ import au.com.shiftyjelly.pocketcasts.servers.toClientInterceptor
 import au.com.shiftyjelly.pocketcasts.servers.toNetworkInterceptor
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
-import com.automattic.android.tracks.crashlogging.CrashLoggingOkHttpInterceptorProvider
-import com.automattic.android.tracks.crashlogging.FormattedUrl
-import com.automattic.android.tracks.crashlogging.RequestFormatter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,18 +34,6 @@ object InterceptorModule {
 
     private val fiveMinutes = 5.minutes.inWholeSeconds
     private val cacheControlHeader = "Cache-Control"
-
-    private val crashLoggingInterceptor = CrashLoggingOkHttpInterceptorProvider
-        .createInstance(object : RequestFormatter {
-            override fun formatRequestUrl(request: Request): FormattedUrl {
-                // PodHopper: crash breadcrumbs record the host only for our own backends, so
-                // podcast feed and media hosts never leak into a crash report. The filter still
-                // named the upstream project's domain, which PodHopper never calls, so every
-                // request was reported as "filtered" and the breadcrumb was useless.
-                val host = request.url.host
-                return host.takeIf { it.contains("podhopper") || it.contains("supabase") } ?: "filtered"
-            }
-        })
 
     private val publicUserAgentInterceptor = Interceptor { chain ->
         val request = chain.request().newBuilder()
@@ -174,7 +159,6 @@ object InterceptorModule {
             add(cacheControlInterceptor.toClientInterceptor())
             add(internalUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
 
             if (BuildConfig.DEBUG) {
                 val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -193,7 +177,6 @@ object InterceptorModule {
         return buildList {
             add(internalUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
 
             if (BuildConfig.DEBUG) {
                 val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -214,7 +197,6 @@ object InterceptorModule {
             add(internalUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
             add(interceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
 
             if (BuildConfig.DEBUG) {
                 val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -233,7 +215,6 @@ object InterceptorModule {
         return buildList {
             add(publicUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
             add(basicAuthInterceptor)
             add(cleanAndRetryInterceptor)
 
@@ -255,7 +236,6 @@ object InterceptorModule {
             add(publicUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
             add(cacheControlTranscriptsInterceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
 
             if (BuildConfig.DEBUG) {
                 val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -276,7 +256,6 @@ object InterceptorModule {
         return buildList {
             add(publicUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
             add(basicAuthInterceptor)
             add(cleanAndRetryInterceptor)
 
@@ -297,7 +276,6 @@ object InterceptorModule {
         return buildList {
             add(publicUserAgentInterceptor.toClientInterceptor())
             add(i18nInterceptor.toClientInterceptor())
-            add(crashLoggingInterceptor.toClientInterceptor())
             add(cleanAndRetryInterceptor)
 
             if (BuildConfig.DEBUG) {

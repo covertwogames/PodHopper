@@ -909,16 +909,10 @@ Language: es
     <string name="empty_play_state">Elige un episodio para empezar</string>
     <string name="settings_beta_features">Funciones beta</string>
     <string name="settings_watch_logs">Registros del reloj</string>
-    <string name="settings_help_phone_unavailable_message">Vuelve a intentarlo cuando el teléfono esté conectado con el reloj.</string>
     <string name="settings_help_logs_sent_to_phone_check_phone">Si actualmente el teléfono está emparejado, se mostrará una ventana emergente con los registros</string>
     <string name="settings_help_send_logs_to_phone">Enviar registros al teléfono</string>
-    <string name="settings_help_contact_support_wear_requires_nearby_phone">Antes de continuar, empareja tu reloj con un teléfono que tenga Pocket Casts instalado.</string>
-    <string name="settings_help_contact_support_no_phone_connection">Empareja tu reloj con un teléfono que tenga Pocket Casts instalado para ver los registros o contactar con el soporte técnico</string>
-    <string name="settings_help_contact_support_email_sent_to_phone">Si actualmente el teléfono está emparejado, se mostrará una ventana emergente para enviar un correo electrónico con los registros adjuntos al soporte técnico</string>
     <string name="podcast_loading">Cargando los pódcast</string>
     <string name="podcasts_subscribe_on_phone">Sigue los pódcasts en tu teléfono y aparecerán aquí.</string>
-    <string name="settings_could_not_open_on_phone">No se puede abrir en el teléfono</string>
-    <string name="settings_open_on_phone">Abrir en el teléfono</string>
     <string name="settings_about_privacy_policy_available_at">Puedes consultar nuestra Política de privacidad en %s</string>
     <string name="settings_about_terms_of_service_available_at">Puedes consultar las condiciones del servicio en %s</string>
     <string name="error_server_failed">Se ha producido un error interno del servidor. Inténtalo de nuevo más tarde.</string>

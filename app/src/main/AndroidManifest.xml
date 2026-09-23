@@ -394,19 +394,6 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name=".PocketCastsWearListenerService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <data
-                    android:scheme="wear"
-                    android:host="*"
-                    android:pathPrefix="/pocket_casts_wear_communication"
-                    />
-            </intent-filter>
-        </service>
-
         <!-- Google play services -->
         <meta-data
                 android:name="com.google.android.gms.version"
@@ -448,9 +435,6 @@
 
         <!-- Samsung Carmode -->
         <meta-data android:name="com.sec.android.automotive.drivelink.notification.SmallIcon" android:resource="@drawable/notification"/>
-
-        <!-- Disable Sentry exception tracking so we can turn it on based on the user preference -->
-        <meta-data android:name="io.sentry.auto-init" android:value="false" />
 
     </application>
 

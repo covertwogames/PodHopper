@@ -29,7 +29,6 @@ dependencies {
     api(projects.modules.services.preferences)
     api(projects.modules.services.protobuf)
 
-    implementation(libs.automattic.crashlogging)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.rx2)
     implementation(libs.moshi.adapters)

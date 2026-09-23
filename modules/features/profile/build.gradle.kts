@@ -24,7 +24,6 @@ dependencies {
     api(libs.androidx.constraintlayout)
     api(libs.androidx.recyclerview)
     api(libs.androidx.swiperefreshlayout)
-    api(libs.automattic.crashlogging)
     api(libs.dagger.hilt.android)
     api(libs.material)
     api(libs.media3.exoplayer)
