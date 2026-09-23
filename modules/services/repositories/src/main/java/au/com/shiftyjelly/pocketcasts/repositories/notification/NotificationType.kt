@@ -150,6 +150,10 @@ sealed class OnboardingNotificationType(
         const val SUBCATEGORY_THEMES = "themes"
         const val SUBCATEGORY_STAFF_PICKS = "staff_picks"
 
+        // PodHopper: StaffPicks is deliberately left out. Its notification text is PodHopper's,
+        // but tapping it opened Pocket Casts' own staff picks list, fetched from their servers.
+        // Leaving it out of this list also disarms any copy already queued on an existing install,
+        // because a queued notification is resolved back to its type through this same list.
         val values: List<OnboardingNotificationType>
             get() = listOf(
                 Sync,
@@ -157,7 +161,6 @@ sealed class OnboardingNotificationType(
                 UpNext,
                 Filters,
                 Themes,
-                StaffPicks,
             )
     }
 }

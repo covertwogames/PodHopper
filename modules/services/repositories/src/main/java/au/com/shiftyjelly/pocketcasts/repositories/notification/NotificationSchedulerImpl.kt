@@ -41,7 +41,6 @@ class NotificationSchedulerImpl @Inject constructor(
             OnboardingNotificationType.UpNext,
             OnboardingNotificationType.Filters,
             OnboardingNotificationType.Themes,
-            OnboardingNotificationType.StaffPicks,
         ).forEach { type ->
             val delay = delayProvider?.invoke(type)?.inWholeMilliseconds ?: delayCalculator.calculateDelayForOnboardingNotification(type)
 
