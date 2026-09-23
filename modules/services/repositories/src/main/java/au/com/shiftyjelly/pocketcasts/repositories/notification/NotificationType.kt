@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import au.com.shiftyjelly.pocketcasts.deeplink.AppOpenDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.CreateAccountDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.DownloadsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ImportDeepLink
@@ -187,7 +188,9 @@ sealed class ReEngagementNotificationType(
         titleRes = LR.string.notification_reengage_we_miss_you_title,
         messageRes = LR.string.notification_reengage_we_miss_you_message,
     ) {
-        override fun toIntent(context: Context): Intent = StaffPicksDeepLink.toIntent(context)
+        // PodHopper: opens the app, as the message invites. Upstream this opened Pocket Casts'
+        // staff picks list, which PodHopper has no equivalent of.
+        override fun toIntent(context: Context): Intent = AppOpenDeepLink.toIntent(context)
     }
 
     data object CatchUpOffline : ReEngagementNotificationType(
