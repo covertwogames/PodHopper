@@ -20,10 +20,6 @@ class NotificationManagerImpl @Inject constructor(
         setupNotificationsForType(ReEngagementNotificationType.values) { it.notificationId }
     }
 
-    override suspend fun setupTrendingAndRecommendationsNotifications() {
-        setupNotificationsForType(TrendingAndRecommendationsNotificationType.values) { it.notificationId }
-    }
-
     override suspend fun setupNewFeaturesNotifications() {
         setupNotificationsForType(NewFeaturesAndTipsNotificationType.values) { it.notificationId }
     }

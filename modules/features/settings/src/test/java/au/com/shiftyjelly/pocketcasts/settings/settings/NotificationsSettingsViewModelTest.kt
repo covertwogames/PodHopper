@@ -102,26 +102,6 @@ internal class NotificationsSettingsViewModelTest {
     }
 
     @Test
-    fun `GIVEN disabled recommendations WHEN recommendations are enabled THEN scheduling notifications`() = runTest {
-        val viewModel = createViewModel()
-        val preference = NotificationPreferenceType.EnableRecommendations(title = TextResource.fromText(""), isEnabled = true)
-
-        viewModel.onPreferenceChanged(preference)
-
-        verify(notificationScheduler).setupTrendingAndRecommendationsNotifications()
-    }
-
-    @Test
-    fun `GIVEN enabled recommendations WHEN recommendations are enabled THEN cancelling scheduled notifications`() = runTest {
-        val viewModel = createViewModel()
-        val preference = NotificationPreferenceType.EnableRecommendations(title = TextResource.fromText(""), isEnabled = false)
-
-        viewModel.onPreferenceChanged(preference)
-
-        verify(notificationScheduler).cancelScheduledTrendingAndRecommendationsNotifications()
-    }
-
-    @Test
     fun `GIVEN notifications disabled WHEN initializing viewmodel THEN state reflects it`() = runTest {
         val viewModel = createViewModel()
 

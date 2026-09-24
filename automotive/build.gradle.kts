@@ -91,7 +91,6 @@ dependencies {
 
     implementation(projects.modules.features.account)
     implementation(projects.modules.features.cartheme)
-    implementation(projects.modules.features.discover)
     implementation(projects.modules.features.player)
     implementation(projects.modules.features.podcasts)
     implementation(projects.modules.features.profile)

@@ -21,8 +21,6 @@ import au.com.shiftyjelly.pocketcasts.player.view.bookmark.BookmarkArguments
 import au.com.shiftyjelly.pocketcasts.podcasts.helper.search.BookmarkSearchHandler
 import au.com.shiftyjelly.pocketcasts.podcasts.helper.search.EpisodeSearchHandler
 import au.com.shiftyjelly.pocketcasts.podcasts.helper.search.SearchHandler
-import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.podcast.RecommendationsHandler
-import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.podcast.RecommendationsResult
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.model.BookmarksSortType
 import au.com.shiftyjelly.pocketcasts.preferences.model.BookmarksSortTypeForPodcast
@@ -52,15 +50,10 @@ import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.PodcastRefreshType
 import com.automattic.eventhorizon.PodcastScreenFundingTappedEvent
 import com.automattic.eventhorizon.PodcastScreenNotificationsTappedEvent
-import com.automattic.eventhorizon.PodcastScreenPodrollInformationModelShownEvent
-import com.automattic.eventhorizon.PodcastScreenPodrollPodcastSubscribedEvent
-import com.automattic.eventhorizon.PodcastScreenPodrollPodcastTappedEvent
 import com.automattic.eventhorizon.PodcastScreenRefreshEpisodeListEvent
 import com.automattic.eventhorizon.PodcastScreenRefreshNewEpisodeFoundEvent
 import com.automattic.eventhorizon.PodcastScreenRefreshNoEpisodesFoundEvent
 import com.automattic.eventhorizon.PodcastScreenToggleArchivedEvent
-import com.automattic.eventhorizon.PodcastScreenYouMightLikeSubscribedEvent
-import com.automattic.eventhorizon.PodcastScreenYouMightLikeTappedEvent
 import com.automattic.eventhorizon.PodcastSubscribedEvent
 import com.automattic.eventhorizon.PodcastTabType
 import com.automattic.eventhorizon.PodcastUnsubscribedEvent
@@ -105,7 +98,6 @@ class PodcastViewModel @Inject constructor(
     private val bookmarkManager: BookmarkManager,
     private val episodeSearchHandler: EpisodeSearchHandler,
     private val bookmarkSearchHandler: BookmarkSearchHandler,
-    private val recommendationsHandler: RecommendationsHandler,
     val multiSelectEpisodesHelper: MultiSelectEpisodesHelper,
     val multiSelectBookmarksHelper: MultiSelectBookmarksHelper,
     private val settings: Settings,
@@ -191,23 +183,19 @@ class PodcastViewModel @Inject constructor(
                 podcast.postValue(newPodcast)
             }
 
-        val recommendationsFlowable = recommendationsHandler.getRecommendationsFlowable(uuid)
-
         Flowable.combineLatest(
             podcastFlowable,
             episodeSearchResults.toFlowable(BackpressureStrategy.LATEST),
             bookmarkSearchResults.toFlowable(BackpressureStrategy.LATEST),
-            recommendationsFlowable,
-        ) { podcast, episodeSearch, bookmarkSearch, recommendations ->
+        ) { podcast, episodeSearch, bookmarkSearch ->
             CombinedData(
                 podcast = podcast,
                 showingArchived = podcast.showArchived,
                 episodeSearchResult = episodeSearch,
                 bookmarkSearchResult = bookmarkSearch,
-                recommendationsResult = recommendations,
             )
         }
-            .buildUiState(episodeManager, bookmarkManager, recommendationsHandler, settings)
+            .buildUiState(episodeManager, bookmarkManager, settings)
             .doOnNext {
                 if (it is UiState.Loaded) {
                     val groups = it.podcast.grouping.formGroups(it.episodes, it.podcast, resources)
@@ -340,7 +328,6 @@ class PodcastViewModel @Inject constructor(
         when (getCurrentTab()) {
             PodcastTab.EPISODES -> episodeSearchHandler.searchQueryUpdated(newValue)
             PodcastTab.BOOKMARKS -> bookmarkSearchHandler.searchQueryUpdated(newValue)
-            PodcastTab.RECOMMENDATIONS -> Unit // No search for the recommendations tab
         }
     }
 
@@ -512,7 +499,6 @@ class PodcastViewModel @Inject constructor(
         when (uiState.showTab) {
             PodcastTab.EPISODES -> multiSelectEpisodesHelper.deselectAllInList(uiState.episodes)
             PodcastTab.BOOKMARKS -> multiSelectBookmarksHelper.deselectAllInList(uiState.bookmarks)
-            PodcastTab.RECOMMENDATIONS -> Unit // No multi select for the recommendations tab
         }
     }
 
@@ -571,7 +557,6 @@ class PodcastViewModel @Inject constructor(
         when (uiState.showTab) {
             PodcastTab.EPISODES -> multiSelectEpisodesHelper.selectAllInList(uiState.episodes)
             PodcastTab.BOOKMARKS -> multiSelectBookmarksHelper.selectAllInList(uiState.bookmarks)
-            PodcastTab.RECOMMENDATIONS -> Unit // No multi select for recommendations tab
         }
     }
 
@@ -690,50 +675,6 @@ class PodcastViewModel @Inject constructor(
         )
     }
 
-    fun onRecommendedPodcastSubscribeClicked(podcastUuid: String, listDate: String) {
-        podcastManager.subscribeToPodcast(podcastUuid = podcastUuid, sync = true)
-        eventHorizon.track(
-            PodcastScreenYouMightLikeSubscribedEvent(
-                podcastUuid = podcastUuid,
-                listDatetime = listDate,
-            ),
-        )
-    }
-
-    fun onRecommendedPodcastClicked(podcastUuid: String, listDate: String) {
-        eventHorizon.track(
-            PodcastScreenYouMightLikeTappedEvent(
-                podcastUuid = podcastUuid,
-                listDatetime = listDate,
-            ),
-        )
-    }
-
-    fun onRecommendedRetryClicked() {
-        recommendationsHandler.retry()
-    }
-
-    fun onPodrollInformationModalShown() {
-        eventHorizon.track(PodcastScreenPodrollInformationModelShownEvent)
-    }
-
-    fun onPodrollPodcastClicked(podcastUuid: String) {
-        eventHorizon.track(
-            PodcastScreenPodrollPodcastTappedEvent(
-                podcastUuid = podcastUuid,
-            ),
-        )
-    }
-
-    fun onPodrollPodcastSubscribeClicked(podcastUuid: String) {
-        podcastManager.subscribeToPodcast(podcastUuid = podcastUuid, sync = true)
-        eventHorizon.track(
-            PodcastScreenPodrollPodcastSubscribedEvent(
-                podcastUuid = podcastUuid,
-            ),
-        )
-    }
-
     fun onOpenNotificationSettingsClicked(activity: Activity) {
         notificationHelper.openNotificationSettings(activity)
     }
@@ -750,10 +691,6 @@ class PodcastViewModel @Inject constructor(
             labelResId = LR.string.bookmarks,
             analyticsValue = PodcastTabType.Bookmarks,
         ),
-        RECOMMENDATIONS(
-            labelResId = LR.string.you_might_like,
-            analyticsValue = PodcastTabType.YouMightLike,
-        ),
     }
 
     sealed class UiState {
@@ -761,7 +698,6 @@ class PodcastViewModel @Inject constructor(
             val podcast: Podcast,
             val episodes: List<PodcastEpisode>,
             val bookmarks: List<Bookmark>,
-            val recommendations: RecommendationsResult,
             val showingArchived: Boolean,
             val episodeCount: Int,
             val archivedCount: Int,
@@ -822,17 +758,15 @@ private data class CombinedData(
     val showingArchived: Boolean,
     val episodeSearchResult: SearchHandler.SearchResult,
     val bookmarkSearchResult: SearchHandler.SearchResult,
-    val recommendationsResult: RecommendationsResult,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun Flowable<CombinedData>.buildUiState(
     episodeManager: EpisodeManager,
     bookmarkManager: BookmarkManager,
-    recommendationsHandler: RecommendationsHandler,
     settings: Settings,
 ): Flowable<PodcastViewModel.UiState> {
-    return this.switchMap { (podcast, showArchived, episodeSearchResults, bookmarkSearchResults, recommendationsResult) ->
+    return this.switchMap { (podcast, showArchived, episodeSearchResults, bookmarkSearchResults) ->
         LogBuffer.i(
             LogBuffer.TAG_BACKGROUND_TASKS,
             "Observing podcast ${podcast.uuid} episode changes",
@@ -893,7 +827,6 @@ private fun Flowable<CombinedData>.buildUiState(
                 podcast = podcast,
                 episodes = filteredList,
                 bookmarks = bookmarks,
-                recommendations = recommendationsResult,
                 showingArchived = showArchivedWithSearch,
                 episodeCount = episodeCount,
                 archivedCount = archivedCount,

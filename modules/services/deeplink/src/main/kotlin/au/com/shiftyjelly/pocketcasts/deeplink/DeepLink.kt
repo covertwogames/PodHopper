@@ -246,21 +246,6 @@ data object ImportDeepLink : IntentableDeepLink {
         .setData(Uri.parse("pktc://settings/import"))
 }
 
-data object StaffPicksDeepLink : IntentableDeepLink {
-    override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://discover/staffpicks"))
-}
-
-data object TrendingDeepLink : IntentableDeepLink {
-    override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://discover/trending"))
-}
-
-data object RecommendationsDeepLink : IntentableDeepLink {
-    override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://discover/recommendations"))
-}
-
 data object AppOpenDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
         .setData(Uri.parse("pktc://open"))

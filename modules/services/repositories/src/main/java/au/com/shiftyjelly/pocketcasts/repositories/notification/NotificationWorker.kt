@@ -69,10 +69,6 @@ class NotificationWorker @AssistedInject constructor(
                 userManager.getSignInState().awaitFirstOrNull()?.isSignedIn != true
             }
 
-            is TrendingAndRecommendationsNotificationType.Recommendations -> {
-                userManager.getSignInState().awaitFirstOrNull()?.isSignedIn == true
-            }
-
             is NewFeaturesAndTipsNotificationType.SmartFolders -> {
                 suggestedFoldersManager.refreshSuggestedFolders()
                 val folders = suggestedFoldersManager.observeSuggestedFolders().firstOrNull()
@@ -87,10 +83,6 @@ class NotificationWorker @AssistedInject constructor(
         val downloadedEpisodes = inputData.getInt(DOWNLOADED_EPISODES, 0)
 
         val builder = when (type) {
-            is TrendingAndRecommendationsNotificationType -> {
-                notificationHelper.trendingAndRecommendationsChannelBuilder()
-            }
-
             is NewFeaturesAndTipsNotificationType -> {
                 notificationHelper.featuresAndTipsChannelBuilder()
             }

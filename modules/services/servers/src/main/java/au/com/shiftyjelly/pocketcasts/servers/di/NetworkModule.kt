@@ -30,7 +30,6 @@ import au.com.shiftyjelly.pocketcasts.servers.podcast.TranscriptService
 import au.com.shiftyjelly.pocketcasts.servers.refresh.RefreshService
 import au.com.shiftyjelly.pocketcasts.servers.search.AutoCompleteResult
 import au.com.shiftyjelly.pocketcasts.servers.search.CombinedResult
-import au.com.shiftyjelly.pocketcasts.servers.server.ListWebService
 import au.com.shiftyjelly.pocketcasts.servers.sync.LoginIdentity
 import au.com.shiftyjelly.pocketcasts.servers.sync.SyncService
 import au.com.shiftyjelly.pocketcasts.servers.webfeeds.WebFeedsService
@@ -325,19 +324,6 @@ class NetworkModule {
     }
 
     @Provides
-    @DiscoverServiceRetrofit
-    @Singleton
-    fun provideDiscoverRetrofit(
-        builder: Retrofit.Builder,
-        @Cached httpClient: Lazy<OkHttpClient>,
-    ): Retrofit {
-        return builder
-            .baseUrl(Settings.SERVER_STATIC_URL)
-            .callFactory { request -> httpClient.get().newCall(request) }
-            .build()
-    }
-
-    @Provides
     @TranscriptRetrofit
     @Singleton
     fun provideTranscriptRetrofit(
@@ -379,10 +365,6 @@ class NetworkModule {
     @Provides
     @Singleton
     fun provideWebFeedsService(@WebFeedsServiceRetrofit retrofit: Retrofit): WebFeedsService = retrofit.create()
-
-    @Provides
-    @Singleton
-    fun provideListWebService(@DiscoverServiceRetrofit retrofit: Retrofit): ListWebService = retrofit.create()
 
     @Provides
     @Singleton
@@ -501,10 +483,6 @@ annotation class ListDownloadServiceRetrofit
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ListUploadServiceRetrofit
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class DiscoverServiceRetrofit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)

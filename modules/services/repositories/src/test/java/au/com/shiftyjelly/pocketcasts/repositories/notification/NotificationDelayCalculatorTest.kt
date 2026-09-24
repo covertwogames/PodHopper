@@ -69,13 +69,6 @@ class NotificationDelayCalculatorTest {
         assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.Themes))
     }
 
-    @Test fun testBefore10AM_StaffPicks() {
-        val t = getFixedTime(2025, Calendar.APRIL, 10, 9, 0)
-        val calc = calculatorAt(t)
-        val expected = (1 + 5 * 24) * HOUR_IN_MILLIS
-        assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.StaffPicks))
-    }
-
     @Test fun testExact10AM_Sync() {
         val t = getFixedTime(2025, Calendar.APRIL, 10, 10, 0)
         val calc = calculatorAt(t)
@@ -111,13 +104,6 @@ class NotificationDelayCalculatorTest {
         assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.Themes))
     }
 
-    @Test fun testExact10AM_StaffPicks() {
-        val t = getFixedTime(2025, Calendar.APRIL, 10, 10, 0)
-        val calc = calculatorAt(t)
-        val expected = (24 + 5 * 24) * HOUR_IN_MILLIS
-        assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.StaffPicks))
-    }
-
     @Test fun testAfter10AM_Sync() {
         val t = getFixedTime(2025, Calendar.APRIL, 10, 11, 0)
         val calc = calculatorAt(t)
@@ -151,13 +137,6 @@ class NotificationDelayCalculatorTest {
         val calc = calculatorAt(t)
         val expected = (23 + 4 * 24) * HOUR_IN_MILLIS
         assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.Themes))
-    }
-
-    @Test fun testAfter10AM_StaffPicks() {
-        val t = getFixedTime(2025, Calendar.APRIL, 10, 11, 0)
-        val calc = calculatorAt(t)
-        val expected = (23 + 5 * 24) * HOUR_IN_MILLIS
-        assertEquals(expected, calc.calculateDelayForOnboardingNotification(OnboardingNotificationType.StaffPicks))
     }
 
     @Test fun testReEngagementCheck_Before4PM() {

@@ -13,14 +13,11 @@ import androidx.navigation.navArgument
 import au.com.shiftyjelly.pocketcasts.account.onboarding.AccountBenefitsPage
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingCreateAccountPage
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingForgotPasswordPage
-import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingGetStartedPage
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingLoginOrSignUpPage
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingLoginPage
-import au.com.shiftyjelly.pocketcasts.account.onboarding.recommendations.OnboardingRecommendationsFlow
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingAccountBenefitsViewModel
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingCreateAccountViewModel
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingLogInViewModel
-import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingLoginOrSignUpViewModel
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingUpgradeFeaturesState
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingUpgradeFeaturesViewModel
 import au.com.shiftyjelly.pocketcasts.compose.AppTheme
@@ -43,7 +40,6 @@ object OnboardingFlowRoutes {
     const val FORGOT_PASSWORD = "forgot_password"
     const val LOG_IN = "log_in"
     const val LOG_IN_OR_SIGN_UP = "log_in_or_sign_up"
-    const val ROUTE_INTRO_CAROUSEL = "new_intro_carousel"
     const val ROUTE_LOG_IN = "new_log_in"
     const val ROUTE_SIGN_UP = "new_sign_up"
 
@@ -67,14 +63,15 @@ object OnboardingFlowRoutes {
     }
 
     fun startDestination(flow: OnboardingFlow) = when (flow) {
+        is OnboardingFlow.AccountEncouragement -> ENCOURAGE_FREE_ACCOUNT
+
+        // PodHopper: these four began at the Pocket Casts intro carousel, whose "get started"
+        // button led to Pocket Casts' recommended-podcasts pages. Both are gone, so they begin
+        // at sign up like the logged out flow.
         is OnboardingFlow.Welcome,
         is OnboardingFlow.PlusAccountUpgradeNeedsLogin,
         is OnboardingFlow.InitialOnboarding,
         is OnboardingFlow.ReferralLoginOrSignUp,
-        -> ROUTE_INTRO_CAROUSEL
-
-        is OnboardingFlow.AccountEncouragement -> ENCOURAGE_FREE_ACCOUNT
-
         is OnboardingFlow.LoggedOut,
         -> ROUTE_SIGN_UP
 
@@ -145,28 +142,6 @@ object OnboardingFlowRoutes {
                     onLoginToExistingAccount(flow, subscription, exitOnboarding)
                 },
                 onForgotPasswordClick = { navController.navigate(FORGOT_PASSWORD) },
-                onUpdateSystemBars = onUpdateSystemBars,
-            )
-        }
-
-        composable(ROUTE_INTRO_CAROUSEL) {
-            val viewModel: OnboardingLoginOrSignUpViewModel = hiltViewModel()
-            OnboardingGetStartedPage(
-                viewModel = viewModel,
-                displayTheme = theme,
-                flow = flow,
-                onGetStartedClick = {
-                    viewModel.onGetStartedClicked(flow)
-                    if (flow is OnboardingFlow.Upsell || flow is OnboardingFlow.LoggedOut) {
-                        navController.navigate(ROUTE_SIGN_UP)
-                    } else {
-                        navController.navigate(OnboardingRecommendationsFlow.ROUTE)
-                    }
-                },
-                onLoginClick = {
-                    viewModel.onLoginClicked(flow)
-                    navController.navigate(ROUTE_LOG_IN)
-                },
                 onUpdateSystemBars = onUpdateSystemBars,
             )
         }

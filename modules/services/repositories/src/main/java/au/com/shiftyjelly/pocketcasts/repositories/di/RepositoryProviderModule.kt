@@ -6,12 +6,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import au.com.shiftyjelly.pocketcasts.payment.PaymentClient
 import au.com.shiftyjelly.pocketcasts.payment.PaymentDataSource
-import au.com.shiftyjelly.pocketcasts.repositories.lists.ListRepository
 import au.com.shiftyjelly.pocketcasts.repositories.payment.AnalyticsPaymentListener
 import au.com.shiftyjelly.pocketcasts.repositories.payment.LoggingPaymentListener
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncAccountManager
-import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
-import au.com.shiftyjelly.pocketcasts.servers.server.ListWebService
 import au.com.shiftyjelly.pocketcasts.servers.sync.TokenHandler
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.Util
@@ -60,17 +57,6 @@ class RepositoryProviderModule {
     @Singleton
     fun providePaymentDataSource(): PaymentDataSource {
         return PaymentDataSource.fake()
-    }
-
-    @Provides
-    @Singleton
-    internal fun provideDiscoverRepository(listWebService: ListWebService, syncManager: SyncManager, @ApplicationContext context: Context): ListRepository {
-        val platform = if (Util.isAutomotive(context)) "automotive" else "android"
-        return ListRepository(
-            listWebService,
-            syncManager,
-            platform,
-        )
     }
 
     @Provides

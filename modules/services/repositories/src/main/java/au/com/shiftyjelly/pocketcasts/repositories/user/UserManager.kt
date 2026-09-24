@@ -12,7 +12,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSync
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationScheduler
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationSchedulerImpl.Companion.TAG_TRENDING_RECOMMENDATIONS
-import au.com.shiftyjelly.pocketcasts.repositories.notification.TrendingAndRecommendationsNotificationType
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextQueue
 import au.com.shiftyjelly.pocketcasts.repositories.playlist.DefaultPlaylistsInitializer
@@ -90,10 +89,6 @@ class UserManagerImpl @Inject constructor(
         return syncManager.isLoggedInObservable.toFlowable(BackpressureStrategy.LATEST)
             .switchMap { isLoggedIn ->
                 if (isLoggedIn) {
-                    launch(coroutineContext) {
-                        notificationScheduler.setupTrendingAndRecommendationsNotifications()
-                    }
-
                     settings.cachedSubscription.flow
                         .map { Optional.of(it) }
                         .asFlowable()
@@ -115,7 +110,9 @@ class UserManagerImpl @Inject constructor(
                         }
                 } else {
                     launch(coroutineContext) {
-                        notificationScheduler.cancelScheduledWorksByTag(listOf("$TAG_TRENDING_RECOMMENDATIONS-${TrendingAndRecommendationsNotificationType.Recommendations.subcategory}"))
+                        // PodHopper: the recommendations notification is gone; this still clears
+                        // anything an earlier build queued.
+                        notificationScheduler.cancelScheduledWorksByTag(listOf("$TAG_TRENDING_RECOMMENDATIONS-recommendations"))
                     }
                     Flowable.just(SignInState.SignedOut)
                 }

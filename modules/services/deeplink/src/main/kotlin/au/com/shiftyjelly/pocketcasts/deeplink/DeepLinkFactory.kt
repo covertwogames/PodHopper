@@ -62,7 +62,6 @@ class DeepLinkFactory(
         WebPlayerShareLinkAdapter(webBaseHost = webBaseHost, webPlayerHost = webPlayerHost),
         OpmlAdapter(listOf(listHost, shareHost)),
         ImportAdapter(),
-        DiscoverAdapter(),
         PodcastUrlSchemeAdapter(listOf(listHost, shareHost, webBaseHost)),
         PlayFromSearchAdapter(),
         AssistantAdapter(),
@@ -607,37 +606,6 @@ private class AppOpenAdapter : DeepLinkAdapter {
 
         return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "open") {
             AppOpenDeepLink
-        } else {
-            null
-        }
-    }
-}
-
-private class DiscoverAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data ?: return null
-        val scheme = uriData.scheme
-        val host = uriData.host
-        val path = uriData.path
-
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "discover") {
-            when (path) {
-                "/staffpicks" -> {
-                    StaffPicksDeepLink
-                }
-
-                "/trending" -> {
-                    TrendingDeepLink
-                }
-
-                "/recommendations" -> {
-                    RecommendationsDeepLink
-                }
-
-                else -> {
-                    null
-                }
-            }
         } else {
             null
         }

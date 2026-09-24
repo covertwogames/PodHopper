@@ -16,7 +16,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationWork
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationWorker.Companion.SUBCATEGORY
 import au.com.shiftyjelly.pocketcasts.repositories.notification.OnboardingNotificationType
 import au.com.shiftyjelly.pocketcasts.repositories.notification.ReEngagementNotificationType
-import au.com.shiftyjelly.pocketcasts.repositories.notification.TrendingAndRecommendationsNotificationType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
@@ -45,8 +44,6 @@ internal class NotificationsTestingViewModel @Inject constructor(
     }
 
     private val NotificationType.subCategory get() = when (this) {
-        NotificationType.TRENDING -> TrendingAndRecommendationsNotificationType.Trending.subcategory
-        NotificationType.RECOMMENDATIONS -> TrendingAndRecommendationsNotificationType.Recommendations.subcategory
         NotificationType.NEW_FEATURE_FOLDERS -> NewFeaturesAndTipsNotificationType.SmartFolders.subcategory
         NotificationType.DAILY_REMINDER_MISS_YOU -> ReEngagementNotificationType.WeMissYou.subcategory
         NotificationType.DAILY_REMINDER_DOWNLOADS_OFFLINE -> ReEngagementNotificationType.CatchUpOffline.subcategory
@@ -54,7 +51,6 @@ internal class NotificationsTestingViewModel @Inject constructor(
         NotificationType.DAILY_REMINDER_IMPORT -> OnboardingNotificationType.Import.subcategory
         NotificationType.DAILY_REMINDER_UP_NEXT -> OnboardingNotificationType.UpNext.subcategory
         NotificationType.DAILY_REMINDER_FILTERS -> OnboardingNotificationType.Filters.subcategory
-        NotificationType.DAILY_REMINDERS_STAFF_PICKS -> OnboardingNotificationType.StaffPicks.subcategory
         NotificationType.DAILY_REMINDERS_THEMES -> OnboardingNotificationType.Themes.subcategory
     }
 
@@ -113,11 +109,6 @@ internal class NotificationsTestingViewModel @Inject constructor(
                     }
                 }
 
-                NotificationCategoryType.TRENDING_AND_RECOMMENDATIONS -> notificationScheduler.setupTrendingAndRecommendationsNotifications {
-                    val indexOfType = TrendingAndRecommendationsNotificationType.values.indexOf(it)
-                    schedule.consecutiveDelay * (1 + indexOfType)
-                }
-
                 NotificationCategoryType.NEW_FEATURES_AND_TIPS -> notificationScheduler.setupNewFeaturesAndTipsNotifications {
                     val indexOfType = NewFeaturesAndTipsNotificationType.values.indexOf(it)
                     schedule.consecutiveDelay * (1 + indexOfType)
@@ -147,21 +138,17 @@ internal class NotificationsTestingViewModel @Inject constructor(
     )
 
     enum class NotificationType {
-        TRENDING,
-        RECOMMENDATIONS,
         DAILY_REMINDER_MISS_YOU,
         DAILY_REMINDER_DOWNLOADS_OFFLINE,
         DAILY_REMINDER_SYNC,
         DAILY_REMINDER_IMPORT,
         DAILY_REMINDER_UP_NEXT,
         DAILY_REMINDER_FILTERS,
-        DAILY_REMINDERS_STAFF_PICKS,
         DAILY_REMINDERS_THEMES,
         NEW_FEATURE_FOLDERS,
     }
 
     enum class NotificationCategoryType {
-        TRENDING_AND_RECOMMENDATIONS,
         DAILY_REMINDERS,
         NEW_FEATURES_AND_TIPS,
     }

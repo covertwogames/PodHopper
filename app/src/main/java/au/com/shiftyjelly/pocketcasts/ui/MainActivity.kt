@@ -87,7 +87,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.NativeShareDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.OpmlImportDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.PlayFromSearchDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.PocketCastsWebsiteGetDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.RecommendationsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ReferralsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShareListDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowBookmarkDeepLink
@@ -103,14 +102,7 @@ import au.com.shiftyjelly.pocketcasts.deeplink.ShowUpNextTabDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SignInDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SmartFoldersDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SonosDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.StaffPicksDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ThemesDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.TrendingDeepLink
-import au.com.shiftyjelly.pocketcasts.discover.util.DiscoverDeepLinkManager
-import au.com.shiftyjelly.pocketcasts.discover.util.DiscoverDeepLinkManager.Companion.RECOMMENDATIONS_USER
-import au.com.shiftyjelly.pocketcasts.discover.util.DiscoverDeepLinkManager.Companion.STAFF_PICKS_LIST_ID
-import au.com.shiftyjelly.pocketcasts.discover.view.PodcastGridListFragment
-import au.com.shiftyjelly.pocketcasts.discover.view.PodcastListFragment
 import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity
 import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity.StoriesSource
 import au.com.shiftyjelly.pocketcasts.endofyear.ui.EndOfYearLaunchBottomSheet
@@ -168,7 +160,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.search.ItunesFeedSearcher
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.search.AddPodcastFragment
 import au.com.shiftyjelly.pocketcasts.search.SearchFragment
-import au.com.shiftyjelly.pocketcasts.servers.model.NetworkLoadableList.Companion.TRENDING
 import au.com.shiftyjelly.pocketcasts.settings.AppearanceSettingsFragment
 import au.com.shiftyjelly.pocketcasts.settings.ExportSettingsFragment
 import au.com.shiftyjelly.pocketcasts.settings.SettingsFragment
@@ -302,9 +293,6 @@ class MainActivity :
 
     @Inject
     lateinit var notificationHelper: NotificationHelper
-
-    @Inject
-    lateinit var discoverDeepLinkManager: DiscoverDeepLinkManager
 
     @Inject
     @ApplicationScope
@@ -1713,27 +1701,6 @@ class MainActivity :
                     openImport()
                 }
 
-                is StaffPicksDeepLink -> {
-                    val podcastListFragment = supportFragmentManager.fragments.find { it is PodcastGridListFragment } as? PodcastGridListFragment
-                    if (podcastListFragment?.listUuid != STAFF_PICKS_LIST_ID) {
-                        openDiscoverListDeeplink(STAFF_PICKS_LIST_ID)
-                    }
-                }
-
-                is TrendingDeepLink -> {
-                    val podcastListFragment = supportFragmentManager.fragments.find { it is PodcastGridListFragment } as? PodcastGridListFragment
-                    if (podcastListFragment?.inferredId != TRENDING) {
-                        openDiscoverListDeeplink(TRENDING)
-                    }
-                }
-
-                is RecommendationsDeepLink -> {
-                    val podcastListFragment = supportFragmentManager.fragments.find { it is PodcastGridListFragment } as? PodcastGridListFragment
-                    if (podcastListFragment?.inferredId != RECOMMENDATIONS_USER) {
-                        openDiscoverListDeeplink(RECOMMENDATIONS_USER)
-                    }
-                }
-
                 is PlayFromSearchDeepLink -> {
                     playbackManager.mediaSessionManager.playFromSearchExternal(deepLink.query)
                 }
@@ -1764,16 +1731,6 @@ class MainActivity :
         } catch (e: Exception) {
             Timber.e(e)
             crashLogging.sendReport(e)
-        }
-    }
-
-    private fun openDiscoverListDeeplink(listId: String) {
-        closePlayer()
-        openTab(VR.id.navigation_podcasts)
-        lifecycleScope.launch {
-            val discoverList = discoverDeepLinkManager.getDiscoverList(listId, resources) ?: return@launch
-            val fragment = PodcastListFragment.newInstance(discoverList)
-            addFragment(fragment)
         }
     }
 

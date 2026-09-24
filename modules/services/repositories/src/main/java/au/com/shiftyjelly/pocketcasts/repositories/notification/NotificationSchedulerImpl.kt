@@ -27,6 +27,8 @@ class NotificationSchedulerImpl @Inject constructor(
 
     companion object {
         const val TAG_TRENDING_RECOMMENDATIONS = "trending_and_recommendations"
+        private const val RETIRED_SUBCATEGORY_TRENDING = "trending"
+        private const val RETIRED_SUBCATEGORY_RECOMMENDATIONS = "recommendations"
         private const val TAG_REENGAGEMENT = "daily_re_engagement_check"
         private const val TAG_ONBOARDING = "onboarding_notification"
         private const val TAG_FEATURES = "features_and_tips"
@@ -85,30 +87,6 @@ class NotificationSchedulerImpl @Inject constructor(
         )
     }
 
-    override suspend fun setupTrendingAndRecommendationsNotifications(delayProvider: ((TrendingAndRecommendationsNotificationType) -> Duration)?) {
-        if (!isRunningOnPhone) return
-
-        TrendingAndRecommendationsNotificationType.values.forEachIndexed { index, notification ->
-            val initialDelay = delayProvider?.invoke(notification)?.inWholeMilliseconds ?: delayCalculator.calculateDelayForRecommendations(index)
-            val workData = workDataOf(
-                SUBCATEGORY to notification.subcategory,
-            )
-
-            val tag = "$TAG_TRENDING_RECOMMENDATIONS-${notification.subcategory}"
-            val notificationWork = PeriodicWorkRequest.Builder(NotificationWorker::class.java, 7, TimeUnit.DAYS)
-                .setInputData(workData)
-                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                .addTag(tag)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                tag,
-                ExistingPeriodicWorkPolicy.UPDATE,
-                notificationWork,
-            )
-        }
-    }
-
     override suspend fun setupNewFeaturesAndTipsNotifications(delayProvider: ((NewFeaturesAndTipsNotificationType) -> Duration)?) {
         if (!isRunningOnPhone) return
 
@@ -137,11 +115,16 @@ class NotificationSchedulerImpl @Inject constructor(
         OnboardingNotificationType.values.forEach {
             WorkManager.getInstance(context).cancelAllWorkByTag("${TAG_ONBOARDING}_${it.subcategory}")
         }
+        // PodHopper: the retired StaffPicks notification, for installs that queued one before it
+        // was removed.
+        WorkManager.getInstance(context).cancelAllWorkByTag("${TAG_ONBOARDING}_${OnboardingNotificationType.SUBCATEGORY_STAFF_PICKS}")
     }
 
+    // PodHopper: the trending and recommendations notifications are gone; they opened Pocket Casts'
+    // own lists. This still cancels anything an earlier build queued, so existing installs heal.
     override fun cancelScheduledTrendingAndRecommendationsNotifications() {
-        TrendingAndRecommendationsNotificationType.values.forEach {
-            WorkManager.getInstance(context).cancelUniqueWork("$TAG_TRENDING_RECOMMENDATIONS-${it.subcategory}")
+        listOf(RETIRED_SUBCATEGORY_TRENDING, RETIRED_SUBCATEGORY_RECOMMENDATIONS).forEach {
+            WorkManager.getInstance(context).cancelUniqueWork("$TAG_TRENDING_RECOMMENDATIONS-$it")
         }
     }
 

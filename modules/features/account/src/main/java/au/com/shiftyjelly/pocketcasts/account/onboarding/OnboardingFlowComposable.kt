@@ -5,7 +5,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import au.com.shiftyjelly.pocketcasts.account.onboarding.import.OnboardingImportFlow.importFlowGraph
-import au.com.shiftyjelly.pocketcasts.account.onboarding.recommendations.OnboardingRecommendationsFlow.onboardingRecommendationsFlowGraph
 import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingFlowRoutes
 import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingFlowRoutes.flowGraph
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingUpgradeFeaturesState
@@ -108,19 +107,6 @@ private fun Content(
 
     NavHost(navController, rootDestination) {
         importFlowGraph(theme, navController, flow, onUpdateSystemBars)
-
-        onboardingRecommendationsFlowGraph(
-            theme,
-            flow = flow,
-            onBackPress = {
-                navController.popBackStack()
-            },
-            onComplete = {
-                navController.navigate(OnboardingFlowRoutes.ROUTE_SIGN_UP)
-            },
-            navController = navController,
-            onUpdateSystemBars = onUpdateSystemBars,
-        )
 
         flowGraph(
             theme = theme,

@@ -15,7 +15,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -147,7 +146,6 @@ class AppLifecycleObserverTest {
         verify(appLifecycleAnalytics, never()).onApplicationUpgrade(any())
         verify(notificationScheduler, times(1)).setupOnboardingNotifications()
         verify(notificationScheduler, times(1)).setupReEngagementNotification()
-        verify(notificationScheduler, times(1)).setupTrendingAndRecommendationsNotifications()
     }
 
     @Test
@@ -168,7 +166,6 @@ class AppLifecycleObserverTest {
         verify(appLifecycleAnalytics, never()).onApplicationUpgrade(any())
         verify(notificationScheduler, never()).setupOnboardingNotifications()
         verify(notificationScheduler, times(1)).setupReEngagementNotification()
-        verify(notificationScheduler, times(1)).setupTrendingAndRecommendationsNotifications()
     }
 
     @Test
@@ -208,6 +205,5 @@ class AppLifecycleObserverTest {
         verify(useUpNextDarkThemeSetting, never()).set(any(), any(), any(), any())
         verify(notificationScheduler, never()).setupOnboardingNotifications()
         verify(notificationScheduler, times(1)).setupReEngagementNotification()
-        verify(notificationScheduler, times(1)).setupTrendingAndRecommendationsNotifications()
     }
 }

@@ -16,10 +16,7 @@ class TabsViewHolder(
     private val theme: Theme,
 ) : RecyclerView.ViewHolder(composeView) {
     fun bind(tabsHeader: TabsHeader) {
-        // PodHopper: the "You might like" recommendations tab is hidden. Its content came from the
-        // Pocket Casts recommendations server, which cannot resolve our feed-derived podcast uuids.
         val tabs = PodcastViewModel.PodcastTab.entries
-            .filter { it != PodcastViewModel.PodcastTab.RECOMMENDATIONS }
             .map {
                 ButtonTab(
                     labelResId = it.labelResId,

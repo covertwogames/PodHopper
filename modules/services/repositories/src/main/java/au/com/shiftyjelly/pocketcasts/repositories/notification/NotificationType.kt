@@ -8,13 +8,10 @@ import au.com.shiftyjelly.pocketcasts.deeplink.AppOpenDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.CreateAccountDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.DownloadsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ImportDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.RecommendationsDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowFiltersDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowUpNextTabDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SmartFoldersDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.StaffPicksDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ThemesDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.TrendingDeepLink
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.NotificationId
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
@@ -48,7 +45,6 @@ sealed interface NotificationType {
             val allSupportedNotifications = buildList {
                 addAll(OnboardingNotificationType.values)
                 addAll(ReEngagementNotificationType.values)
-                addAll(TrendingAndRecommendationsNotificationType.values)
                 addAll(NewFeaturesAndTipsNotificationType.values)
             }
             return allSupportedNotifications.find { it.subcategory == subCategory }
@@ -131,18 +127,6 @@ sealed class OnboardingNotificationType(
         override fun toIntent(context: Context) = ThemesDeepLink.toIntent(context)
     }
 
-    data object StaffPicks : OnboardingNotificationType(
-        notificationId = NotificationId.ONBOARDING_STAFF_PICKS.value,
-        subcategory = SUBCATEGORY_STAFF_PICKS,
-        titleRes = LR.string.notification_staff_picks_title,
-        dayOffset = 5,
-        analyticsType = "onboardingStaffPicks",
-    ) {
-        override val messageRes get() = LR.string.notification_staff_picks_message
-
-        override fun toIntent(context: Context) = StaffPicksDeepLink.toIntent(context)
-    }
-
     companion object {
         const val SUBCATEGORY_SYNC = "sync"
         const val SUBCATEGORY_IMPORT = "import"
@@ -151,10 +135,10 @@ sealed class OnboardingNotificationType(
         const val SUBCATEGORY_THEMES = "themes"
         const val SUBCATEGORY_STAFF_PICKS = "staff_picks"
 
-        // PodHopper: StaffPicks is deliberately left out. Its notification text is PodHopper's,
-        // but tapping it opened Pocket Casts' own staff picks list, fetched from their servers.
-        // Leaving it out of this list also disarms any copy already queued on an existing install,
-        // because a queued notification is resolved back to its type through this same list.
+        // PodHopper: the StaffPicks notification is gone. Its text was PodHopper's, but tapping it
+        // opened Pocket Casts' own staff picks list, fetched from their servers. The subcategory
+        // above is kept only so an install that queued one before this change can cancel it, and so
+        // that a queued copy resolves to nothing and is quietly dropped.
         val values: List<OnboardingNotificationType>
             get() = listOf(
                 Sync,
@@ -213,48 +197,6 @@ sealed class ReEngagementNotificationType(
                 WeMissYou,
                 CatchUpOffline,
             )
-    }
-}
-
-sealed class TrendingAndRecommendationsNotificationType(
-    override val notificationId: Int,
-    override val subcategory: String,
-    override val analyticsType: String,
-    @StringRes override val titleRes: Int,
-    @StringRes override val messageRes: Int? = null,
-    @PluralsRes override val messagePluralRes: Int? = null,
-) : NotificationType {
-
-    override fun isSettingsToggleOn(settings: Settings) = settings.recommendationsNotification.value
-
-    data object Trending : TrendingAndRecommendationsNotificationType(
-        notificationId = NotificationId.CONTENT_RECOMMENDATIONS.value,
-        subcategory = SUBCATEGORY_TRENDING,
-        titleRes = LR.string.notification_content_recommendations_trending_title,
-        messageRes = LR.string.notification_content_recommendations_trending_message,
-        analyticsType = "recommendationsTrending",
-    ) {
-        override fun toIntent(context: Context) = TrendingDeepLink.toIntent(context)
-    }
-
-    data object Recommendations : TrendingAndRecommendationsNotificationType(
-        notificationId = NotificationId.CONTENT_RECOMMENDATIONS.value,
-        subcategory = SUBCATEGORY_RECOMMENDATIONS,
-        titleRes = LR.string.notification_content_recommendations_title,
-        messageRes = LR.string.notification_content_recommendations_message,
-        analyticsType = "recommendationsYouMightLike",
-    ) {
-        override fun toIntent(context: Context) = RecommendationsDeepLink.toIntent(context)
-    }
-
-    companion object {
-        const val SUBCATEGORY_RECOMMENDATIONS = "recommendations"
-        const val SUBCATEGORY_TRENDING = "trending"
-
-        val values: List<TrendingAndRecommendationsNotificationType> get() = listOf(
-            Trending,
-            Recommendations,
-        )
     }
 }
 

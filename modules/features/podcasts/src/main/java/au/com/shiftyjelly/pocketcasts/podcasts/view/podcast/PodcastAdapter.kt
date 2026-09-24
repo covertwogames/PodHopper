@@ -10,7 +10,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -42,21 +41,15 @@ import au.com.shiftyjelly.pocketcasts.podcasts.databinding.AdapterEpisodeHeaderB
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.BookmarkHeaderViewHolder
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.BookmarkUpsellViewHolder
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.BookmarkViewHolder
-import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.DividerSubTitleViewHolder
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.EmptyListViewHolder
-import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.LoadingViewHolder
-import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.PaddingViewHolder
-import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.RecommendedPodcastViewHolder
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.adapter.TabsViewHolder
 import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.PodcastRatingsViewModel
 import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.PodcastRatingsViewModel.RatingState
 import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.PodcastViewModel.PodcastTab
-import au.com.shiftyjelly.pocketcasts.podcasts.viewmodel.podcast.RecommendationsResult
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.model.ArtworkConfiguration.Element
 import au.com.shiftyjelly.pocketcasts.repositories.images.PocketCastsImageRequestFactory
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeRowDataProvider
-import au.com.shiftyjelly.pocketcasts.servers.model.DiscoverPodcast
 import au.com.shiftyjelly.pocketcasts.ui.extensions.getThemeColor
 import au.com.shiftyjelly.pocketcasts.ui.extensions.themed
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
@@ -144,12 +137,6 @@ class PodcastAdapter(
     private val onClickRating: (Podcast) -> Unit,
     private val onClickWebsite: (Podcast) -> Unit,
     private val onArtworkAvailable: (Podcast) -> Unit,
-    private val onRecommendedRetryClicked: () -> Unit,
-    private val onRecommendedPodcastClicked: (String, String) -> Unit,
-    private val onRecommendedPodcastSubscribeClicked: (String, String) -> Unit,
-    private val onPodrollHeaderClicked: () -> Unit,
-    private val onPodrollPodcastClicked: (String) -> Unit,
-    private val onPodrollPodcastSubscribeClicked: (String) -> Unit,
     private val onSwipeAction: (PodcastEpisode, SwipeAction) -> Unit,
 ) : LargeListAdapter<Any, RecyclerView.ViewHolder>(1500, differ) {
 
@@ -190,25 +177,6 @@ class PodcastAdapter(
         val onButtonClick: (() -> Unit)? = null,
     )
 
-    data class DividerSubTitleRow(
-        @DrawableRes val icon: Int,
-        val title: String,
-        val onClick: (() -> Unit)? = null,
-    )
-
-    data class PaddingRow(
-        val padding: Dp,
-    )
-
-    object LoadingRow
-
-    data class RecommendedPodcast(
-        val listDate: String,
-        val podcast: DiscoverPodcast,
-        val onRowClick: (podcastUuid: String, listDate: String) -> Unit,
-        val onSubscribeClick: (podcastUuid: String, listDate: String) -> Unit,
-    )
-
     enum class HeaderType {
         Blur,
         Scrim,
@@ -221,10 +189,6 @@ class PodcastAdapter(
         private const val VIEW_TYPE_BOOKMARK_UPSELL = 103
         private const val VIEW_TYPE_EMPTY_LIST = 104
         const val VIEW_TYPE_PODCAST_HEADER = 105
-        private const val VIEW_TYPE_RECOMMENDED_PODCAST = 106
-        private const val VIEW_TYPE_DIVIDER_SUBTITLE = 107
-        private const val VIEW_TYPE_PADDING_ROW = 108
-        private const val VIEW_TYPE_LOADING_ROW = 109
         val VIEW_TYPE_EPISODE_HEADER = R.layout.adapter_episode_header
         val VIEW_TYPE_EPISODE_LIMIT_ROW = R.layout.adapter_episode_limit
         val VIEW_TYPE_DIVIDER_TITLE = R.layout.adapter_divider_row
@@ -299,14 +263,6 @@ class PodcastAdapter(
 
             VIEW_TYPE_EMPTY_LIST -> EmptyListViewHolder(ComposeView(parent.context), theme)
 
-            VIEW_TYPE_RECOMMENDED_PODCAST -> RecommendedPodcastViewHolder(ComposeView(parent.context), theme)
-
-            VIEW_TYPE_DIVIDER_SUBTITLE -> DividerSubTitleViewHolder(ComposeView(parent.context), theme)
-
-            VIEW_TYPE_PADDING_ROW -> PaddingViewHolder(ComposeView(parent.context))
-
-            VIEW_TYPE_LOADING_ROW -> LoadingViewHolder(ComposeView(parent.context), theme)
-
             else -> {
                 val binding = AdapterEpisodeBinding.inflate(inflater, parent, false)
                 EpisodeViewHolder(
@@ -358,14 +314,6 @@ class PodcastAdapter(
             is BookmarkUpsellViewHolder -> holder.bind()
 
             is EmptyListViewHolder -> holder.bind(getItem(position) as EmptyList)
-
-            is RecommendedPodcastViewHolder -> holder.bind(getItem(position) as RecommendedPodcast)
-
-            is DividerSubTitleViewHolder -> holder.bind(getItem(position) as DividerSubTitleRow)
-
-            is PaddingViewHolder -> holder.bind(getItem(position) as PaddingRow)
-
-            is LoadingViewHolder -> holder.bind()
         }
     }
 
@@ -632,81 +580,6 @@ class PodcastAdapter(
         submitList(content)
     }
 
-    fun setRecommendations(result: RecommendationsResult) {
-        val content = buildList {
-            add(Podcast())
-            add(TabsHeader(selectedTab = PodcastTab.RECOMMENDATIONS, onTabClicked = onTabClicked))
-            when (result) {
-                is RecommendationsResult.Loading -> {
-                    add(PaddingRow(32.dp))
-                    add(LoadingRow)
-                    add(PaddingRow(12.dp))
-                }
-
-                is RecommendationsResult.Empty -> {
-                    val resources = context.resources
-                    add(
-                        EmptyList(
-                            title = resources.getString(LR.string.you_might_like_empty_title),
-                            iconResourceId = IR.drawable.ic_exclamation_circle,
-                            buttonText = resources.getString(LR.string.you_might_like_empty_button),
-                            onButtonClick = onRecommendedRetryClicked,
-                        ),
-                    )
-                }
-
-                is RecommendationsResult.Success -> {
-                    val resources = context.resources
-                    val list = result.listFeed
-                    // Podroll
-                    val podroll = list.podroll
-                    if (!podroll.isNullOrEmpty()) {
-                        add(
-                            DividerSubTitleRow(
-                                icon = IR.drawable.ic_author_small,
-                                title = resources.getString(LR.string.recommended_by_creator),
-                                onClick = onPodrollHeaderClicked,
-                            ),
-                        )
-                        podroll.forEachIndexed { index, podcast ->
-                            add(
-                                RecommendedPodcast(
-                                    listDate = list.date ?: "",
-                                    podcast = podcast,
-                                    onRowClick = { podcastUuid, _ -> onPodrollPodcastClicked(podcastUuid) },
-                                    onSubscribeClick = { podcastUuid, _ -> onPodrollPodcastSubscribeClicked(podcastUuid) },
-                                ),
-                            )
-                        }
-                        add(PaddingRow(12.dp))
-                    }
-                    // Recommended "You might like" podcasts
-                    val podcasts = list.podcasts
-                    if (!podcasts.isNullOrEmpty()) {
-                        add(
-                            DividerSubTitleRow(
-                                icon = IR.drawable.ic_duplicate,
-                                title = resources.getString(LR.string.similar_shows_to, podcast.title),
-                            ),
-                        )
-                        podcasts.forEachIndexed { index, podcast ->
-                            add(
-                                RecommendedPodcast(
-                                    listDate = list.date ?: "",
-                                    podcast = podcast,
-                                    onRowClick = onRecommendedPodcastClicked,
-                                    onSubscribeClick = onRecommendedPodcastSubscribeClicked,
-                                ),
-                            )
-                        }
-                        add(PaddingRow(12.dp))
-                    }
-                }
-            }
-        }
-        submitList(content)
-    }
-
     fun setBookmarksAvailable(bookmarksAvailable: Boolean) {
         this.bookmarksAvailable = bookmarksAvailable
     }
@@ -727,10 +600,6 @@ class PodcastAdapter(
             is BookmarkHeader -> VIEW_TYPE_BOOKMARK_HEADER
             is BookmarkUpsell -> VIEW_TYPE_BOOKMARK_UPSELL
             is EmptyList -> VIEW_TYPE_EMPTY_LIST
-            is RecommendedPodcast -> VIEW_TYPE_RECOMMENDED_PODCAST
-            is DividerSubTitleRow -> VIEW_TYPE_DIVIDER_SUBTITLE
-            is PaddingRow -> VIEW_TYPE_PADDING_ROW
-            is LoadingRow -> VIEW_TYPE_LOADING_ROW
             else -> R.layout.adapter_episode
         }
     }
@@ -748,10 +617,6 @@ class PodcastAdapter(
             is DividerRow -> item.groupIndex.toLong()
             is PodcastEpisode -> item.adapterId
             is BookmarkItemData -> item.bookmark.adapterId
-            is RecommendedPodcast -> item.podcast.adapterId
-            is DividerSubTitleRow -> Long.MAX_VALUE - 8
-            is PaddingRow -> Long.MAX_VALUE - 9
-            is LoadingRow -> Long.MAX_VALUE - 10
             else -> throw IllegalStateException("Unknown item type")
         }
     }
