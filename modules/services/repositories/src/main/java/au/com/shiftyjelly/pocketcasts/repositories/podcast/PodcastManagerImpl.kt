@@ -24,7 +24,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.extensions.getUrlForArtwork
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsThread
-import au.com.shiftyjelly.pocketcasts.repositories.sync.PodcastRefresher
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
@@ -59,7 +58,6 @@ class PodcastManagerImpl @Inject constructor(
     private val subscribeManager: SubscribeManager,
     private val feedParser: FeedParser,
     private val syncManager: SyncManager,
-    private val podcastRefresher: PodcastRefresher,
     private val downloadQueue: DownloadQueue,
     @ApplicationScope private val applicationScope: CoroutineScope,
     appDatabase: AppDatabase,
@@ -256,10 +254,6 @@ class PodcastManagerImpl @Inject constructor(
         RefreshPodcastsThread.clearLastRefreshTime()
         markAllPodcastsUnsynced()
         refreshPodcasts("login")
-    }
-
-    override suspend fun refreshPodcast(existingPodcast: Podcast, playbackManager: PlaybackManager) {
-        podcastRefresher.refreshPodcast(existingPodcast, playbackManager)
     }
 
     override fun checkForUnusedPodcastsBlocking(playbackManager: PlaybackManager) {

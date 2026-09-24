@@ -206,7 +206,6 @@ class EpisodeFragmentViewModel @Inject constructor(
 
     fun setup(
         episodeUuid: String,
-        podcastUuid: String?,
         timestamp: Duration?,
         autoPlay: Boolean,
         forceDark: Boolean,
@@ -220,26 +219,11 @@ class EpisodeFragmentViewModel @Inject constructor(
             .distinctUntilChanged()
             .asFlowable()
 
-        // If we can't find it in the database and we know the podcast uuid we can try load it
-        // from the server
-        val onEmptyHandler = if (podcastUuid != null) {
-            podcastManager.findOrDownloadPodcastRxSingle(podcastUuid).flatMapMaybe {
-                val episode = it.episodes.find { episode -> episode.uuid == episodeUuid }
-                if (episode != null) {
-                    Maybe.just(episode)
-                } else {
-                    episodeManager.downloadMissingEpisodeRxMaybe(episodeUuid, podcastUuid, PodcastEpisode(uuid = episodeUuid, publishedDate = Date()), podcastManager, downloadMetaData = true, source = source).flatMap { missingEpisode ->
-                        if (missingEpisode is PodcastEpisode) {
-                            Maybe.just(missingEpisode)
-                        } else {
-                            Maybe.empty()
-                        }
-                    }
-                }
-            }
-        } else {
-            Maybe.empty()
-        }
+        // PodHopper: an episode that is not stored locally used to be fetched from the Pocket Casts
+        // server, which cannot resolve our feed-derived uuids. Nothing opens this screen for an
+        // episode that is not already stored: the deep link route refuses unknown episodes, and Up
+        // Next and position sync fetch missing ones from the feed first.
+        val onEmptyHandler = Maybe.empty<PodcastEpisode>()
 
         @Suppress("DEPRECATION")
         val maybeEpisode = episodeManager.findByUuidRxMaybe(episodeUuid)

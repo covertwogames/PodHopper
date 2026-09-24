@@ -152,7 +152,6 @@ interface PodcastManager {
     fun refreshPodcastsIfRequired(fromLog: String)
     fun refreshPodcasts(fromLog: String)
     suspend fun refreshPodcastsAfterSignIn()
-    suspend fun refreshPodcast(existingPodcast: Podcast, playbackManager: PlaybackManager)
 
     fun countEpisodesInPodcastWithStatusBlocking(podcastUuid: String, episodeStatus: EpisodeDownloadStatus): Int
     fun updateGroupingForAllBlocking(grouping: PodcastGrouping)

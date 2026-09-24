@@ -155,7 +155,6 @@ class PodcastViewModel @Inject constructor(
                 LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Loaded podcast $uuid from database")
                 if (it.isSubscribed) {
                     LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Podcast $uuid is subscribed")
-                    updatePodcast(it)
                     return@flatMap Maybe.just(it)
                 } else {
                     val wasDeleted = podcastManager.deletePodcastIfUnusedBlocking(it, playbackManager)
@@ -163,7 +162,6 @@ class PodcastViewModel @Inject constructor(
                         LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Podcast $uuid was old and deleted")
                         return@flatMap Maybe.empty<Podcast>()
                     } else {
-                        updatePodcast(it)
                         return@flatMap Maybe.just(it)
                     }
                 }
@@ -235,13 +233,6 @@ class PodcastViewModel @Inject constructor(
         super.onCleared()
         disposables.clear()
         podcastAndEpisodeDetailsCoordinator.onEpisodeDetailsDismissed = null
-    }
-
-    fun updatePodcast(existingPodcast: Podcast) {
-        // Refresh the podcast application coroutine scope so the podcast continues to update if the view model is closed
-        applicationScope.launch {
-            podcastManager.refreshPodcast(existingPodcast, playbackManager)
-        }
     }
 
     fun updateIsHeaderExpanded(uuid: String, isExpanded: Boolean) {

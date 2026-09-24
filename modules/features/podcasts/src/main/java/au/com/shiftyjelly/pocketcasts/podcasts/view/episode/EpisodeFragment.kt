@@ -400,7 +400,6 @@ class EpisodeFragment : BaseFragment() {
 
         viewModel.setup(
             episodeUuid = episodeUUID,
-            podcastUuid = podcastUuid,
             timestamp = timestamp,
             autoPlay = autoPlay && savedInstanceState == null,
             forceDark = forceDarkTheme,
