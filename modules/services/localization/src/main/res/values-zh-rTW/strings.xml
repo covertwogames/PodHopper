@@ -1728,10 +1728,6 @@ Language: zh_TW
     <string name="profile_forgot_your_password">我忘記密碼</string>
     <string name="profile_email_address">電子郵件地址</string>
     <string name="profile_password">密碼</string>
-    <string name="profile_sonos_connect_to">連線至 Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">目前無法連結 Pocket Casts 帳號。 請稍後再試一次。</string>
-    <string name="profile_sonos_linking_failed">連結失敗</string>
-    <string name="profile_sonos_need_account">你必須有 Pocket Casts 帳號，才可以與 Sonos 連線。</string>
     <string name="profile_stats_auto_skipping">自動跳過</string>
     <string name="profile_stats_skipping">跳過</string>
     <string name="profile_stats_variable_speed">變速</string>
@@ -1768,12 +1764,6 @@ Language: zh_TW
     <string name="profile_stats_since_listened_for">自 %s 以來，你已收聽</string>
     <string name="profile_stats_listened_for">你已收聽</string>
     <string name="profile_stat_days_listened">已收聽的天數</string>
-    <string name="profile_sonos_title">Pocket Casts 和 Sonos</string>
-    <string name="profile_sonos_setup_account">設定帳號</string>
-    <string name="profile_sonos_description">連結 Sonos 將允許 Sonos 應用程式存取你的單集資訊。  我們絕不會分享你的電子郵件地址、密碼和其他敏感項目。</string>
-    <string name="profile_sonos_connecting">正在連結…</string>
-    <string name="profile_sonos_connect">連線</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">登入身分</string>
     <string name="profile_sign_out_confirm">確定要退出同步嗎？</string>
     <string name="profile_share_stats">分享統計資料</string>
@@ -1888,7 +1878,6 @@ Language: zh_TW
     <string name="filters_create_options">篩選選項</string>
     <string name="filters_choose_podcasts">選擇 Podcast</string>
     <string name="filters_title_new_releases">最新上架</string>
-    <string name="profile_sonos_connect_account">連線至 Sonos 將允許 Sonos 應用程式存取你的單集資訊。\n\n我們絕不會分享你的電子郵件地址、密碼和其他敏感內容。</string>
     <string name="filters_no_episodes">找不到任何單集</string>
     <string name="filters_episode_duration">單集長度</string>
     <string name="filters_create_select_criteria">使用這些按鈕選取篩選條件，建立最新的智慧單集播放清單。</string>

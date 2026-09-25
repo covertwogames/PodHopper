@@ -299,7 +299,6 @@ object OnboardingFlowRoutes {
                 OnboardingUpgradeSource.SLUMBER_STUDIOS,
                 OnboardingUpgradeSource.UP_NEXT_SHUFFLE,
                 OnboardingUpgradeSource.GENERATED_TRANSCRIPTS,
-                OnboardingUpgradeSource.EPISODE_CHAT,
                 OnboardingUpgradeSource.AI_SUMMARIES,
                 OnboardingUpgradeSource.DEEP_LINK,
                 OnboardingUpgradeSource.FINISHED_ONBOARDING,

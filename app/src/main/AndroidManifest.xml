@@ -312,8 +312,6 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name=".profile.sonos.SonosAppLinkActivity" android:label="@string/profile_sonos"/>
-
         <!-- Re-asserts the saved app icon alias after an app update -->
         <receiver
             android:name=".AppIconUpdateReceiver"

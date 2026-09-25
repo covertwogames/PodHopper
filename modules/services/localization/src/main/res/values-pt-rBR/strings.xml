@@ -1730,11 +1730,6 @@ Language: pt_BR
     <string name="profile_forgot_your_password">Esqueci minha senha</string>
     <string name="profile_email_address">Endereço de e-mail</string>
     <string name="profile_password">Senha</string>
-    <string name="profile_sonos_connect_to">Conectar à Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">Não é possível vincular a conta do Pocket Casts no momento. Tente novamente mais tarde.</string>
-    <string name="profile_sonos_linking_failed">Falha na vinculação</string>
-    <string name="profile_sonos_connect_account">Conectar-se à caixa de som Sonos permitirá que o aplicativo do Sonos acesse suas informações de episódios.\n\nSeu endereço de e-mail, senha e outros dados confidenciais jamais são compartilhados.</string>
-    <string name="profile_sonos_need_account">Você precisa de uma conta do Pocket Casts para se conectar à caixa de som Sonos.</string>
     <string name="profile_stats_auto_skipping">Avanços automáticos</string>
     <string name="profile_stats_skipping">Avanços</string>
     <string name="profile_stats_variable_speed">Velocidade variável</string>
@@ -1770,12 +1765,6 @@ Language: pt_BR
     <string name="profile_stats_since_listened_for">Desde %s, você ouviu podcasts por</string>
     <string name="profile_stats_listened_for">Você ouviu podcasts por</string>
     <string name="profile_stat_days_listened">Dias ouvidos</string>
-    <string name="profile_sonos_title">Pocket Casts e Sonos</string>
-    <string name="profile_sonos_setup_account">Configurar conta</string>
-    <string name="profile_sonos_description">Conectar-se ao Sonos permitirá que o aplicativo acesse informações do seu episódio.  Seu endereço de e-mail, senha e outras informações pessoais nunca são compartilhadas.</string>
-    <string name="profile_sonos_connecting">Conectando…</string>
-    <string name="profile_sonos_connect">Conectar</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Conectado como</string>
     <string name="profile_sign_out_confirm">Você tem certeza de que deseja sair da sincronização?</string>
     <string name="profile_share_stats">Compartilhar estatísticas</string>

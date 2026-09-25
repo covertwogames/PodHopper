@@ -2,12 +2,8 @@ package au.com.shiftyjelly.pocketcasts.servers.di
 
 import au.com.shiftyjelly.pocketcasts.servers.analytics.AnalyticsLiveServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.analytics.AnalyticsLiveServiceManagerImpl
-import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticServiceManager
-import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticServiceManagerImpl
 import au.com.shiftyjelly.pocketcasts.servers.list.ListServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.list.ListServiceManagerImpl
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManagerImpl
 import au.com.shiftyjelly.pocketcasts.servers.refresh.RefreshServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.refresh.RefreshServiceManagerImpl
 import dagger.Binds
@@ -26,15 +22,7 @@ abstract class ServersModuleBinds {
 
     @Binds
     @Singleton
-    abstract fun provideStaticManager(staticServiceManagerImpl: StaticServiceManagerImpl): StaticServiceManager
-
-    @Binds
-    @Singleton
     abstract fun provideShareServiceManager(shareServiceManagerImpl: ListServiceManagerImpl): ListServiceManager
-
-    @Binds
-    @Singleton
-    abstract fun providePodcastCacheServiceManager(podcastCacheServiceManagerImpl: PodcastCacheServiceManagerImpl): PodcastCacheServiceManager
 
     @Binds
     @Singleton

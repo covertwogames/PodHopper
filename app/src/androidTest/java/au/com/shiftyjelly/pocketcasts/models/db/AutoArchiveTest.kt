@@ -24,7 +24,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import com.automattic.eventhorizon.EventHorizon
 import com.squareup.moshi.Moshi
 import java.util.Calendar
@@ -49,7 +48,6 @@ class AutoArchiveTest {
     lateinit var testDb: AppDatabase
     lateinit var episodeDao: EpisodeDao
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    val podcastCacheServiceManager = mock<PodcastCacheServiceManager> {}
     val userEpisodeManager = mock<UserEpisodeManager> {}
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -86,7 +84,6 @@ class AutoArchiveTest {
             downloadQueue = mock(),
             context = context,
             appDatabase = db,
-            podcastCacheServiceManager = podcastCacheServiceManager,
             userEpisodeManager = userEpisodeManager,
             ioDispatcher = testDispatcher,
             eventHorizon = EventHorizon(TestEventSink()),

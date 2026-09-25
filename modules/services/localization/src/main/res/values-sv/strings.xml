@@ -1728,11 +1728,6 @@ Language: sv_SE
     <string name="profile_forgot_your_password">Jag har glömt lösenordet</string>
     <string name="profile_email_address">E-postadress</string>
     <string name="profile_password">Lösenord</string>
-    <string name="profile_sonos_connect_to">Anslut till Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">Det går för närvarande inte att länka Pocket Casts-kontot. Försök igen senare.</string>
-    <string name="profile_sonos_linking_failed">Länkningen misslyckades</string>
-    <string name="profile_sonos_connect_account">Genom att ansluta till Sonos ger du Sonos-appen tillåtelse att komma åt din avsnittsinformation.\n\nDin e-postadress, ditt lösenord eller annan känslig information delas aldrig.</string>
-    <string name="profile_sonos_need_account">Du behöver ha ett Pocket Casts-konto för att ansluta till Sonos.</string>
     <string name="profile_stats_auto_skipping">Hoppa över automatiskt</string>
     <string name="profile_stats_skipping">Hoppa över</string>
     <string name="profile_stats_variable_speed">Variabel hastighet</string>
@@ -1768,12 +1763,6 @@ Language: sv_SE
     <string name="profile_stats_since_listened_for">Sedan %s har du lyssnat i</string>
     <string name="profile_stats_listened_for">Du har lyssnat i</string>
     <string name="profile_stat_days_listened">Dagar lyssnade</string>
-    <string name="profile_sonos_title">Pocket Casts och Sonos</string>
-    <string name="profile_sonos_setup_account">Konfigurera konto</string>
-    <string name="profile_sonos_description">Genom att ansluta till Sonos ger du Sonos-appen tillåtelse att komma åt din avsnittsinformation.  Din e-postadress, ditt lösenord eller annan känslig information delas aldrig.</string>
-    <string name="profile_sonos_connecting">Ansluter …</string>
-    <string name="profile_sonos_connect">Anslut</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Inloggad som</string>
     <string name="profile_sign_out_confirm">Är du säker på att du vill logga ut från synkroniseringen?</string>
     <string name="profile_share_stats">Dela statistik</string>

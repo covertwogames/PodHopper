@@ -40,7 +40,6 @@ import au.com.shiftyjelly.pocketcasts.servers.sync.bookmark.toBookmark
 import au.com.shiftyjelly.pocketcasts.servers.sync.exception.RefreshTokenExpiredException
 import au.com.shiftyjelly.pocketcasts.servers.sync.history.HistoryYearResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceAuthorizeResponse
-import au.com.shiftyjelly.pocketcasts.servers.sync.login.ExchangeSonosResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginTokenResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.parseErrorResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.parseTokenErrorResponse
@@ -481,10 +480,6 @@ class SyncManagerImpl @Inject constructor(
     }
 
     // Other
-
-    override suspend fun exchangeSonos(): ExchangeSonosResponse = getCacheTokenOrLogin { token ->
-        syncServiceManager.exchangeSonos(token)
-    }
 
     override suspend fun getFilters(): List<PlaylistEntity> = getCacheTokenOrLogin { token ->
         syncServiceManager.getFilters(token)

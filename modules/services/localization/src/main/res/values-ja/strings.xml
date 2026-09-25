@@ -1730,11 +1730,6 @@ Language: ja_JP
     <string name="profile_forgot_your_password">パスワードを忘れた場合</string>
     <string name="profile_email_address">メールアドレス</string>
     <string name="profile_password">パスワード</string>
-    <string name="profile_sonos_connect_to">Sonos に接続</string>
-    <string name="profile_sonos_linking_failed_summary">現在、Pocket Casts アカウントとの接続に問題が生じています。 後ほど、もう一度お試しください。</string>
-    <string name="profile_sonos_linking_failed">リンクに失敗</string>
-    <string name="profile_sonos_connect_account">Sonos に接続すると Sonos アプリがエピソード情報にアクセスできるようになります。\n\nお客様のメールアドレス、パスワード、その他の機密情報が共有されることはありません。</string>
-    <string name="profile_sonos_need_account">Pocket Casts アカウントを作成してから Sonos に接続してください。</string>
     <string name="profile_stats_auto_skipping">自動スキップ</string>
     <string name="profile_stats_skipping">スキップ</string>
     <string name="profile_stats_variable_speed">速度調整</string>
@@ -1769,12 +1764,6 @@ Language: ja_JP
     <string name="profile_stats_since_listened_for">%s以降の聴取時間</string>
     <string name="profile_stats_listened_for">聴取時間</string>
     <string name="profile_stat_days_listened">聴取日数</string>
-    <string name="profile_sonos_title">Pocket Casts と Sonos</string>
-    <string name="profile_sonos_setup_account">アカウントの設定</string>
-    <string name="profile_sonos_description">Sonos に接続すると Sonos アプリがエピソード情報にアクセスできるようになります。  お客様のメールアドレス、パスワード、その他の機密情報が共有されることはありません。</string>
-    <string name="profile_sonos_connecting">連携中…</string>
-    <string name="profile_sonos_connect">連携</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">ログインアカウント</string>
     <string name="profile_sign_out_confirm">同期からログアウトしますか ?</string>
     <string name="profile_share_stats">統計情報を共有</string>

@@ -116,8 +116,6 @@ interface EpisodeManager {
     /** Utility methods  */
     suspend fun countEpisodes(): Int
     fun countEpisodesWhereBlocking(queryAfterWhere: String): Int
-    fun downloadMissingEpisodeRxMaybe(episodeUuid: String, podcastUuid: String, skeletonEpisode: PodcastEpisode, podcastManager: PodcastManager, downloadMetaData: Boolean, source: SourceView): Maybe<BaseEpisode>
-    suspend fun downloadMissingPodcastEpisode(episodeUuid: String, podcastUuid: String): PodcastEpisode?
 
     fun unarchiveAllInListBlocking(episodes: List<PodcastEpisode>)
     fun findPlaybackHistoryEpisodesFlow(): Flow<List<PodcastEpisode>>

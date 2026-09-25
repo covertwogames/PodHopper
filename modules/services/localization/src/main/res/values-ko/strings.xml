@@ -1716,17 +1716,6 @@ Language: ko_KR
     <string name="profile_stats_listened_for">청취한 기간</string>
     <string name="profile_stats_auto_skipping">자동 건너뛰기</string>
     <string name="profile_stat_days_listened">청취한 기간(일)</string>
-    <string name="profile_sonos_title">Pocket Casts와 Sonos</string>
-    <string name="profile_sonos_setup_account">계정 설정</string>
-    <string name="profile_sonos_need_account">Sonos와 연결할 수 있으려면 Pocket Casts 계정이 있어야 합니다.</string>
-    <string name="profile_sonos_linking_failed_summary">지금은 Pocket Casts 계정을 연결할 수 없습니다. 나중에 다시 시도하세요.</string>
-    <string name="profile_sonos_linking_failed">연결 실패</string>
-    <string name="profile_sonos_description">Sonos에 연결하면 Sonos 앱에서 에피소드 정보에 접근할 수 있습니다.  이메일 주소, 비밀번호 및 기타 민감한 항목은 공유되지 않습니다.</string>
-    <string name="profile_sonos_connecting">연결 중…</string>
-    <string name="profile_sonos_connect_to">Sonos에 연결</string>
-    <string name="profile_sonos_connect_account">Sonos에 연결하면 Sonos 앱에서 에피소드 정보에 접근할 수 있습니다.\n\n이메일 주소, 비밀번호 및 기타 민감한 항목은 공유되지 않습니다.</string>
-    <string name="profile_sonos_connect">연결</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">다음으로 로그인됨</string>
     <string name="profile_sign_out_confirm">동기화에서 로그아웃하시겠나요?</string>
     <string name="profile_sign_in_or_create_account">로그인 또는 계정 생성</string>

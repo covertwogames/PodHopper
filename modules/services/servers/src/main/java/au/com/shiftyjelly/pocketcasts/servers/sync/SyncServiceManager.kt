@@ -18,7 +18,6 @@ import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceAuthorizeRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceAuthorizeResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceTokenRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceTokenResponse
-import au.com.shiftyjelly.pocketcasts.servers.sync.login.ExchangeSonosResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginGoogleRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginPocketCastsRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginTokenRequest
@@ -129,10 +128,6 @@ open class SyncServiceManager @Inject constructor(
     suspend fun forgotPassword(email: String): ForgotPasswordResponse {
         val request = ForgotPasswordRequest(email = email)
         return service.forgotPassword(request)
-    }
-
-    suspend fun exchangeSonos(token: AccessToken): ExchangeSonosResponse {
-        return service.exchangeSonos(addBearer(token))
     }
 
     suspend fun emailChange(newEmail: String, password: String, token: AccessToken): UserChangeResponse {

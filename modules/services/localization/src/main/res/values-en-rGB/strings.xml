@@ -855,17 +855,6 @@ Language: en_GB
     <string name="profile_stats_listened_for">You\'ve listened for</string>
     <string name="profile_stats_auto_skipping">Auto Skipping</string>
     <string name="profile_stat_days_listened">Days listened</string>
-    <string name="profile_sonos_title">Pocket Casts And Sonos</string>
-    <string name="profile_sonos_setup_account">Set Up Account</string>
-    <string name="profile_sonos_need_account">You need to have a Pocket Casts account before you can connect with Sonos.</string>
-    <string name="profile_sonos_linking_failed_summary">Unable to link Pocket Casts account at this time. Please try again later.</string>
-    <string name="profile_sonos_linking_failed">Linking Failed</string>
-    <string name="profile_sonos_description">Connecting to Sonos will allow the Sonos app to access your episode information.  Your email address, password and other sensitive items are never shared.</string>
-    <string name="profile_sonos_connecting">Connecting…</string>
-    <string name="profile_sonos_connect_to">Connect To Sonos</string>
-    <string name="profile_sonos_connect_account">Connecting to Sonos will allow the Sonos app to access your episode information.\n\nYour email address, password and other sensitive items are never shared.</string>
-    <string name="profile_sonos_connect">Connect</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Signed in as</string>
     <string name="profile_sign_out_confirm">Are you sure you want to sign out of syncing?</string>
     <string name="profile_sign_in_or_create_account">Sign in or create account</string>

@@ -1727,11 +1727,6 @@ Language: nl
     <string name="profile_forgot_your_password">Ik ben mijn wachtwoord vergeten</string>
     <string name="profile_email_address">E-mailadres</string>
     <string name="profile_password">Wachtwoord</string>
-    <string name="profile_sonos_connect_to">Maak verbinding met Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">Kan het Pocket Casts-account op dit moment niet koppelen. Probeer het later opnieuw.</string>
-    <string name="profile_sonos_linking_failed">Koppelen mislukt</string>
-    <string name="profile_sonos_connect_account">Door verbinding te maken met Sonos kan de Sonos-app informatie over je aflevering ophalen.\n\nJe e-mailadres, wachtwoord en andere gevoelige gegevens worden nooit gedeeld.</string>
-    <string name="profile_sonos_need_account">Je moet een Pocket Casts-account hebben voordat je verbinding kan maken met Sonos.</string>
     <string name="profile_stats_auto_skipping">Automatisch overslaan</string>
     <string name="profile_stats_skipping">Overslaan</string>
     <string name="profile_stats_variable_speed">Variabele snelheid</string>
@@ -1767,12 +1762,6 @@ Language: nl
     <string name="profile_stats_since_listened_for">Sinds %s heb je geluisterd gedurende</string>
     <string name="profile_stats_listened_for">Je hebt geluisterd gedurende</string>
     <string name="profile_stat_days_listened">Dagen geluisterd</string>
-    <string name="profile_sonos_title">Pocket Casts en Sonos</string>
-    <string name="profile_sonos_setup_account">Account instellen</string>
-    <string name="profile_sonos_description">Door verbinding te maken met Sonos kan de Sonos-app informatie over je aflevering ophalen.  Je e-mailadres, wachtwoord en andere gevoelige gegevens worden nooit gedeeld.</string>
-    <string name="profile_sonos_connecting">Verbinden…</string>
-    <string name="profile_sonos_connect">Verbinden</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Aangemeld als</string>
     <string name="profile_sign_out_confirm">Weet je zeker dat je wilt uitloggen bij synchroniseren?</string>
     <string name="profile_share_stats">Deelstatistieken</string>

@@ -49,7 +49,6 @@ class DeepLinkFactory(
         PocketCastsWebsiteGetAdapter(webBaseHost),
         ReferralsAdapter(webBaseHost),
         PodloveAdapter(),
-        SonosAdapter(),
         ShareListAdapter(listHost),
         ShareListNativeAdapter(),
         SubscribeOnAndroidAdapter(),
@@ -298,21 +297,6 @@ private class PodloveAdapter : DeepLinkAdapter {
 
     private companion object {
         private val PODLOVE_REGEX = """^pktc://(subscribe|subscribehttps)/(.{3,})$""".toRegex()
-    }
-}
-
-private class SonosAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val scheme = uriData?.scheme
-        val host = uriData?.host
-        val state = uriData?.getQueryParameter("state")
-
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "applink" && state != null) {
-            SonosDeepLink(state)
-        } else {
-            null
-        }
     }
 }
 

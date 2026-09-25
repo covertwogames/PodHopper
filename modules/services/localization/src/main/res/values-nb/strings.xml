@@ -841,17 +841,6 @@ Language: nb_NO
     <string name="profile_stats_listened_for">Du har lyttet for</string>
     <string name="profile_stats_auto_skipping">Hopp over automatisk</string>
     <string name="profile_stat_days_listened">Dager lyttet</string>
-    <string name="profile_sonos_title">Pocket Casts og Sonos</string>
-    <string name="profile_sonos_setup_account">Konfigurer konto</string>
-    <string name="profile_sonos_need_account">Du må ha en Pocket Casts-konto før du kan koble til med Sonos.</string>
-    <string name="profile_sonos_linking_failed_summary">Kan ikke koble til Pocket Casts-kontoen nå. Prøv på nytt senere.</string>
-    <string name="profile_sonos_linking_failed">Kobling mislyktes</string>
-    <string name="profile_sonos_description">Ved å koble til Sonos vil Sonos-appen få tilgang til episodeinformasjonen din.  E-postadressen din, passordet og andre sensitive elementer deles aldri.</string>
-    <string name="profile_sonos_connecting">Kobler til …</string>
-    <string name="profile_sonos_connect_to">Koble til Sonos</string>
-    <string name="profile_sonos_connect_account">Ved å koble til Sonos vil Sonos-appen få tilgang til episodeinformasjonen din.\n\nE-postadressen din, passordet og andre sensitive elementer deles aldri.</string>
-    <string name="profile_sonos_connect">Koble til</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Logget inn som</string>
     <string name="profile_sign_out_confirm">Er du sikker på at du vil logge deg ut av synkroniseringen?</string>
     <string name="profile_sign_in_or_create_account">Logg inn eller opprett konto</string>

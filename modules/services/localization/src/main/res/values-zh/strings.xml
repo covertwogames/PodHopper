@@ -1730,11 +1730,6 @@ Language: zh_CN
     <string name="profile_forgot_your_password">我忘记了密码</string>
     <string name="profile_email_address">电子邮件地址</string>
     <string name="profile_password">密码</string>
-    <string name="profile_sonos_connect_to">连接至 Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">此时无法关联 Pocket Casts 账户。 请稍后重试。</string>
-    <string name="profile_sonos_linking_failed">链接失败</string>
-    <string name="profile_sonos_connect_account">连接到 Sonos 后，Sonos 应用程序就可以访问您的剧集信息。\n\n系统绝不会分享您的电子邮件地址、密码和其他敏感信息。</string>
-    <string name="profile_sonos_need_account">您需要有一个 Pocket Casts 账户才能与 Sonos 连接。</string>
     <string name="profile_stats_auto_skipping">自动跳过</string>
     <string name="profile_stats_variable_speed">变速</string>
     <string name="profile_terms_of_use_title">使用条款</string>
@@ -1769,12 +1764,6 @@ Language: zh_CN
     <string name="profile_stats_since_listened_for">自从 %s，您已收听</string>
     <string name="profile_stats_listened_for">您已收听</string>
     <string name="profile_stat_days_listened">已收听的天数</string>
-    <string name="profile_sonos_title">Pocket Casts 和 Sonos</string>
-    <string name="profile_sonos_setup_account">设置账户</string>
-    <string name="profile_sonos_description">连接到 Sonos 后，Sonos 应用程序就可以访问您的剧集信息。  系统绝不会分享您的电子邮件地址、密码和其他敏感信息。</string>
-    <string name="profile_sonos_connecting">正在连接…</string>
-    <string name="profile_sonos_connect">连接</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">登录身份</string>
     <string name="profile_sign_out_confirm">是否确定要注销同步？</string>
     <string name="profile_share_stats">共享统计信息</string>

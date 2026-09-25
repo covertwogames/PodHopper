@@ -1730,11 +1730,6 @@ Language: es
     <string name="profile_forgot_your_password">He olvidado mi contraseña</string>
     <string name="profile_email_address">Dirección de correo electrónico</string>
     <string name="profile_password">Contraseña</string>
-    <string name="profile_sonos_connect_to">Conectar con Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">En este momento, no se puede vincular la cuenta de Pocket Casts. Inténtalo de nuevo más tarde.</string>
-    <string name="profile_sonos_linking_failed">Se ha producido un error en la vinculación</string>
-    <string name="profile_sonos_connect_account">Al conectarte a Sonos, permitirás que la aplicación acceda a la información del episodio.\n\nNunca se compartirá tu dirección de correo electrónico, contraseña ni otra información confidencial.</string>
-    <string name="profile_sonos_need_account">Para poder conectarte con Sonos, necesitas una cuenta de Pocket Casts.</string>
     <string name="profile_stats_auto_skipping">Salto automático</string>
     <string name="profile_stats_skipping">Saltando</string>
     <string name="profile_stats_variable_speed">Velocidad variable</string>
@@ -1770,12 +1765,6 @@ Language: es
     <string name="profile_stats_since_listened_for">Desde el %s, has escuchado podcasts durante</string>
     <string name="profile_stats_listened_for">Has escuchado podcasts durante</string>
     <string name="profile_stat_days_listened">Días escuchados</string>
-    <string name="profile_sonos_title">Pocket Casts y Sonos</string>
-    <string name="profile_sonos_setup_account">Configurar cuenta</string>
-    <string name="profile_sonos_description">Al conectarte a Sonos, permitirás que la aplicación acceda a la información del episodio.  Nunca se compartirá tu dirección de correo electrónico, contraseña ni otra información confidencial.</string>
-    <string name="profile_sonos_connecting">Conectando…</string>
-    <string name="profile_sonos_connect">Conectar</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Has iniciado sesión como</string>
     <string name="profile_sign_out_confirm">¿Seguro que quieres cerrar sesión y detener la sincronización?</string>
     <string name="profile_share_stats">Estadísticas del uso compartido</string>

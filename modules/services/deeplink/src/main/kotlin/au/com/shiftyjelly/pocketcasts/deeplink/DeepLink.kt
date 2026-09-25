@@ -201,10 +201,6 @@ data class ShowPodcastFromUrlDeepLink(
     val url: String,
 ) : DeepLink
 
-data class SonosDeepLink(
-    val state: String,
-) : DeepLink
-
 data class ShareListDeepLink(
     val path: String,
     val sourceView: String?,

@@ -16,8 +16,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadType
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.servers.cdn.ArtworkColors
-import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticServiceManager
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.servers.sync.PodcastEpisodesResponse
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.Optional
@@ -31,8 +29,6 @@ import com.jakewharton.rxrelay2.PublishRelay
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.reactivex.Completable
 import io.reactivex.Single
-import io.reactivex.functions.BiFunction
-import io.reactivex.functions.Function4
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import java.util.Date
@@ -44,8 +40,6 @@ import timber.log.Timber
 @Singleton
 class SubscribeManager @Inject constructor(
     val appDatabase: AppDatabase,
-    val podcastCacheServiceManager: PodcastCacheServiceManager,
-    private val staticServiceManager: StaticServiceManager,
     private val syncManager: SyncManager,
     private val episodeManager: EpisodeManager,
     private val downloadQueue: DownloadQueue,
@@ -67,6 +61,13 @@ class SubscribeManager @Inject constructor(
     private val isWatch: Boolean by lazy { Util.getAppPlatform(context) == AppPlatform.WearOs }
 
     data class PodcastSubscribe(val podcastUuid: String, val sync: Boolean, val shouldAutoDownload: Boolean)
+
+    private fun canDownloadEpisodesAfterFollowPodcast(
+        subscribed: Boolean,
+        shouldAutoDownload: Boolean,
+    ): Boolean = subscribed &&
+        settings.autoDownloadOnFollowPodcast.value &&
+        shouldAutoDownload
 
     @SuppressLint("CheckResult")
     private fun setupSubscribeRelay(): PublishRelay<PodcastSubscribe> {
@@ -401,78 +402,6 @@ class SubscribeManager @Inject constructor(
         // return the final podcast
         val findObservable = podcastDao.findByUuidRxMaybe(podcastUuid)
         return updateObservable.andThen(findObservable.toSingle())
-    }
-
-    @Suppress("unused")
-    private fun subscribeToServerPodcastRxSingle(podcastUuid: String, sync: Boolean, subscribed: Boolean, shouldAutoDownload: Boolean): Single<Podcast> {
-        // download the podcast
-        val podcastObservable = downloadPodcastRxSingle(podcastUuid)
-            .doOnSuccess { podcast ->
-                // mark sync status
-                podcast.syncStatus = if (sync) Podcast.SYNC_STATUS_NOT_SYNCED else Podcast.SYNC_STATUS_SYNCED
-                podcast.isSubscribed = subscribed
-                podcast.grouping = settings.podcastGroupingDefault.value
-                podcast.showArchived = settings.showArchivedDefault.value
-                podcastDao.findByUuidBlocking(podcastUuid)?.let { localPodcast ->
-                    podcast.copyPlaybackEffects(
-                        sourcePodcast = localPodcast,
-                    )
-                }
-                if (canDownloadEpisodesAfterFollowPodcast(subscribed, shouldAutoDownload)) {
-                    LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Update auto download status for $podcastUuid")
-                    podcast.autoDownloadStatus = AUTO_DOWNLOAD_NEW_EPISODES
-                }
-            }
-        // add the podcast
-        val insertPodcastObservable = podcastObservable.flatMap { podcast ->
-            podcastDao.insertRxSingle(podcast)
-        }
-        // insert episodes
-        return insertPodcastObservable.flatMap { podcast -> subscribeInsertEpisodesRxCompletable(podcast).toSingle { podcast } }
-    }
-
-    private fun canDownloadEpisodesAfterFollowPodcast(
-        subscribed: Boolean,
-        shouldAutoDownload: Boolean,
-    ): Boolean = subscribed &&
-        settings.autoDownloadOnFollowPodcast.value &&
-        shouldAutoDownload
-
-    private fun downloadPodcastRxSingle(podcastUuid: String): Single<Podcast> {
-        // download the podcast
-        val serverPodcastObservable = podcastCacheServiceManager.getPodcast(podcastUuid)
-            .subscribeOn(Schedulers.io())
-            .doOnSuccess { Timber.i("Downloaded episodes success podcast $podcastUuid") }
-        // download the colors
-        val colorObservable = staticServiceManager.getColorsSingle(podcastUuid)
-            .subscribeOn(Schedulers.io())
-            .doOnSuccess { Timber.i("Downloaded colors success podcast $podcastUuid") }
-            .onErrorReturn { Optional.empty() }
-        // keep expanded or collapsed header state
-        val isHeaderExpandedObservable = podcastDao.findByUuidRxMaybe(podcastUuid)
-            .subscribeOn(Schedulers.io())
-            .map { it.isHeaderExpanded }
-            .toSingle(true)
-        // find all podcasts from the database
-        val allPodcastsObservable = podcastDao.findSubscribedRxSingle().subscribeOn(Schedulers.io())
-        // group the server podcast and all the existing podcasts to calculate the new podcast properties
-        val cleanPodcastObservable = Single.zip(
-            serverPodcastObservable,
-            colorObservable,
-            isHeaderExpandedObservable,
-            allPodcastsObservable,
-            Function4<Podcast, Optional<ArtworkColors>, Boolean, List<Podcast>, Podcast> { podcast, colors, isHeaderExpanded, allPodcasts ->
-                cleanPodcast(podcast, colors, isHeaderExpanded, allPodcasts)
-            },
-        )
-        // add sync information
-        if (syncManager.isLoggedIn()) {
-            val syncPodcastObservable = syncManager.getPodcastEpisodesRxSingle(podcastUuid).subscribeOn(Schedulers.io())
-            return Single.zip(cleanPodcastObservable, syncPodcastObservable, BiFunction<Podcast, PodcastEpisodesResponse, Podcast>(this::mergeSyncPodcast))
-                .onErrorResumeNext(cleanPodcastObservable)
-        } else {
-            return cleanPodcastObservable
-        }
     }
 
     private fun subscribeInsertEpisodesRxCompletable(podcast: Podcast): Completable {

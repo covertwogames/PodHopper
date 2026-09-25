@@ -10,7 +10,6 @@ import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceAuthorizeRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceAuthorizeResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceTokenRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceTokenResponse
-import au.com.shiftyjelly.pocketcasts.servers.sync.login.ExchangeSonosResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginGoogleRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginPocketCastsRequest
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.LoginTokenRequest
@@ -78,9 +77,6 @@ interface SyncService {
 
     @POST("/user/forgot_password")
     suspend fun forgotPassword(@Body request: ForgotPasswordRequest): ForgotPasswordResponse
-
-    @POST("/user/exchange_sonos")
-    suspend fun exchangeSonos(@Header("Authorization") authorization: String): ExchangeSonosResponse
 
     @POST("/user/change_email")
     suspend fun emailChange(@Header("Authorization") authorization: String, @Body request: EmailChangeRequest): UserChangeResponse

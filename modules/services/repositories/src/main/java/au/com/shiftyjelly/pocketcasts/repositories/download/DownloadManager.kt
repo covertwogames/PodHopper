@@ -23,7 +23,6 @@ import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.DownloadStatusUpdate
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodeDownloadStatus
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import au.com.shiftyjelly.pocketcasts.repositories.download.task.UpdateShowNotesTask
 import au.com.shiftyjelly.pocketcasts.repositories.fingerprint.FingerprintMappingCache
 import au.com.shiftyjelly.pocketcasts.repositories.fingerprint.FingerprintReferenceRetriever
 import au.com.shiftyjelly.pocketcasts.utils.FileUtil
@@ -250,7 +249,6 @@ private class DownloadQueueController(
         // the state will be eventually consistent thanks to status updates.
         episodeUuids.forEach { episodeUuid ->
             workManager.cancelAllWorkByTag(DownloadEpisodeWorker.episodeTag(episodeUuid))
-            workManager.cancelAllWorkByTag(UpdateShowNotesTask.episodeTag(episodeUuid))
         }
         return resetEpisodes.values
     }
@@ -286,7 +284,6 @@ private class DownloadQueueController(
         val episodeUuids = downloadDao.findPodcastEpisodesUuids(podcastUuid)
         val removedEpisodes = removeFromQueue(episodeUuids, sourceView)
         workManager.cancelAllWorkByTag(DownloadEpisodeWorker.podcastTag(podcastUuid))
-        workManager.cancelAllWorkByTag(UpdateShowNotesTask.podcastTag(podcastUuid))
         return removedEpisodes
     }
 
@@ -294,7 +291,6 @@ private class DownloadQueueController(
         val episodeUuids = downloadDao.findCancellableEpisodes().map(BaseEpisode::uuid)
         val removedEpisodes = removeFromQueue(episodeUuids, sourceView)
         workManager.cancelAllWorkByTag(DownloadEpisodeWorker.WORKER_TAG)
-        workManager.cancelAllWorkByTag(UpdateShowNotesTask.WORKER_TAG)
         return removedEpisodes
     }
 
@@ -317,7 +313,6 @@ private class DownloadQueueController(
 
         for (info in infos) {
             workManager.cancelAllWorkByTag(DownloadEpisodeWorker.episodeTag(info.episodeUuid))
-            workManager.cancelAllWorkByTag(UpdateShowNotesTask.episodeTag(info.episodeUuid))
         }
     }
 

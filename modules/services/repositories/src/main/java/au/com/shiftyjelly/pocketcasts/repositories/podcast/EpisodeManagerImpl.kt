@@ -25,7 +25,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperEpisodeStatusBus
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlayerEvent
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServiceManager
 import au.com.shiftyjelly.pocketcasts.utils.Network
 import au.com.shiftyjelly.pocketcasts.utils.days
 import au.com.shiftyjelly.pocketcasts.utils.hours
@@ -63,7 +62,6 @@ class EpisodeManagerImpl @Inject constructor(
     private val downloadQueue: DownloadQueue,
     @ApplicationContext private val context: Context,
     private val appDatabase: AppDatabase,
-    private val podcastCacheServiceManager: PodcastCacheServiceManager,
     private val userEpisodeManager: UserEpisodeManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val eventHorizon: EventHorizon,
@@ -956,33 +954,6 @@ class EpisodeManagerImpl @Inject constructor(
 
     override fun markPlaybackHistorySyncedBlocking() {
         return episodeDao.markPlaybackHistorySyncedBlocking()
-    }
-
-    /**
-     * Try downloading the episode if it is missing. If the server doesn't know about it insert the skeleton episode.
-     */
-    override fun downloadMissingEpisodeRxMaybe(episodeUuid: String, podcastUuid: String, skeletonEpisode: PodcastEpisode, podcastManager: PodcastManager, downloadMetaData: Boolean, source: SourceView): Maybe<BaseEpisode> {
-        return episodeDao.existsRxSingle(episodeUuid)
-            .flatMapMaybe { episodeExists ->
-                if (episodeExists || podcastUuid == Podcast.userPodcast.uuid) {
-                    findEpisodeByUuidRxFlowable(episodeUuid).firstElement()
-                } else {
-                    podcastCacheServiceManager.getPodcastAndEpisodeSingle(podcastUuid, episodeUuid).flatMapMaybe { response ->
-                        val episode = response.episodes.firstOrNull() ?: skeletonEpisode
-                        addBlocking(episode, downloadMetaData = downloadMetaData)
-
-                        @Suppress("DEPRECATION")
-                        findByUuidRxMaybe(episodeUuid)
-                    }
-                }
-            }
-    }
-
-    override suspend fun downloadMissingPodcastEpisode(episodeUuid: String, podcastUuid: String): PodcastEpisode? {
-        val response = podcastCacheServiceManager.getPodcastAndEpisode(podcastUuid = podcastUuid, episodeUuid = episodeUuid)
-        val episode = response.episodes.firstOrNull() ?: return null
-        add(episodes = listOf(episode), podcastUuid = podcastUuid, downloadMetaData = false)
-        return findByUuid(episodeUuid)
     }
 
     override suspend fun calculatePlayedUptoSumInSecsWithinDays(days: Int): Double {

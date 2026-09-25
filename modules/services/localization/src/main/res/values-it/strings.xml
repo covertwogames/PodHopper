@@ -1718,11 +1718,6 @@ Language: it
     <string name="profile_forgot_your_password">Ho dimenticato la password</string>
     <string name="profile_email_address">Indirizzo e-mail</string>
     <string name="profile_password">Password</string>
-    <string name="profile_sonos_connect_to">Connetti a Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">Impossibile collegare l\'account Pocket Casts in questo momento. Riprova più tardi.</string>
-    <string name="profile_sonos_linking_failed">Collegamento non riuscito</string>
-    <string name="profile_sonos_connect_account">La connessione a Sonos consentirà all\'app Sonos di accedere alle informazioni sull\'episodio.\n\nL\'indirizzo e-mail, la password e altri elementi sensibili non vengono mai condivisi.</string>
-    <string name="profile_sonos_need_account">Devi disporre di un account Pocket Casts prima di poterti connettere a Sonos.</string>
     <string name="profile_terms_of_use_title">Termini d\'uso</string>
     <string name="profile_payment_try_again">Riprova</string>
     <string name="profile_monthly">Mensile</string>
@@ -1752,12 +1747,6 @@ Language: it
     <string name="profile_status_error_internet">🤔\n\nImpossibile caricare le statistiche,\ncontrolla la connessione Internet.</string>
     <string name="profile_stats_total">TOTALE</string>
     <string name="profile_stat_days_listened">Giorni di ascolto</string>
-    <string name="profile_sonos_title">Pocket Cast e Sonos</string>
-    <string name="profile_sonos_setup_account">Configura account</string>
-    <string name="profile_sonos_description">La connessione a Sonos consentirà all\'app Sonos di accedere alle informazioni sull\'episodio.  L\'indirizzo e-mail, la password e altri elementi sensibili non vengono mai condivisi.</string>
-    <string name="profile_sonos_connecting">Connessione in corso…</string>
-    <string name="profile_sonos_connect">Connetti</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Accesso eseguito come</string>
     <string name="profile_share_stats">Condividi statistiche</string>
     <string name="profile_reset_password_check_email">Controlla la tua e-mail</string>

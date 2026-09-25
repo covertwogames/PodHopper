@@ -1735,8 +1735,6 @@ Language: ca
     <string name="profile_payment_try_again">Tornar-ho a provar</string>
     <string name="profile_refresh_failed">S\'ha produït un error en actualitzar</string>
     <string name="profile_reset_password_sent">S\'ha enviat l\'enllaç per recuperar la contrasenya</string>
-    <string name="profile_sonos_linking_failed_summary">Ara mateix no es pot vincular el compte de Pocket Casts. Torna-ho a provar més tard.</string>
-    <string name="profile_sonos_need_account">Per poder connectar-ne amb Sonos, necessites un compte de Pocket Casts.</string>
     <string name="profile_stat_days_listened">Dies escoltats</string>
     <string name="profile_stats_auto_skipping">Salt automàtic</string>
     <string name="profile_stats_skipping">Saltant</string>
@@ -1760,10 +1758,6 @@ Language: ca
     <string name="profile_stats_total">TOTAL</string>
     <string name="profile_stats_time_saved_by">Temps estalviat per</string>
     <string name="profile_stats_listened_for">Has escoltat durant</string>
-    <string name="profile_sonos_title">Pocket Casts i Sonos</string>
-    <string name="profile_sonos_description">En connectar-te a Sonos, permetràs que l\'aplicació accedeixi a la informació de l\'episodi. Mai no es compartirà la teva adreça de correu electrònic, contrasenya ni cap altra informació confidencial.</string>
-    <string name="profile_sonos_connecting">Connectant…</string>
-    <string name="profile_sonos_connect_account">En connectar-te a Sonos, permetràs que l\'aplicació accedeixi a la informació de l\'episodi.\nMai no es compartirà la teva adreça de correu electrònic, contrasenya ni cap altra informació confidencial.</string>
     <string name="profile_promo_upgraded_welcome">Quan s\'acabi la prova, podràs continuar gaudint de tots els avantatges del teu compte de sempre. Gaudeix dels pòdcasts!</string>
     <string name="profile_promo_upgraded">El teu compte s\'ha actualitzat</string>
     <string name="profile_promo_sign_up_for_plus">Registra\'t a Pocket Casts Plus</string>
@@ -1799,7 +1793,6 @@ Language: ca
     <string name="profile_subscribed_current_total">%1$d/%2$d SUBSCRIT</string>
     <string name="profile_sub_thankyou_for_support">Gràcies pel teu suport com a subscriptor de pagament. El teu compte torna a tenir la versió gratuïta.</string>
     <string name="profile_sub_cancel_web_link">https://play.pocketcasts.com</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Connectat com a</string>
     <string name="profile_sign_out_confirm">Estàs segur que vols tancar la sessió i aturar la sincronització?</string>
     <string name="profile_reset_password_check_email">Comprova el teu correu electrònic</string>
@@ -1856,9 +1849,6 @@ Language: ca
     <string name="profile_create_subscription_failed">No s\'ha pogut crear la subscripció. Torna-ho a provar</string>
     <string name="profile_create_failed">No s\'ha pogut crear el compte. Torna-ho a provar</string>
     <string name="profile_stats_share_to">Comparteix amb…</string>
-    <string name="profile_sonos_setup_account">Configura el compte</string>
-    <string name="profile_sonos_connect_to">Connecta amb Sonos</string>
-    <string name="profile_sonos_connect">Connecta</string>
     <string name="profile_sign_in_or_create_account">Inicia sessió o crea un compte</string>
     <string name="profile_share_stats">Comparteix les estadístiques</string>
     <string name="profile_set_up_account">Configura el compte</string>
@@ -1905,7 +1895,6 @@ Language: ca
     <string name="profile_clean_up">Buida</string>
     <string name="filters_choose_podcasts">Tria pòdcasts</string>
     <string name="profile_cloud_files_added_uploaded">Els arxius afegits a aquests dispositius es pujaran automàticament al núvol.</string>
-    <string name="profile_sonos_linking_failed">S\'ha produït un error a la vinculació</string>
     <string name="podcasts">Pòdcasts</string>
     <string name="download_warning_title">Descarrega-ho tot</string>
     <string name="episode_row_download_failed">Error a la descàrrega</string>

@@ -53,8 +53,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.model.AutoPlaySource
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.images.PocketCastsImageRequestFactory
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeRowDataProvider
-import au.com.shiftyjelly.pocketcasts.repositories.sync.StarredSyncWorker
-import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.settings.AutoDownloadSettingsFragment
 import au.com.shiftyjelly.pocketcasts.settings.ManualCleanupFragment
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
@@ -167,9 +165,6 @@ class ProfileEpisodeListFragment :
     @Inject
     lateinit var rowDataProvider: EpisodeRowDataProvider
 
-    @Inject
-    lateinit var syncManager: SyncManager
-
     private val viewModel: ProfileEpisodeListViewModel by viewModels()
     private val cleanUpViewModel: ManualCleanupViewModel by viewModels()
     private val swipeActionViewModel by viewModels<SwipeActionViewModel>(
@@ -280,10 +275,6 @@ class ProfileEpisodeListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.setup(mode)
-
-        if (savedInstanceState == null) {
-            startStarredSyncWorker()
-        }
 
         updateToolbar()
 
@@ -483,15 +474,6 @@ class ProfileEpisodeListFragment :
                     binding?.recyclerView?.updatePadding(bottom = it)
                 }
             }
-        }
-    }
-
-    private fun startStarredSyncWorker() {
-        if (mode is Mode.Starred) {
-            StarredSyncWorker.enqueue(
-                syncManager = syncManager,
-                context = requireContext(),
-            )
         }
     }
 

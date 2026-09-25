@@ -1302,7 +1302,6 @@ Language: el_GR
     <string name="profile_sub_cancel_hint0">Η τρέχουσα συνδρομή σου θα μείνει ενεργή μέχρι</string>
     <string name="profile_promo_upgraded">Ο λογαριασμός σου έχει αναβαθμιστεί</string>
     <string name="profile_stats_listened_for">Άκουσες για</string>
-    <string name="profile_sonos_need_account">Πρέπει να έχεις λογαριασμό στο Pocket Casts για να μπορείς να συνδεθείς με τη Sonos.</string>
     <string name="profile_alreadysignedindescription">Μπορείς να συνδεθείς μόνο σε έναν λογαριασμό κάθε φορά.</string>
     <string name="profile_alreadysignedin">Έχεις ήδη συνδεθεί</string>
     <string name="profile_account_delete_yes">Ναι, διέγραψέ το</string>
@@ -1324,7 +1323,6 @@ Language: el_GR
     <string name="profile_sign_in_or_create_account">Συνδέσου ή δημιούργησε λογαριασμό</string>
     <string name="filters_duration_shorter_than">Μικρότερο από</string>
     <string name="profile_share_stats">Μοιράσου στατιστικά</string>
-    <string name="profile_sonos_setup_account">Ρύθμιση Λογαριασμού</string>
     <string name="profile_set_up_account">Δημιουργία λογαριασμού</string>
     <string name="filters_create_select_criteria">Επίλεξε τα κριτήρια φίλτρου σου χρησιμοποιώντας αυτά τα κουμπιά για να δημιουργήσεις μια ενημερωμένη έξυπνη λίστα αναπαραγωγής επεισοδίων.</string>
     <string name="profile_select_account_type">Επιλογή Τύπου Λογαριασμού</string>
@@ -1335,7 +1333,6 @@ Language: el_GR
     <string name="profile_payment_failed">Αποτυχία Πληρωμής</string>
     <string name="profile_payment_cancelled">Η Πληρωμή Ακυρώθηκε</string>
     <string name="profile_pocket_casts_newsletter">Pocket Casts newsletter</string>
-    <string name="profile_sonos_title">Pocket Casts Και Sonos</string>
     <string name="profile_cloud_plus_features">Χαρακτηριστικά Plus</string>
     <string name="profile_plus_expires_in">Το Plus λήγει %s</string>
     <string name="profile_plus_expired">Το Plus έληξε</string>
@@ -1391,13 +1388,6 @@ Language: el_GR
     <string name="profile_stats_trim_silence">Περικοπή Σιωπής</string>
     <string name="profile_stats_auto_skipping">Αυτόματη Παράλειψη</string>
     <string name="profile_stat_days_listened">Ημέρες ακρόασης</string>
-    <string name="profile_sonos_linking_failed_summary">Δεν είναι δυνατή η σύνδεση του λογαριασμού Pocket Casts αυτή τη στιγμή. Παρακαλώ δοκιμάσε ξανά αργότερα.</string>
-    <string name="profile_sonos_linking_failed">Αποτυχία Σύνδεσης</string>
-    <string name="profile_sonos_description">Η σύνδεση με το Sonos θα επιτρέψει στην Εφαρμογή Sonos να έχει πρόσβαση στις πληροφορίες επεισοδίων σου. Η διεύθυνση email σου, το συνθηματικό σου και άλλα ευαίσθητα στοιχεία δεν κοινοποιούνται ποτέ.</string>
-    <string name="profile_sonos_connecting">Σύνδεση…</string>
-    <string name="profile_sonos_connect_to">Σύνδεση με Sonos</string>
-    <string name="profile_sonos_connect">Σύνδεση</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_sign_out_confirm">Σίγουρα θέλεις να αποσυνδεθείς από τον συγχρονισμό;</string>
     <string name="profile_save_your_podcasts">Αποθήκευσε τα podcast σου στο cloud και συγχρόνισε την πρόοδό σου με άλλες συσκευές</string>
     <string name="profile_reset_password_failed">Δεν είναι δυνατή η αποστολή νέου κωδικού πρόσβασης με email. Προσπάθησε ξανά αργότερα.</string>
@@ -1493,7 +1483,6 @@ Language: el_GR
     <string name="filters_choose_podcasts">Επίλεξε podcasts</string>
     <string name="filters_chip_media_type">Τύπος Πολυμέσων</string>
     <string name="filters_chip_download_status">Κατάσταση Λήψης</string>
-    <string name="profile_sonos_connect_account">Η σύνδεση με τη Sonos θα επιτρέψει στην εφαρμογή Sonos να αποκτήσει πρόσβαση στις πληροφορίες του επεισοδίου σου.\n\nΗ διεύθυνση email σας, ο κωδικός πρόσβασης και άλλα ευαίσθητα στοιχεία δεν κοινοποιούνται ποτέ.</string>
     <string name="profile_create_completed">Ολοκλήρωση Λογαριασμού</string>
     <string name="profile_create_subscription_failed">Δεν ήταν δυνατή η δημιουργία συνδρομής. Προσπάθησε ξανά</string>
     <string name="profile_create_newsletter_summary">Λάβε ειδήσεις, ενημερώσεις εφαρμογών, θεματικές λίστες podcast, συνεντεύξεις και πολλά άλλα.</string>

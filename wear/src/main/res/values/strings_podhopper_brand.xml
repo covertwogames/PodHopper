@@ -74,9 +74,6 @@
     <string name="profile_promo_create_pocket_casts_account">Create a PodHopper Account</string>
     <string name="profile_promo_sign_in_or_create_summary">A PodHopper account is required for PodHopper Plus. This ensures seamless listening across all your devices.\n\nCreate an account or sign in to redeem your access to PodHopper Plus.</string>
     <string name="profile_promo_sign_up_for_plus">Sign up for PodHopper Plus</string>
-    <string name="profile_sonos_linking_failed_summary">Unable to link PodHopper account at this time. Please try again later.</string>
-    <string name="profile_sonos_need_account">You need to have a PodHopper account before you can connect with Sonos.</string>
-    <string name="profile_sonos_title">PodHopper And Sonos</string>
     <string name="profile_sub_cancel_hint1">Access to PodHopper Plus features will be locked</string>
     <string name="profile_sub_cancel_hint2">All files uploaded to your PodHopper account will be deleted</string>
     <string name="profile_sub_from_android">It looks like you subscribed to PodHopper Plus from an Android device</string>

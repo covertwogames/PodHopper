@@ -101,7 +101,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.ShowUpNextModalDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowUpNextTabDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SignInDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SmartFoldersDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.SonosDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ThemesDeepLink
 import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity
 import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity.StoriesSource
@@ -138,7 +137,6 @@ import au.com.shiftyjelly.pocketcasts.profile.SubCancelledFragment
 import au.com.shiftyjelly.pocketcasts.profile.TrialFinishedFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFileBottomSheetFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFilesFragment
-import au.com.shiftyjelly.pocketcasts.profile.sonos.SonosAppLinkActivity
 import au.com.shiftyjelly.pocketcasts.referrals.ReferralsGuestPassFragment
 import au.com.shiftyjelly.pocketcasts.repositories.appreview.AppReviewManager
 import au.com.shiftyjelly.pocketcasts.repositories.di.NotificationPermissionChecker
@@ -1665,13 +1663,6 @@ class MainActivity :
                     openPodcastUrl(deepLink.url)
                 }
 
-                is SonosDeepLink -> {
-                    startActivityForResult(
-                        SonosAppLinkActivity.buildIntent(deepLink.state, this),
-                        SonosAppLinkActivity.SONOS_APP_ACTIVITY_RESULT,
-                    )
-                }
-
                 is ShareListDeepLink -> {
                     addFragment(ShareListIncomingFragment.newInstance(deepLink.path, SourceView.fromString(deepLink.sourceView)))
                 }
@@ -1853,16 +1844,6 @@ class MainActivity :
             getString(LR.string.podcast_share_open_fail),
             null,
         )
-    }
-
-    @Suppress("DEPRECATION")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == SonosAppLinkActivity.SONOS_APP_ACTIVITY_RESULT) {
-            setResult(Activity.RESULT_OK, data)
-            finish()
-        }
     }
 
     private fun trackTabOpened(tab: Int, isInitial: Boolean = false) {

@@ -19,13 +19,11 @@ import au.com.shiftyjelly.pocketcasts.servers.analytics.AnalyticsLiveService
 import au.com.shiftyjelly.pocketcasts.servers.analytics.EventProperties
 import au.com.shiftyjelly.pocketcasts.servers.analytics.EventPropertiesJsonAdapter
 import au.com.shiftyjelly.pocketcasts.servers.bumpstats.WpComService
-import au.com.shiftyjelly.pocketcasts.servers.cdn.StaticService
 import au.com.shiftyjelly.pocketcasts.servers.list.ListDownloadService
 import au.com.shiftyjelly.pocketcasts.servers.list.ListUploadService
 import au.com.shiftyjelly.pocketcasts.servers.model.DisplayStyleMoshiAdapter
 import au.com.shiftyjelly.pocketcasts.servers.model.ExpandedStyleMoshiAdapter
 import au.com.shiftyjelly.pocketcasts.servers.model.ListTypeMoshiAdapter
-import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheService
 import au.com.shiftyjelly.pocketcasts.servers.podcast.TranscriptService
 import au.com.shiftyjelly.pocketcasts.servers.refresh.RefreshService
 import au.com.shiftyjelly.pocketcasts.servers.search.AutoCompleteResult
@@ -272,32 +270,6 @@ class NetworkModule {
     }
 
     @Provides
-    @PodcastCacheServiceRetrofit
-    @Singleton
-    fun providePodcastRetrofit(
-        builder: Retrofit.Builder,
-        @Cached httpClient: Lazy<OkHttpClient>,
-    ): Retrofit {
-        return builder
-            .baseUrl(Settings.SERVER_CACHE_URL)
-            .callFactory { request -> httpClient.get().newCall(request) }
-            .build()
-    }
-
-    @Provides
-    @StaticServiceRetrofit
-    @Singleton
-    fun provideStaticRetrofit(
-        builder: Retrofit.Builder,
-        @Cached httpClient: Lazy<OkHttpClient>,
-    ): Retrofit {
-        return builder
-            .baseUrl(Settings.SERVER_STATIC_URL)
-            .callFactory { request -> httpClient.get().newCall(request) }
-            .build()
-    }
-
-    @Provides
     @ListDownloadServiceRetrofit
     @Singleton
     fun provideListDownloadRetrofit(
@@ -368,15 +340,7 @@ class NetworkModule {
 
     @Provides
     @Singleton
-    fun provideCacheService(@PodcastCacheServiceRetrofit retrofit: Retrofit): PodcastCacheService = retrofit.create()
-
-    @Provides
-    @Singleton
     fun provideTranscriptCacheService(@TranscriptRetrofit retrofit: Retrofit): TranscriptService = retrofit.create()
-
-    @Provides
-    @Singleton
-    fun provideStaticService(@StaticServiceRetrofit retrofit: Retrofit): StaticService = retrofit.create()
 
     @Provides
     @Singleton
@@ -467,14 +431,6 @@ annotation class WpComServiceRetrofit
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class RefreshServiceRetrofit
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class PodcastCacheServiceRetrofit
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class StaticServiceRetrofit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)

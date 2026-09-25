@@ -51,7 +51,6 @@ class EpisodeManagerImplTest {
             settings = mock(),
             downloadQueue = mock(),
             context = context,
-            podcastCacheServiceManager = mock(),
             userEpisodeManager = mock(),
             ioDispatcher = coroutineRule.testDispatcher,
             eventHorizon = EventHorizon(TestEventSink()),

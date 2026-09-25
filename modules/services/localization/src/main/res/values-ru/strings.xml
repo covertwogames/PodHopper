@@ -1729,11 +1729,6 @@ Language: ru
     <string name="profile_forgot_your_password">Я не помню свой пароль</string>
     <string name="profile_email_address">Адрес электронной почты</string>
     <string name="profile_password">Пароль</string>
-    <string name="profile_sonos_connect_to">Подключиться к Sonos</string>
-    <string name="profile_sonos_linking_failed_summary">В данный момент не удается привязать учетную запись Pocket Casts. Повторите попытку позже.</string>
-    <string name="profile_sonos_linking_failed">Не удалось привязать</string>
-    <string name="profile_sonos_connect_account">При подключении к Sonos приложение Sonos получит доступ к информации о вашем выпуске.\n\nВаш адрес электронной почты, пароль и другие конфиденциальные данные никогда не разглашаются.</string>
-    <string name="profile_sonos_need_account">Для подключения к Sonos нужна учетная запись Pocket Casts.</string>
     <string name="profile_stats_auto_skipping">Автоматический пропуск</string>
     <string name="profile_stats_skipping">Пропуск</string>
     <string name="profile_stats_variable_speed">Переменная скорость</string>
@@ -1768,12 +1763,6 @@ Language: ru
     <string name="profile_stats_time_saved_by">Сэкономленное время</string>
     <string name="profile_stats_since_listened_for">С %s вы слушали в течение</string>
     <string name="profile_stat_days_listened">дней прослушано</string>
-    <string name="profile_sonos_title">Pocket Casts и Sonos</string>
-    <string name="profile_sonos_setup_account">Настройка учётной записи</string>
-    <string name="profile_sonos_description">При подключении к Sonos приложение Sonos получит доступ к информации о вашем выпуске.  Ваш адрес электронной почты, пароль и другие конфиденциальные данные никогда не разглашаются.</string>
-    <string name="profile_sonos_connecting">Подключение…</string>
-    <string name="profile_sonos_connect">Подключиться</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Выполнен вход как</string>
     <string name="profile_sign_out_confirm">Вы действительно хотите отказаться от синхронизации?</string>
     <string name="profile_share_stats">Поделиться статистикой</string>

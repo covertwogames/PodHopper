@@ -25,7 +25,6 @@ import au.com.shiftyjelly.pocketcasts.servers.sync.UpNextSyncResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.UserChangeResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.history.HistoryYearResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.login.DeviceAuthorizeResponse
-import au.com.shiftyjelly.pocketcasts.servers.sync.login.ExchangeSonosResponse
 import au.com.shiftyjelly.pocketcasts.utils.Optional
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.pocketcasts.service.api.BookmarksResponse
@@ -121,7 +120,6 @@ interface SyncManager : NamedSettingsCaller {
     suspend fun getPodcastRatings(): PodcastRatingsResponse?
 
     // Other
-    suspend fun exchangeSonos(): ExchangeSonosResponse
     suspend fun getFilters(): List<PlaylistEntity>
     suspend fun loadStats(): StatsBundle
     suspend fun upNextSync(request: UpNextSyncRequest): UpNextSyncResponse

@@ -1715,17 +1715,6 @@ Language: ar
     <string name="profile_stats_listened_for">الذي استمعت إليه</string>
     <string name="profile_stats_auto_skipping">التخطي التلقائي</string>
     <string name="profile_stat_days_listened">الأيام التي تم الاستماع فيها</string>
-    <string name="profile_sonos_title">Pocket Casts وSonos</string>
-    <string name="profile_sonos_setup_account">إعداد حساب</string>
-    <string name="profile_sonos_need_account">يتعيَّن أن يكون لديك حساب على Pocket Casts قبل أن تتمكن من الربط بـ Sonos.</string>
-    <string name="profile_sonos_linking_failed_summary">يتعذر ربط حساب Pocket Casts في هذا الوقت. يرجى المحاولة لاحقًا.</string>
-    <string name="profile_sonos_linking_failed">فشل الربط</string>
-    <string name="profile_sonos_description">سيسمح الربط بـ Sonos لتطبيق Sonos بالوصول إلى معلومات حلقتك.  لم تتم مشاركة عنوان بريدك الإلكتروني وكلمة مرورك وغيرها من العناصر الحساسة إطلاقًا.</string>
-    <string name="profile_sonos_connecting">جارِ الاتصال…</string>
-    <string name="profile_sonos_connect_to">الربط بـ Sonos</string>
-    <string name="profile_sonos_connect_account">سيسمح الربط بـ Sonos لتطبيق Sonos بالوصول إلى معلومات حلقتك.\n\nلم تتم مشاركة عنوان بريدك الإلكتروني وكلمة مرورك وغيرها من العناصر الحساسة إطلاقًا.</string>
-    <string name="profile_sonos_connect">الاتصال</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">تم تسجيل الدخول كـ</string>
     <string name="profile_sign_out_confirm">هل أنت متأكد من رغبتك في تسجيل الخروج من المزامنة؟</string>
     <string name="profile_sign_in_or_create_account">تسجيل الدخول أو إنشاء حساب</string>

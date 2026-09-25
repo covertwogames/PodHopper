@@ -1722,11 +1722,6 @@ Language: de
     <string name="profile_forgot_your_password">Ich habe mein Passwort vergessen</string>
     <string name="profile_email_address">E-Mail-Adresse</string>
     <string name="profile_password">Passwort</string>
-    <string name="profile_sonos_connect_to">Mit Sonos verbinden</string>
-    <string name="profile_sonos_linking_failed_summary">Das Pocket Casts-Konto kann zurzeit nicht verknüpft werden. Bitte versuche es später erneut.</string>
-    <string name="profile_sonos_linking_failed">Verknüpfung fehlgeschlagen</string>
-    <string name="profile_sonos_connect_account">Durch die Verbindung mit Sonos kann die Sonos-App auf Informationen zu deinen Folgen zugreifen.\n\nDeine E-Mail-Adresse, dein Passwort und andere sensible Daten werden nicht geteilt.</string>
-    <string name="profile_sonos_need_account">Zur Verbindung mit Sonos benötigst du ein Pocket Casts-Konto.</string>
     <string name="profile_stats_variable_speed">Variable Geschwindigkeit</string>
     <string name="profile_terms_of_use_title">Nutzungsbedingungen</string>
     <string name="profile_payment_try_again">Erneut versuchen</string>
@@ -1758,12 +1753,6 @@ Language: de
     <string name="profile_status_error_internet">🤔\n\nStatistiken konnten nicht geladen werden,\nüberprüfe deine Internetverbindung.</string>
     <string name="profile_stats_total">GESAMT</string>
     <string name="profile_stat_days_listened">Tage angehört</string>
-    <string name="profile_sonos_title">Pocket Casts und Sonos</string>
-    <string name="profile_sonos_setup_account">Konto einrichten</string>
-    <string name="profile_sonos_description">Durch die Verbindung mit Sonos kann die Sonos-App auf Informationen zu deinen Folgen zugreifen.  Deine E-Mail-Adresse, dein Passwort und andere sensible Daten werden nicht geteilt.</string>
-    <string name="profile_sonos_connecting">Wird verbunden …</string>
-    <string name="profile_sonos_connect">Verbinden</string>
-    <string name="profile_sonos">Sonos</string>
     <string name="profile_signed_in_as">Angemeldet als</string>
     <string name="profile_sign_out_confirm">Bist du sicher, dass du dich von der Synchronisierung abmelden möchtest?</string>
     <string name="profile_share_stats">Teilen-Statistiken</string>

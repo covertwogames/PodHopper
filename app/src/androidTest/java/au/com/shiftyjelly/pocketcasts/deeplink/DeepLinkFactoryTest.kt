@@ -345,28 +345,6 @@ class DeepLinkFactoryTest {
     }
 
     @Test
-    fun sonos() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://applink?state=hello_world"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(SonosDeepLink("hello_world"), deepLink)
-    }
-
-    @Test
-    fun sonosWithoutState() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://applink"))
-
-        val deepLink = factory.create(intent)
-
-        assertNull(deepLink)
-    }
-
-    @Test
     fun shareListHttp() {
         val intent = Intent()
             .setAction(ACTION_VIEW)

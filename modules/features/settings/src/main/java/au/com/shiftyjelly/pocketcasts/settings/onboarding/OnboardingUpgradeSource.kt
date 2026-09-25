@@ -86,9 +86,6 @@ enum class OnboardingUpgradeSource(
     DEEP_LINK(
         analyticsValue = OnboardingSourceType.DeepLink,
     ),
-    EPISODE_CHAT(
-        analyticsValue = OnboardingSourceType.EpisodeChat,
-    ),
     AI_SUMMARIES(
         analyticsValue = OnboardingSourceType.Unknown,
     ),
