@@ -24,7 +24,6 @@ interface FragmentHostListener {
     fun openCloudFiles()
     fun snackBarView(): View
     fun setFullScreenDarkOverlayViewVisibility(visible: Boolean)
-    fun showAccountUpgradeNow(autoSelectPlus: Boolean)
     fun updateStatusBar()
     fun getPlayerBottomSheetState(): Int
     fun addPlayerBottomSheetCallback(callback: BottomSheetBehavior.BottomSheetCallback)

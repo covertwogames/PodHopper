@@ -28,9 +28,6 @@
                 <data android:mimeType="video/*" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="au.com.shiftyjelly.pocketcasts.account.AccountActivity"
-            android:windowSoftInputMode="adjustResize" />
         <!--
             PodHopper: the Android account authenticator was removed. Sign-in moved to PodHopper's
             own backend and no account is ever created through AccountManager, but registering the

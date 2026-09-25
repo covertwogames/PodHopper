@@ -127,9 +127,6 @@ class AutomotiveSettingsActivity :
     override fun setFullScreenDarkOverlayViewVisibility(visible: Boolean) {
     }
 
-    override fun showAccountUpgradeNow(autoSelectPlus: Boolean) {
-    }
-
     override fun updateStatusBar() {
     }
 

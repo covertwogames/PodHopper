@@ -58,7 +58,6 @@ import androidx.mediarouter.media.MediaRouteSelector
 import androidx.mediarouter.media.MediaRouter
 import androidx.transition.Slide
 import au.com.shiftyjelly.pocketcasts.R
-import au.com.shiftyjelly.pocketcasts.account.AccountActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.AccountBenefitsFragment
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
@@ -133,8 +132,6 @@ import au.com.shiftyjelly.pocketcasts.podcasts.view.podcasts.PodcastsFragment
 import au.com.shiftyjelly.pocketcasts.podcasts.view.share.ShareListIncomingFragment
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.profile.ProfileFragment
-import au.com.shiftyjelly.pocketcasts.profile.SubCancelledFragment
-import au.com.shiftyjelly.pocketcasts.profile.TrialFinishedFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFileBottomSheetFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFilesFragment
 import au.com.shiftyjelly.pocketcasts.referrals.ReferralsGuestPassFragment
@@ -174,7 +171,6 @@ import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
 import au.com.shiftyjelly.pocketcasts.utils.Network
 import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
-import au.com.shiftyjelly.pocketcasts.utils.observeOnce
 import au.com.shiftyjelly.pocketcasts.view.LockableBottomSheetBehavior
 import au.com.shiftyjelly.pocketcasts.views.extensions.showAllowingStateLoss
 import au.com.shiftyjelly.pocketcasts.views.extensions.spring
@@ -1122,20 +1118,8 @@ class MainActivity :
                 }
             }
 
-            if (subscription != null) {
-                if (viewModel.shouldShowCancelled(subscription)) {
-                    val cancelledFragment = SubCancelledFragment.newInstance()
-                    showBottomSheet(cancelledFragment)
-                }
-            } else {
+            if (subscription == null) {
                 applicationScope.launch { userEpisodeManager.removeCloudStatusFromFiles(playbackManager) }
-            }
-
-            if (viewModel.shouldShowTrialFinished(signinState)) {
-                val trialFinished = TrialFinishedFragment()
-                showBottomSheet(trialFinished)
-
-                settings.setTrialFinishedSeen(true)
             }
         }
 
@@ -1522,27 +1506,6 @@ class MainActivity :
     override fun onSearchFolderClick(folderUuid: String) {
         val fragment = PodcastsFragment.newInstance(folderUuid)
         addFragment(fragment)
-    }
-
-    override fun showAccountUpgradeNow(autoSelectPlus: Boolean) {
-        showAccountUpgradeNowDialog(autoSelectPlus = autoSelectPlus)
-    }
-
-    private fun showAccountUpgradeNowDialog(autoSelectPlus: Boolean = false) {
-        val observer: Observer<SignInState> = Observer { value ->
-            val intent = if (value.isSignedInAsFree) {
-                AccountActivity.newUpgradeInstance(this)
-            } else if (autoSelectPlus) {
-                AccountActivity.newAutoSelectPlusInstance(
-                    this,
-                )
-            } else {
-                Intent(this, AccountActivity::class.java)
-            }
-            startActivity(intent)
-        }
-
-        viewModel.signInState.observeOnce(this, observer)
     }
 
     override fun onNewIntent(intent: Intent) {

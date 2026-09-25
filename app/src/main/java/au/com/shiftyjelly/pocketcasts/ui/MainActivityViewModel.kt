@@ -9,7 +9,6 @@ import au.com.shiftyjelly.pocketcasts.compose.PodcastColors
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.SignInState
-import au.com.shiftyjelly.pocketcasts.models.type.Subscription
 import au.com.shiftyjelly.pocketcasts.player.view.bookmark.BookmarkArguments
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.bookmark.BookmarkManager
@@ -27,7 +26,6 @@ import com.automattic.eventhorizon.BookmarkDeletedEvent
 import com.automattic.eventhorizon.EventHorizon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.BackpressureStrategy
-import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -123,19 +121,6 @@ class MainActivityViewModel
     val signInState: LiveData<SignInState> = userManager.getSignInState().toLiveData()
     val isSignedIn: Boolean
         get() = signInState.value?.isSignedIn ?: false
-
-    fun shouldShowCancelled(subscription: Subscription): Boolean {
-        val renewing = subscription.isAutoRenewing
-        val cancelAcknowledged = settings.getCancelledAcknowledged()
-        val giftDays = subscription.giftDays
-        val expired = subscription.expiryDate.isBefore(Instant.now())
-
-        return !renewing && !cancelAcknowledged && giftDays == 0 && expired
-    }
-
-    fun shouldShowTrialFinished(signInState: SignInState): Boolean {
-        return signInState.isExpiredTrial && !settings.getTrialFinishedSeen()
-    }
 
     suspend fun isEndOfYearStoriesEligible() = endOfYearManager.isEligibleForEndOfYear()
 
