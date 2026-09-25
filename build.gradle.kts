@@ -372,20 +372,28 @@ subprojects {
 
     plugins.withType<AppPlugin>().configureEach {
         configure<ApplicationExtension> {
-            // PodHopper: the automotive app ships on its own Play track and must always sit +50000
-            // above the phone version so the two never collide on upload, no matter how it is built
-            // (Android Studio signing wizard included). We read the base straight from
+            // PodHopper: the automotive, wear and tv apps each ship on their own Play track and must
+            // always sit above the phone version so they never collide on upload, no matter how they
+            // are built (Android Studio signing wizard included). We read the base straight from
             // version.properties so this does not depend on any -P build flag. Just bump versionCode
-            // in version.properties as normal; the automotive bundle becomes that number + 50000 with
-            // an "a" suffix automatically.
-            if (project.name == "automotive") {
+            // in version.properties as normal; each bundle becomes that number plus its offset, with
+            // its own version name suffix, automatically. The offsets match the ones in
+            // dependencies.gradle.kts.
+            val versionOffset = when (project.name) {
+                "automotive" -> 50000 to "a"
+                "wear" -> 100000 to "w"
+                "tv" -> 150000 to "t"
+                else -> null
+            }
+            if (versionOffset != null) {
+                val (offset, suffix) = versionOffset
                 val baseProps = java.util.Properties().apply {
                     rootProject.file("version.properties").inputStream().use { load(it) }
                 }
                 val baseCode = baseProps.getProperty("versionCode").toInt()
                 val baseName = baseProps.getProperty("versionName")
-                defaultConfig.versionCode = baseCode + 50000
-                defaultConfig.versionName = "${baseName}a"
+                defaultConfig.versionCode = baseCode + offset
+                defaultConfig.versionName = "$baseName$suffix"
             } else {
                 defaultConfig.versionCode = project.property("versionCode") as Int
                 defaultConfig.versionName = project.property("versionName") as String
