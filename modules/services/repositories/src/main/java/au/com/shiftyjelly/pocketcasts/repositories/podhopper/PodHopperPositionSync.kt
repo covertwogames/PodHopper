@@ -134,6 +134,52 @@ class PodHopperPositionSync @Inject constructor(
             .launchIn(applicationScope)
     }
 
+    // PodHopper: while playback started from a position this device could not check against the
+    // server, its writes for that episode are held back until the check has an answer. Without
+    // this, the first write after the network returns replaces another device's newer row before
+    // this device has looked at it: on 29 Sep 2026 the car resumed offline at 29:16, came online
+    // ten seconds later, and its first write overwrote the phone's 63:45 two milliseconds before
+    // its own check read the row, so the check found nothing to correct to. The hold is released
+    // by the check answering, by any seek, or by its deadline, whichever comes first. Completions
+    // are never held: finishing an episode always wins.
+    private data class PushHold(
+        val episodeUuid: String,
+        val untilMs: Long,
+    )
+
+    @Volatile private var pushHold: PushHold? = null
+
+    fun holdPositionPushes(
+        episodeUuid: String,
+        untilMs: Long,
+    ) {
+        pushHold = PushHold(episodeUuid, untilMs)
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper holding position pushes for $episodeUuid until its synced position is checked")
+    }
+
+    fun releasePositionPushHold(episodeUuid: String) {
+        val hold = pushHold ?: return
+        if (hold.episodeUuid == episodeUuid) {
+            pushHold = null
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position pushes for $episodeUuid resumed")
+        }
+    }
+
+    private fun isPositionPushHeld(
+        episodeUuid: String,
+        now: Long,
+    ): Boolean {
+        val hold = pushHold ?: return false
+        if (hold.episodeUuid != episodeUuid) {
+            return false
+        }
+        if (now >= hold.untilMs) {
+            pushHold = null
+            return false
+        }
+        return true
+    }
+
     /**
      * Push a single episode position to Supabase. Throttled to one push every
      * [MIN_PUSH_INTERVAL_MS] unless [immediate] is true (pause and shutdown). The completed column
@@ -152,6 +198,9 @@ class PodHopperPositionSync @Inject constructor(
         // device's episode is only adopted when it is genuinely newer than this device's own last
         // activity. Stamped before the throttle so periodic samples keep it fresh while playing.
         stampLocalActivity(now)
+        if (isPositionPushHeld(episode.uuid, now)) {
+            return
+        }
         if (!immediate && now - lastPushAttemptMs < MIN_PUSH_INTERVAL_MS) {
             return
         }
@@ -775,9 +824,10 @@ class PodHopperPositionSync @Inject constructor(
      * retried in the background. Three outcomes: [RemoteEpisodeState.InProgress] carries the
      * other device's position (NOT applied here) so the player can offer a "jump to synced
      * position" action; [RemoteEpisodeState.Completed] means the episode was finished elsewhere,
-     * and the player treats that as the completion it is (mark played, advance); null means
-     * signed out, offline, timed out, or no other-device row exists, in which case playback just
-     * continues locally.
+     * and the player treats that as the completion it is (mark played, advance);
+     * [RemoteEpisodeState.NoOtherDevice] means the server answered and no other device has a row
+     * for this episode, so the local position stands. Null means the question could not be
+     * answered (signed out, offline, timed out), so the caller may ask again.
      */
     suspend fun fetchRemoteEpisodeState(episode: BaseEpisode): RemoteEpisodeState? {
         if (!supabaseClient.isLoggedIn()) {
@@ -794,7 +844,7 @@ class PodHopperPositionSync @Inject constructor(
                         "&limit=1"
                     val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
                     if (rows.length() == 0) {
-                        null
+                        RemoteEpisodeState.NoOtherDevice
                     } else {
                         val row = rows.getJSONObject(0)
                         val positionSec = row.optInt("position_sec", -1)
@@ -817,7 +867,10 @@ class PodHopperPositionSync @Inject constructor(
 
     sealed interface RemoteEpisodeState {
         data class InProgress(val positionMs: Long) : RemoteEpisodeState
+
         data object Completed : RemoteEpisodeState
+
+        data object NoOtherDevice : RemoteEpisodeState
     }
 
     /**
