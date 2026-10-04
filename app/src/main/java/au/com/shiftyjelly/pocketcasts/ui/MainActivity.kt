@@ -1575,7 +1575,10 @@ class MainActivity :
                 }
 
                 is CreateAccountDeepLink -> {
-                    openOnboardingFlow(OnboardingFlow.LoggedOut)
+                    // PodHopper: the "create a free account" notification lands here. Open PodHopper's
+                    // own sign up, the same screen as the Profile banner, rather than the Pocket Casts
+                    // onboarding, which closes itself immediately.
+                    startActivity(PodHopperOnboardingActivity.newInstance(this))
                 }
 
                 is ShowFiltersDeepLink -> {

@@ -15,7 +15,7 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.R
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationOpenReceiverActivity.Companion.toIntentRelayed
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.SuggestedFoldersManager
-import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.SupabaseClient
 import au.com.shiftyjelly.pocketcasts.utils.AppPlatform
 import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
@@ -23,7 +23,6 @@ import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import au.com.shiftyjelly.pocketcasts.images.R as IR
 
 @HiltWorker
@@ -34,7 +33,7 @@ class NotificationWorker @AssistedInject constructor(
     private val notificationHelper: NotificationHelper,
     private val notificationManager: NotificationManager,
     private val suggestedFoldersManager: SuggestedFoldersManager,
-    private val userManager: UserManager,
+    private val supabaseClient: SupabaseClient,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         if (Util.getAppPlatform(applicationContext) != AppPlatform.Phone) return Result.failure()
@@ -58,6 +57,12 @@ class NotificationWorker @AssistedInject constructor(
         if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED && (shouldSkipValidations || FeatureFlag.isEnabled(Feature.NOTIFICATIONS_REVAMP))) {
             NotificationManagerCompat.from(applicationContext).notify(type.notificationId, notification)
             notificationManager.updateNotificationSent(type)
+            // PodHopper: the "create a free account" nudge is sent once, ever. Marking it handled
+            // makes every later run skip it (hasUserInteractedWithFeature), including the ones
+            // scheduled again whenever Daily reminders is switched back on.
+            if (type is OnboardingNotificationType.Sync) {
+                notificationManager.updateUserFeatureInteraction(type)
+            }
         }
 
         return Result.success()
@@ -66,7 +71,9 @@ class NotificationWorker @AssistedInject constructor(
     private suspend fun shouldSchedule(type: NotificationType): Boolean {
         return when (type) {
             is OnboardingNotificationType.Sync -> {
-                userManager.getSignInState().awaitFirstOrNull()?.isSignedIn != true
+                // PodHopper: only for people not signed in to a PodHopper account. This used to
+                // check for a Pocket Casts sign in, which nobody has, so everyone got it.
+                !supabaseClient.isLoggedIn()
             }
 
             is NewFeaturesAndTipsNotificationType.SmartFolders -> {
