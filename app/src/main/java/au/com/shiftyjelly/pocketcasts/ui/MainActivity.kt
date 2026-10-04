@@ -48,7 +48,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -58,7 +57,6 @@ import androidx.mediarouter.media.MediaRouteSelector
 import androidx.mediarouter.media.MediaRouter
 import androidx.transition.Slide
 import au.com.shiftyjelly.pocketcasts.R
-import au.com.shiftyjelly.pocketcasts.account.onboarding.AccountBenefitsFragment
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract.OnboardingFinish
@@ -169,7 +167,6 @@ import au.com.shiftyjelly.pocketcasts.ui.helper.NavigationBarColor
 import au.com.shiftyjelly.pocketcasts.ui.helper.StatusBarIconColor
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
 import au.com.shiftyjelly.pocketcasts.utils.Network
-import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.view.LockableBottomSheetBehavior
 import au.com.shiftyjelly.pocketcasts.views.extensions.showAllowingStateLoss
@@ -461,14 +458,10 @@ class MainActivity :
         }
 
         // After restore from backup, consume the restore flag on fresh launch so it can't
-        // trigger later unexpectedly, and suppress the generic encouragement flag when this
-        // path launches the same account encouragement flow.
+        // trigger later unexpectedly. PodHopper: this used to open the Pocket Casts "create a free
+        // account" screen, which has no meaning here, so the flag is only cleared.
         if (savedInstanceState == null && needsLoginPromptAfterRestore) {
             settings.setNeedsLoginPromptAfterRestore(false)
-            if (!showOnboarding && !isLoggedIn) {
-                settings.showFreeAccountEncouragement.set(false, updateModifiedAt = true)
-                openOnboardingFlow(OnboardingFlow.AccountEncouragement)
-            }
         }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -646,7 +639,6 @@ class MainActivity :
 
         ThemeSettingObserver(this, theme, settings.themeReconfigurationEvents).observeThemeChanges()
 
-        encourageAccountCreation()
         setupAppReviewPrompt()
     }
 
@@ -656,29 +648,6 @@ class MainActivity :
         ) {
             binding.bottomNavigation.removeBadge(VR.id.navigation_profile)
             settings.setEndOfYearShowBadge2025(false)
-        }
-    }
-
-    private fun encourageAccountCreation() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val encourageAccountCreation = settings.showFreeAccountEncouragement.value
-                if (!encourageAccountCreation) {
-                    return@repeatOnLifecycle
-                }
-                settings.showFreeAccountEncouragement.set(false, updateModifiedAt = true)
-
-                val isSignedIn = viewModel.signInState.asFlow().first().isSignedIn
-                if (isSignedIn) {
-                    return@repeatOnLifecycle
-                }
-
-                if (Util.isTablet(this@MainActivity)) {
-                    AccountBenefitsFragment().show(supportFragmentManager, "account_benefits_fragment")
-                } else {
-                    openOnboardingFlow(OnboardingFlow.AccountEncouragement)
-                }
-            }
         }
     }
 

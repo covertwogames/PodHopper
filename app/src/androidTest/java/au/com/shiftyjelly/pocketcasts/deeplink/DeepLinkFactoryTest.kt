@@ -1049,14 +1049,15 @@ class DeepLinkFactoryTest {
     }
 
     @Test
-    fun smartFolders() {
+    fun smartFoldersLinkIsNotHandled() {
+        // PodHopper: this route led to the Pocket Casts Plus upsell and was removed.
         val intent = Intent()
             .setAction(ACTION_VIEW)
             .setData(Uri.parse("pktc://features/suggestedFolders"))
 
         val deepLink = factory.create(intent)
 
-        assertEquals(SmartFoldersDeepLink, deepLink)
+        assertNull(deepLink)
     }
 
     @Test

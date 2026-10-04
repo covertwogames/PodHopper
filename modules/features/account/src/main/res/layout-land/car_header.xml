@@ -28,5 +28,6 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@id/btnClose"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="?attr/logo_title_horizontal" />
+        android:scaleType="fitStart"
+        app:srcCompat="@drawable/podhopper_lockup_horizontal_ondark" />
 </androidx.constraintlayout.widget.ConstraintLayout>
