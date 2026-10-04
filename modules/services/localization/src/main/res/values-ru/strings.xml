@@ -1268,7 +1268,7 @@ Language: ru
     <string name="settings_about_work_with_us">Вакансии</string>
     <string name="settings_about_instagram">Instagram</string>
     <string name="settings_about_rate_us">Оцените нас</string>
-    <string name="settings_about_share_with_friends_message">Привет! Вот ссылка для загрузки приложения PodHopper. Мне оно нравится, рекомендую. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">Привет! Вот ссылка для загрузки приложения PodHopper. Мне оно нравится, рекомендую. \nhttps://podhopper.app</string>
     <string name="settings_about_share_with_friends">Поделитесь с друзьями</string>
     <string name="collapsed">Свернутый</string>
     <string name="expanded">Развернутый</string>

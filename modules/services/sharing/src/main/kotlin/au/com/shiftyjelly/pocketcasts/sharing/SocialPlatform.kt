@@ -39,7 +39,7 @@ enum class SocialPlatform(
         packageId = "com.tumblr",
     ),
     PocketCasts(
-        logoId = IR.drawable.ic_share_logo_pocket_casts,
+        logoId = IR.drawable.ic_share_logo_copy_link,
         nameId = LR.string.share_label_copy_link,
         packageId = null,
     ),

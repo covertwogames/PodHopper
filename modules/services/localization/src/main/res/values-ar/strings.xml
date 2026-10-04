@@ -1266,7 +1266,7 @@ Language: ar
     <string name="settings_about_work_with_us">العمل معنا</string>
     <string name="settings_about_instagram">إنستغرام</string>
     <string name="settings_about_rate_us">تقييمنا</string>
-    <string name="settings_about_share_with_friends_message">مرحبًا! فيما يأتي رابط لتنزيل تطبيق PodHopper. إنني استمتع به حقًا واعتقد أنك قد تستمتع به كذلك. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">مرحبًا! فيما يأتي رابط لتنزيل تطبيق PodHopper. إنني استمتع به حقًا واعتقد أنك قد تستمتع به كذلك. \nhttps://podhopper.app</string>
     <string name="settings_about_share_with_friends">المشاركة مع الأصدقاء</string>
     <string name="collapsed">تم الطي</string>
     <string name="expanded">تمت التوسعة</string>

@@ -1811,7 +1811,7 @@
     <string name="settings_forums_description">Please go to PodHopper\'s forums (%1$s) where our support team can help you.</string>
     <string name="settings_take_me_there">Take me there</string>
     <string name="settings_about_share_with_friends">Share with friends</string>
-    <string name="settings_about_share_with_friends_message">Hey! Here is a link to download the PodHopper app. I\'m really enjoying it and thought you might too. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">Hey! Here is a link to download the PodHopper app. I\'m really enjoying it and thought you might too. \nhttps://podhopper.app</string>
     <string name="settings_about_rate_us">Rate us</string>
     <string name="settings_about_instagram">Instagram</string>
     <string name="settings_about_x" translatable="false">X</string>

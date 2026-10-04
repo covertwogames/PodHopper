@@ -1271,7 +1271,7 @@ Language: pt_BR
     <string name="settings_about_share_with_friends">Compartilhe com seus amigos</string>
     <string name="collapsed">Recolhido</string>
     <string name="expanded">Expandido</string>
-    <string name="settings_about_share_with_friends_message">Oi! Este é um link para fazer download do aplicativo do PodHopper. Eu estou gostando muito de usá-lo e acho que talvez você goste também. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">Oi! Este é um link para fazer download do aplicativo do PodHopper. Eu estou gostando muito de usá-lo e acho que talvez você goste também. \nhttps://podhopper.app</string>
     <string name="off">Desativado</string>
     <string name="discover_popular_in">Populares em %s</string>
     <string name="discover_popular">Populares</string>

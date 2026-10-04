@@ -1270,7 +1270,7 @@ Language: es
     <string name="expanded">Ampliado</string>
     <string name="settings_about_website">Sitio web</string>
     <string name="settings_about_terms_of_serivce">Condiciones del servicio</string>
-    <string name="settings_about_share_with_friends_message">¡Hola! A continuación, encontrarás un enlace para descargar PodHopper. Esta aplicación me está gustando mucho y creo que a ti también te puede interesar. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">¡Hola! A continuación, encontrarás un enlace para descargar PodHopper. Esta aplicación me está gustando mucho y creo que a ti también te puede interesar. \nhttps://podhopper.app</string>
     <string name="settings_about_share_with_friends">Compártela con tus amigos</string>
     <string name="off">Off</string>
     <string name="discover_popular_in">Popular en %s</string>

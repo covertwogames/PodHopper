@@ -414,7 +414,7 @@ Language: en_GB
     <string name="settings_about_work_with_us">Work with us</string>
     <string name="settings_about_instagram">Instagram</string>
     <string name="settings_about_rate_us">Rate us</string>
-    <string name="settings_about_share_with_friends_message">Hi! Here\'s a link to download the PodHopper app. I\'m really enjoying it and thought you might too. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">Hi! Here\'s a link to download the PodHopper app. I\'m really enjoying it and thought you might too. \nhttps://podhopper.app</string>
     <string name="settings_about_share_with_friends">Share with friends</string>
     <string name="collapsed">Collapsed</string>
     <string name="expanded">Expanded</string>
