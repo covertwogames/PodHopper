@@ -142,25 +142,67 @@ class PodHopperPositionSync @Inject constructor(
     // its own check read the row, so the check found nothing to correct to. The hold is released
     // by the check answering, by any seek, or by its deadline, whichever comes first. Completions
     // are never held: finishing an episode always wins.
+    //
+    // Each hold carries its own token. The check that set a hold can only release that hold, so a
+    // check that has been replaced cannot end its replacement's hold. On 4 Oct 2026 the car sent two
+    // play commands 205ms apart; the second started a fresh check, and the first check's cleanup,
+    // running a moment after it was cancelled, released the new hold by episode alone. The car's
+    // pause then wrote its stale position over the phone's. Seeks still release whatever hold
+    // exists for the episode, because a seek is the listener choosing a position.
     private data class PushHold(
         val episodeUuid: String,
         val untilMs: Long,
+        val token: Long,
     )
 
-    @Volatile private var pushHold: PushHold? = null
+    private val pushHoldLock = Any()
+    private var pushHold: PushHold? = null
+    private var nextPushHoldToken = 0L
 
+    /** Hold this device's position writes for [episodeUuid] until [untilMs]. Returns the hold's token. */
     fun holdPositionPushes(
         episodeUuid: String,
         untilMs: Long,
-    ) {
-        pushHold = PushHold(episodeUuid, untilMs)
+    ): Long {
+        var token: Long
+        synchronized(pushHoldLock) {
+            nextPushHoldToken += 1
+            token = nextPushHoldToken
+            pushHold = PushHold(episodeUuid, untilMs, token)
+        }
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper holding position pushes for $episodeUuid until its synced position is checked")
+        return token
     }
 
+    /** End any hold on [episodeUuid]. For seeks: the listener's chosen position is theirs to publish. */
     fun releasePositionPushHold(episodeUuid: String) {
-        val hold = pushHold ?: return
-        if (hold.episodeUuid == episodeUuid) {
-            pushHold = null
+        var released = false
+        synchronized(pushHoldLock) {
+            val hold = pushHold
+            if (hold != null && hold.episodeUuid == episodeUuid) {
+                pushHold = null
+                released = true
+            }
+        }
+        if (released) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position pushes for $episodeUuid resumed")
+        }
+    }
+
+    /** End the hold only if it is still the one identified by [token]. For the check that set it. */
+    fun releasePositionPushHold(
+        episodeUuid: String,
+        token: Long,
+    ) {
+        var released = false
+        synchronized(pushHoldLock) {
+            val hold = pushHold
+            if (hold != null && hold.episodeUuid == episodeUuid && hold.token == token) {
+                pushHold = null
+                released = true
+            }
+        }
+        if (released) {
             LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper position pushes for $episodeUuid resumed")
         }
     }
@@ -169,15 +211,17 @@ class PodHopperPositionSync @Inject constructor(
         episodeUuid: String,
         now: Long,
     ): Boolean {
-        val hold = pushHold ?: return false
-        if (hold.episodeUuid != episodeUuid) {
-            return false
+        synchronized(pushHoldLock) {
+            val hold = pushHold
+            if (hold == null || hold.episodeUuid != episodeUuid) {
+                return false
+            }
+            if (now >= hold.untilMs) {
+                pushHold = null
+                return false
+            }
+            return true
         }
-        if (now >= hold.untilMs) {
-            pushHold = null
-            return false
-        }
-        return true
     }
 
     /**

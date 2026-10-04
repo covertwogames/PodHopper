@@ -1067,20 +1067,32 @@ open class PlaybackManager @Inject constructor(
         }
     }
 
-    private suspend fun seekToTimeMsInternal(duration: Duration) {
-        seekToTimeMsInternal(duration.inWholeMilliseconds.toInt())
+    private suspend fun seekToTimeMsInternal(
+        duration: Duration,
+        automatic: Boolean = false,
+    ) {
+        seekToTimeMsInternal(duration.inWholeMilliseconds.toInt(), automatic)
     }
 
-    private suspend fun seekToTimeMsInternal(positionMs: Int) {
+    /**
+     * [automatic] is true only for the player skipping a chapter the listener deselected. That is
+     * not the listener choosing a position, so it neither records a deliberate move nor ends a hold
+     * on this device's writes. Otherwise a stale position that happened to sit in a deselected
+     * chapter would switch off the late position check the moment playback reached it.
+     */
+    private suspend fun seekToTimeMsInternal(
+        positionMs: Int,
+        automatic: Boolean = false,
+    ) {
         LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PlaybackService seekToTimeMsInternal %.3f ", positionMs.toDouble() / 1000.0)
         val episode = getCurrentEpisode()
         if (episode != null) {
             episode.playedUpToMs = positionMs
             // PodHopper: every seek passes through here, so this is where "the position has been
-            // moved deliberately for this episode" is recorded. A deliberate position is this
-            // device's to publish, so any hold on its writes ends here too.
-            userSeekedEpisodeUuid = episode.uuid
-            podHopperPositionSync.releasePositionPushHold(episode.uuid)
+            // moved deliberately for this episode" is recorded.
+            if (!automatic) {
+                userSeekedEpisodeUuid = episode.uuid
+            }
         }
 
         if (player == null) {
@@ -1095,6 +1107,13 @@ open class PlaybackManager @Inject constructor(
             }
 
             player?.seekToTimeMs(positionMs)
+        }
+
+        // PodHopper: a deliberate position is this device's to publish, so any hold on its writes
+        // ends here. Released only now, once the new position is in the playback state and the
+        // database, so the next write carries it rather than the position from before the seek.
+        if (episode != null && !automatic) {
+            podHopperPositionSync.releasePositionPushHold(episode.uuid)
         }
 
         withContext(Dispatchers.Main) {
@@ -1179,12 +1198,13 @@ open class PlaybackManager @Inject constructor(
         }
     }
 
-    fun skipToNextSelectedOrLastChapter() {
+    /** [automatic] is true only when the player skips a deselected chapter on its own. */
+    fun skipToNextSelectedOrLastChapter(automatic: Boolean = false) {
         launch {
             val episode = getCurrentEpisode() ?: return@launch
             val currentTimeMs = getCurrentTimeMs(episode = episode)
             playbackStateRelay.blockingFirst().chapters.getNextSelectedChapter(currentTimeMs.milliseconds)?.let { chapter ->
-                seekToTimeMsInternal(chapter.startTime)
+                seekToTimeMsInternal(chapter.startTime, automatic)
                 trackPlaybackEvent(SourceView.PLAYER) { source, contentType ->
                     PlaybackChapterSkippedEvent(
                         source = source.analyticsValue,
@@ -1192,7 +1212,7 @@ open class PlaybackManager @Inject constructor(
                         origin = chapter.origin.toChapterOriginType(),
                     )
                 }
-            } ?: skipToEndOfLastChapter()
+            } ?: skipToEndOfLastChapter(automatic)
         }
     }
 
@@ -1213,10 +1233,10 @@ open class PlaybackManager @Inject constructor(
         }
     }
 
-    private fun skipToEndOfLastChapter() {
+    private fun skipToEndOfLastChapter(automatic: Boolean = false) {
         launch {
             playbackStateRelay.blockingFirst().chapters.lastOrNull()?.let { chapter ->
-                seekToTimeMsInternal(chapter.endTime)
+                seekToTimeMsInternal(chapter.endTime, automatic)
                 trackPlaybackEvent(SourceView.PLAYER) { source, contentType ->
                     PlaybackChapterSkippedEvent(
                         source = source.analyticsValue,
@@ -1930,7 +1950,8 @@ open class PlaybackManager @Inject constructor(
             .onEach { position ->
                 val currentChapter = chapters.firstOrNull { position in it }
                 if (currentChapter?.selected == false) {
-                    skipToNextSelectedOrLastChapter()
+                    // PodHopper: the player skipping on its own, not the listener choosing.
+                    skipToNextSelectedOrLastChapter(automatic = true)
                 }
             }
             .launchIn(this)
@@ -2651,7 +2672,9 @@ open class PlaybackManager @Inject constructor(
     private fun correctPositionOnceOnline(episode: BaseEpisode) {
         pendingSyncedOfferJob?.cancel()
         val startedAt = System.currentTimeMillis()
-        podHopperPositionSync.holdPositionPushes(episode.uuid, startedAt + AUTO_JUMP_WINDOW_MS)
+        // The token ties this check to its own hold. If a second play command replaces this check, the
+        // cleanup below runs after the new check has set its hold, and must not release that one.
+        val holdToken = podHopperPositionSync.holdPositionPushes(episode.uuid, startedAt + AUTO_JUMP_WINDOW_MS)
         pendingSyncedOfferJob = launch {
             try {
                 while (System.currentTimeMillis() - startedAt < AUTO_JUMP_WINDOW_MS) {
@@ -2681,7 +2704,7 @@ open class PlaybackManager @Inject constructor(
                 }
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late position check: no answer within the window, keeping local")
             } finally {
-                podHopperPositionSync.releasePositionPushHold(episode.uuid)
+                podHopperPositionSync.releasePositionPushHold(episode.uuid, holdToken)
             }
         }
     }
@@ -2700,10 +2723,10 @@ open class PlaybackManager @Inject constructor(
             LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late position check: other device not meaningfully ahead (remote %.3f, local %.3f)", remotePositionMs / 1000f, localMs / 1000f)
             return
         }
-        if (!isPlaying()) {
-            // Paused: the background sync moves a paused episode to the synced position itself.
-            return
-        }
+        // Paused or playing, move it. A paused episode cannot be left for the background sync: the few
+        // seconds this device played from its stale position stamped that position as the newest
+        // change, so the background sync and the next play-time check would both keep it. A seek
+        // while paused only moves the position; nothing starts playing.
         if (Util.isAutomotive(application)) {
             if (!settings.podhopperCarAutoSwitchAfterResume.value) {
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late position check: newer position %.3f not applied, auto-switch is off", remotePositionMs / 1000f)
