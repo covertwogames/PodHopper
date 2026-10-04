@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name" translatable="false">PodHopper</string>
     <string name="pocket_casts" translatable="false">@string/app_name</string>
-    <string name="pocket_casts_plus" translatable="false">Pocket Casts Plus</string>
+    <string name="pocket_casts_plus" translatable="false">PodHopper Plus</string>
     <string name="pocket_casts_plus_short" translatable="false">Plus</string>
-    <string name="pocket_casts_patron" translatable="false">Pocket Casts Patron</string>
+    <string name="pocket_casts_patron" translatable="false">PodHopper Patron</string>
     <string name="pocket_casts_patron_short" translatable="false">Patron</string>
 
     <string name="empty" translatable="false" />
@@ -143,7 +143,7 @@
     <string name="subscribe_to">Subscribe to %s</string>
     <string name="upgrade_to">Upgrade to %s</string>
     <string name="unarchive_all">Unarchive all</string>
-    <string name="get_pocket_casts_plus">Get Pocket Casts Plus</string>
+    <string name="get_pocket_casts_plus">Get PodHopper Plus</string>
     <string name="unplayed">Unplayed</string>
     <string name="unsubscribe">Unfollow</string>
     <string name="home">Home</string>
@@ -242,7 +242,7 @@
     <string name="ad_report_reason_malicious">This is a malicious ad</string>
     <string name="ad_report_reason_too_often">See this ad too often</string>
     <string name="ad_report_reason_other">Other</string>
-    <string name="banner_ad_plus_prompt">Say goodbye to banner ads and more with Pocket Casts Plus</string>
+    <string name="banner_ad_plus_prompt">Say goodbye to banner ads and more with PodHopper Plus</string>
     <string name="ad_report_confirmation">You reported this ad.</string>
     <string name="add_episodes">Add episodes</string>
     <string name="your_podcasts">Your podcasts</string>
@@ -255,8 +255,8 @@
     <string name="tv_sign_in_go_to_url">going to %1$s</string>
     <string name="unavailable">Unavailable</string>
     <string name="browse_podcasts">Browse podcasts</string>
-    <string name="pocket_casts_plus_badge">Pocket Casts Plus badge</string>
-    <string name="pocket_casts_patron_badge">Pocket Casts Patron badge</string>
+    <string name="pocket_casts_plus_badge">PodHopper Plus badge</string>
+    <string name="pocket_casts_patron_badge">PodHopper Patron badge</string>
     <!-- "View" is used as a verb here. As in "view this object" -->
     <string name="view">View</string>
     <string name="no_episodes">No episodes</string>
@@ -379,7 +379,7 @@
     <string name="time_short_seconds">%ds</string>
     <string name="time_left">%s left</string>
 
-    <string name="tracking_consent_dialog_title">Allow "Pocket Casts" to track your activity across other companies\' apps and websites?</string>
+    <string name="tracking_consent_dialog_title">Allow "PodHopper" to track your activity across other companies\' apps and websites?</string>
     <string name="tracking_consent_dialog_message">We use analytics to make the app better and to measure if our ad campaigns are successful.</string>
     <string name="tracking_consent_dialog_allow">Allow</string>
     <string name="tracking_consent_dialog_reject">Ask App Not to Track</string>
@@ -506,7 +506,7 @@
     <!-- %1$d is the number of total chapters. %2$d is the number of hidden chapters. -->
     <string name="number_of_chapters_summary_plural">%1$d chapters &#x2022; %2$d hidden</string>
     <string name="number_of_chapters_summary_singular">1 chapter &#x2022; %d hidden</string>
-    <string name="skip_chapters_plus_prompt">Preselect chapters and more with Pocket Casts Plus</string>
+    <string name="skip_chapters_plus_prompt">Preselect chapters and more with PodHopper Plus</string>
     <string name="chapters_generated_disclaimer">These chapters are automatically generated and may not be perfectly accurate.</string>
     <!-- %1$d is the current selected chapter. %2$d is the total number of chapters. -->
     <string name="chapter_count_summary">%1$d of %2$d</string>
@@ -884,9 +884,9 @@
     <string name="supporter_check_contributions">Check contributions for details</string>
     <string name="supporter_contribution_details">Contribution details</string>
     <string name="supporter_contributions">Supporter contributions</string>
-    <string name="supporter_paid_type_exclusive">Become a supporter for premium content, unique to Pocket Casts</string>
+    <string name="supporter_paid_type_exclusive">Become a supporter for premium content, unique to PodHopper</string>
     <string name="supporter_paid_type_noads">Become a supporter for ad-free content</string>
-    <string name="supporter_paid_type_noads_exclusive">Become a supporter for ad-free content, unique to Pocket Casts</string>
+    <string name="supporter_paid_type_noads_exclusive">Become a supporter for ad-free content, unique to PodHopper</string>
     <string name="supporter_paid_type_noads_purchase">Purchase a subscription for ad-free content</string>
     <string name="supporter_paid_type_premium">Become a supporter for premium content</string>
     <string name="supporter_paid_type_premium_purchase">Purchase a subscription for premium content</string>
@@ -1059,7 +1059,7 @@
     <string name="profile_account_created">Account Created</string>
     <string name="profile_account_delete" translatable="false">@string/delete</string>
     <string name="profile_account_delete_yes">Yes, delete it</string>
-    <string name="profile_already_have_account">Already have a Pocket Casts account?</string>
+    <string name="profile_already_have_account">Already have a PodHopper account?</string>
     <string name="profile_alreadysignedin">You are already signed in</string>
     <string name="profile_alreadysignedindescription">You can only be signed in to one account at a time.</string>
     <string name="profile_amount_free">%s free</string>
@@ -1160,8 +1160,8 @@
     <string name="profile_end_tour">END TOUR</string>
     <string name="profile_ended">Ended %s</string>
     <string name="profile_ends">Ends %s</string>
-    <string name="profile_feature_requires">This feature requires Pocket Casts Plus</string>
-    <string name="profile_feature_try_trial">Try Pocket Casts Plus free for %s</string>
+    <string name="profile_feature_requires">This feature requires PodHopper Plus</string>
+    <string name="profile_feature_try_trial">Try PodHopper Plus free for %s</string>
     <string name="profile_feature_try_trial_secondary_info">No Payments Now — Cancel Anytime</string>
     <string name="profile_file">File</string>
     <string name="profile_file_locked">locked</string>
@@ -1171,22 +1171,22 @@
     <string name="profile_files_addfile_save">Save</string>
     <string name="profile_files_delete" translatable="false">@string/delete</string>
     <string name="profile_files_edit" translatable="false">@string/edit</string>
-    <string name="profile_files_empty_summary">Want to listen to your own files?\nTap the + button to open them in Pocket Casts, and they&#x2019;ll appear here.</string>
+    <string name="profile_files_empty_summary">Want to listen to your own files?\nTap the + button to open them in PodHopper, and they&#x2019;ll appear here.</string>
     <string name="profile_files_empty_title">Listen or watch your own files</string>
     <string name="profile_files_mark_as_played" translatable="false">@string/mark_as_played</string>
     <string name="profile_files_options" translatable="false">@string/options</string>
     <string name="profile_files_remove_image">Replace Image</string>
     <string name="profile_forgot_your_password">I forgot my password</string>
     <string name="profile_free_account">Free Account</string>
-    <string name="profile_get_plus">Get Pocket Casts Plus to unlock this feature, plus lots more!</string>
-    <string name="profile_help_support">Help support Pocket Casts by upgrading your account</string>
+    <string name="profile_get_plus">Get PodHopper Plus to unlock this feature, plus lots more!</string>
+    <string name="profile_help_support">Help support PodHopper by upgrading your account</string>
     <string name="profile_joined">Joined:</string>
     <string name="profile_just_now">Just now</string>
     <string name="profile_just_sign_out">Just sign out</string>
     <string name="profile_last_refresh">Last refresh: %s ago</string>
     <!-- WearOS uses absolute time format (e.g., "3:45 PM") instead of relative time. Will be translated via GlotPress. -->
     <string name="profile_last_refresh_at">Last refresh: %s</string>
-    <string name="profile_license_agreement">Pocket Casts values your privacy. This Privacy Policy explains what information we collect about you and why, what we may do with that information and how we handle it. It applies to the iOS and Android Pocket Casts apps, and the Pocket Casts web service with associated macOS and Windows apps (jointly and severally, the Service). By using the Service, you agree to this Privacy Policy. If you turn on push notifications in the app, we store the push token Apple provides us in order to deliver those push notifications to your device. If you buy the web app we store a transaction id for your purchase. If you choose not to create an account, and don&#x2019;t use push notifications, no data is stored about you on our servers. Pocket Casts web service also uses cookies and like technologies to keep you logged in. Should you choose to generate a support request from within the Service, we may generate an attachment containing additional data to assist in addressing your support request which you&#x2019;re welcome to view prior to submission.</string>
+    <string name="profile_license_agreement">PodHopper values your privacy. This Privacy Policy explains what information we collect about you and why, what we may do with that information and how we handle it. It applies to the iOS and Android PodHopper apps, and the PodHopper web service with associated macOS and Windows apps (jointly and severally, the Service). By using the Service, you agree to this Privacy Policy. If you turn on push notifications in the app, we store the push token Apple provides us in order to deliver those push notifications to your device. If you buy the web app we store a transaction id for your purchase. If you choose not to create an account, and don&#x2019;t use push notifications, no data is stored about you on our servers. PodHopper web service also uses cookies and like technologies to keep you logged in. Should you choose to generate a support request from within the Service, we may generate an attachment containing additional data to assist in addressing your support request which you&#x2019;re welcome to view prior to submission.</string>
     <string name="profile_monthly">Monthly</string>
     <string name="profile_navigation_downloads" translatable="false">@string/downloads</string>
     <string name="profile_navigation_files">Files</string>
@@ -1217,17 +1217,17 @@
     <string name="profile_plus_expired">Plus expired</string>
     <string name="profile_plus_expires">Expires %s</string>
     <string name="profile_plus_expires_in">Plus expires in %s</string>
-    <string name="profile_plus_thankyou">The Pocket Casts Web Player is now part of Pocket Casts Plus. As a thank you for your support, we&#x2019;ve upgraded your account to Pocket Casts Plus for %s.</string>
-    <string name="profile_pocket_casts_newsletter">Pocket Casts newsletter</string>
+    <string name="profile_plus_thankyou">The PodHopper Web Player is now part of PodHopper Plus. As a thank you for your support, we&#x2019;ve upgraded your account to PodHopper Plus for %s.</string>
+    <string name="profile_pocket_casts_newsletter">PodHopper newsletter</string>
     <string name="profile_privacy_policy">Privacy policy</string>
     <string name="profile_privacy_policy_read">Read privacy policy</string>
     <string name="profile_privacy_policy_title">Privacy policy</string>
     <string name="profile_promo_create_account" translatable="false">@string/create_account</string>
-    <string name="profile_promo_create_pocket_casts_account">Create a Pocket Casts Account</string>
-    <string name="profile_pocket_casts_account">Pocket Casts Account</string>
+    <string name="profile_promo_create_pocket_casts_account">Create a PodHopper Account</string>
+    <string name="profile_pocket_casts_account">PodHopper Account</string>
     <string name="profile_promo_sign_in_or_create">Sign in or create an account</string>
-    <string name="profile_promo_sign_in_or_create_summary">A Pocket Casts account is required for Pocket Casts Plus. This ensures seamless listening across all your devices.\n\nCreate an account or sign in to redeem your access to Pocket Casts Plus.</string>
-    <string name="profile_promo_sign_up_for_plus">Sign up for Pocket Casts Plus</string>
+    <string name="profile_promo_sign_in_or_create_summary">A PodHopper account is required for PodHopper Plus. This ensures seamless listening across all your devices.\n\nCreate an account or sign in to redeem your access to PodHopper Plus.</string>
+    <string name="profile_promo_sign_up_for_plus">Sign up for PodHopper Plus</string>
     <string name="profile_promo_upgraded">Your account has been upgraded</string>
     <string name="profile_promo_upgraded_welcome">When your trial is over you will still have all the great benefits of your regular account.\nHappy podcasting!</string>
     <string name="profile_refresh_error">Refresh error</string>
@@ -1300,12 +1300,12 @@
     <string name="profile_try_days_for_free">Try 30 days for free</string>
     <string name="profile_sub_android_goto">To cancel your subscription, you&#x2019;ll need to cancel via the Google Play Store.</string>
     <string name="profile_sub_cancel_hint0">Your current subscription will remain active until</string>
-    <string name="profile_sub_cancel_hint1">Access to Pocket Casts Plus features will be locked</string>
-    <string name="profile_sub_cancel_hint2">All files uploaded to your Pocket Casts account will be deleted</string>
+    <string name="profile_sub_cancel_hint1">Access to PodHopper Plus features will be locked</string>
+    <string name="profile_sub_cancel_hint2">All files uploaded to your PodHopper account will be deleted</string>
     <string name="profile_sub_cancel_web_link">https://play.pocketcasts.com</string>
-    <string name="profile_sub_from_android">It looks like you subscribed to Pocket Casts Plus from an Android device</string>
+    <string name="profile_sub_from_android">It looks like you subscribed to PodHopper Plus from an Android device</string>
     <string name="profile_sub_from_ios">Your subscription is managed by the Apple App Store</string>
-    <string name="profile_sub_from_web">It looks like you subscribed to Pocket Casts Plus from the web</string>
+    <string name="profile_sub_from_web">It looks like you subscribed to PodHopper Plus from the web</string>
     <string name="profile_sub_ios_goto">To cancel your subscription, you&#x2019;ll need to cancel via Settings.</string>
     <string name="profile_sub_sorry_to_see_you_go">Sorry to see you go!</string>
     <string name="profile_sub_thankyou_for_support">Thank you for your support as a paid subscriber. Your account has now been downgraded to free.</string>
@@ -1327,8 +1327,8 @@
     <string name="profile_updates_ends">Updates end: %s</string>
     <string name="profile_upgrade_to_patron">Upgrade to Patron</string>
     <string name="profile_web_player">Web Player</string>
-    <string name="profile_welcome_to_free">Welcome to Pocket Casts!</string>
-    <string name="profile_welcome_to_plus">Welcome to Pocket Casts Plus!</string>
+    <string name="profile_welcome_to_free">Welcome to PodHopper!</string>
+    <string name="profile_welcome_to_plus">Welcome to PodHopper Plus!</string>
     <string name="profile_whats_included">What\'s Included?</string>
     <string name="profile_yearly">Yearly</string>
     <string name="profile_expiry_date_unknown">Unknown</string>
@@ -1337,9 +1337,9 @@
 
     <string name="plus_cloud_storage">Cloud Storage</string>
     <string name="plus_desktop_apps">Desktop Apps</string>
-    <string name="plus_learn_more_about_plus">Learn more about Pocket Casts Plus</string>
+    <string name="plus_learn_more_about_plus">Learn more about PodHopper Plus</string>
     <string name="plus_learn_more_button">Learn More</string>
-    <string name="pocket_casts_champion" translatable="false">Pocket Casts Champion</string>
+    <string name="pocket_casts_champion" translatable="false">PodHopper Champion</string>
     <string name="plus_trial_duration_free">%s FREE</string>
     <string name="plus_trial_duration_free_trial">%s free trial</string>
     <string name="plus_offer_duration">%s offer</string>
@@ -1358,12 +1358,12 @@
     <string name="plus_themes_icons_body">Fly your true colors. Exclusive icons and themes for the plus club only.</string>
     <string name="plus_folder" translatable="false">@string/folders</string>
     <string name="plus_folder_body">Create folders to organize your podcast collection.</string>
-    <string name="plus_trial_finished">Pocket Casts Plus Trial Finished</string>
-    <string name="plus_trial_finished_continue">Upgrade your account anytime to continue using Pocket Casts Plus</string>
+    <string name="plus_trial_finished">PodHopper Plus Trial Finished</string>
+    <string name="plus_trial_finished_continue">Upgrade your account anytime to continue using PodHopper Plus</string>
     <string name="plus_trial_finished_detail">Sadly, your free trial period has reached its end. Your account has now been downgraded to free.</string>
     <string name="plus_trial_finished_files_removed">Files uploaded to your account will be removed after a week</string>
-    <string name="plus_trial_finished_locked">Access to Pocket Casts Plus features will be locked</string>
-    <string name="plus_upgrade_to_pocket_casts_plus">Upgrade to Pocket Casts Plus</string>
+    <string name="plus_trial_finished_locked">Access to PodHopper Plus features will be locked</string>
+    <string name="plus_upgrade_to_pocket_casts_plus">Upgrade to PodHopper Plus</string>
     <string name="plus_subscription_finished">Subscription Finished</string>
     <string name="plus_month_year_price">%1$s per month / %2$s per year</string>
     <string name="plus_select_payment_frequency">Select Payment Frequency</string>
@@ -1492,7 +1492,7 @@
     <string name="settings_general_defaults">Defaults</string>
     <string name="settings_general_player">Player</string>
     <string name="settings_general_sleep_timer">Sleep Timer</string>
-    <string name="settings_get_plus_and_more">Get Pocket Casts Plus to unlock this feature and more!</string>
+    <string name="settings_get_plus_and_more">Get PodHopper Plus to unlock this feature and more!</string>
     <string name="settings_headphone_controls_action_next">Next action</string>
     <string name="settings_headphone_controls_action_previous">Previous action</string>
     <string name="settings_headphone_controls_choice_add_bookmark">Add bookmark</string>
@@ -1509,7 +1509,7 @@
     <string name="settings_help_logs_sent_to_phone_check_phone">If your phone is currently paired, it will show a pop-up with your logs</string>
     <string name="settings_import_choose_file">Choose an OPML file.</string>
     <string name="settings_import_file">Select file</string>
-    <string name="settings_import_file_summary">If you have podcasts in another app or service, Pocket Casts can import them from an OPML file.</string>
+    <string name="settings_import_file_summary">If you have podcasts in another app or service, PodHopper can import them from an OPML file.</string>
     <string name="settings_import_url">By URL</string>
     <string name="settings_import_url_summary">Import your podcasts from an OPML file using a URL.</string>
     <string name="settings_import_opml_progress">%1$d of %2$d podcasts</string>
@@ -1558,7 +1558,7 @@
     <string name="settings_notification_daily_reminders">Daily Reminders</string>
     <string name="settings_notification_recommendations">Trending &amp; Recommendations</string>
     <string name="settings_notification_new_features">New Features &amp; Tips</string>
-    <string name="settings_notification_offers">Pocket Casts Offers</string>
+    <string name="settings_notification_offers">PodHopper Offers</string>
     <string name="settings_notification_play_over">Play over notifications</string>
     <string name="settings_notification_play_over_never">Never</string>
     <string name="settings_notification_play_over_duck">Duck volume</string>
@@ -1574,7 +1574,7 @@
     <string name="settings_open_player_automatically_summary">If on, the full-screen player will open when you start playing a podcast episode.</string>
     <string name="settings_other_media_actions">Other media actions</string>
     <string name="settings_playback_resumption">Intelligent playback resumption</string>
-    <string name="settings_playback_resumption_summary">If on, Pocket Casts will go back a little in episodes you resume so you can catch up more comfortably.</string>
+    <string name="settings_playback_resumption_summary">If on, PodHopper will go back a little in episodes you resume so you can catch up more comfortably.</string>
     <string name="settings_podcast_artwork">Podcast Artwork</string>
     <string name="settings_podcast_custom">Custom for this podcast</string>
     <string name="settings_podcast_episode_grouping">Podcast episode grouping</string>
@@ -1590,7 +1590,7 @@
     <string name="settings_podcasts_selected_x">%d podcasts</string>
     <string name="settings_podcasts_selected_zero">No podcasts selected</string>
     <string name="settings_refresh_all_podcast_artwork">Refresh all podcast artwork</string>
-    <string name="settings_refresh_artwork_message">Pocket Casts is now refreshing all your podcast images, this will happen in the background and may take a little time.</string>
+    <string name="settings_refresh_artwork_message">PodHopper is now refreshing all your podcast images, this will happen in the background and may take a little time.</string>
     <string name="settings_refresh_artwork_ok" translatable="false">@string/ok</string>
     <string name="settings_refresh_artwork_title">Right away!</string>
     <string name="settings_row_action">Row action</string>
@@ -1611,16 +1611,16 @@
     <string name="settings_storage">Storage</string>
     <string name="settings_storage_android_10_custom">We can no longer support custom folders for storage on Android 10+. We have switched your storage option back to your phones default.</string>
     <string name="settings_storage_background_refresh">Background refresh</string>
-    <string name="settings_storage_background_refresh_off">Pocket Casts will only refresh when you open the app.\n\nEpisode notifications and auto downloads will only happen when you open the app.</string>
-    <string name="settings_storage_background_refresh_off_watch">Pocket Casts will only sync your account when you open the app.</string>
-    <string name="settings_storage_background_refresh_on">Pocket Casts will periodically check for new episodes and auto downloads in the background.</string>
+    <string name="settings_storage_background_refresh_off">PodHopper will only refresh when you open the app.\n\nEpisode notifications and auto downloads will only happen when you open the app.</string>
+    <string name="settings_storage_background_refresh_off_watch">PodHopper will only sync your account when you open the app.</string>
+    <string name="settings_storage_background_refresh_on">PodHopper will periodically check for new episodes and auto downloads in the background.</string>
     <string name="settings_refresh_frequency_off">Off</string>
     <string name="settings_refresh_frequency_1_hour">Every hour</string>
     <string name="settings_refresh_frequency_3_hours">Every 3 hours</string>
     <string name="settings_refresh_frequency_6_hours">Every 6 hours</string>
     <string name="settings_refresh_frequency_12_hours">Every 12 hours</string>
     <string name="settings_refresh_frequency_24_hours">Every 24 hours</string>
-    <string name="settings_storage_background_refresh_on_watch">Pocket Casts will periodically sync your account in the background.</string>
+    <string name="settings_storage_background_refresh_on_watch">PodHopper will periodically sync your account in the background.</string>
     <string name="settings_storage_clear_cache">Clearing download cache</string>
     <string name="settings_storage_clear_download_cache">Clear download cache</string>
     <string name="settings_storage_custom_folder">Custom Folder</string>
@@ -1646,7 +1646,7 @@
     <string name="settings_storage_sorry">Sorry</string>
     <string name="settings_storage_store_on">Store podcasts on</string>
     <string name="settings_storage_fix_downloads">Fix downloads</string>
-    <string name="settings_storage_fix_downloads_description">Attempt to restore any downloaded files if they are missing in the Pocket Casts app.</string>
+    <string name="settings_storage_fix_downloads_description">Attempt to restore any downloaded files if they are missing in the PodHopper app.</string>
     <string name="settings_subscribe_to_played">Follow played podcasts</string>
     <string name="settings_show_played">Show played episodes</string>
     <string name="settings_show_played_summary">Episodes that you have finished playing will still be displayed</string>
@@ -1691,7 +1691,7 @@
     <string name="settings_use_dynamic_colors_widget">Use dynamic colors for widget</string>
     <string name="settings_use_dynamic_colors_widget_details">When enabled, widget colors will change based on the device theme colors.</string>
     <string name="settings_use_episode_artwork">Use episode artwork</string>
-    <string name="settings_use_episode_artwork_details">Some shows have custom artwork for certain episodes. Enable this option and Pocket Casts will display them instead of the show’s artwork.</string>
+    <string name="settings_use_episode_artwork_details">Some shows have custom artwork for certain episodes. Enable this option and PodHopper will display them instead of the show’s artwork.</string>
     <string name="settings_use_episode_artwork_advanced">Advanced episode artwork settings</string>
     <string name="settings_use_episode_artwork_title">Episode Artwork</string>
     <string name="settings_use_episode_artwork_customization_section">Customization</string>
@@ -1773,8 +1773,8 @@
     <string name="settings_no_email_app_title">Unable to email</string>
     <string name="settings_no_email_app">Please check you have an email app installed.</string>
     <string name="settings_opml_exporting">Exporting podcasts…</string>
-    <string name="settings_opml_email_subject">Pocket Casts - Backup of Podcast List</string>
-    <string name="settings_opml_email_body"><![CDATA[Hi, <br/><br/>Please find attached your freshly exported podcast list in an OPML file. <br/><br/>Pocket Casts Team]]></string>
+    <string name="settings_opml_email_subject">PodHopper - Backup of Podcast List</string>
+    <string name="settings_opml_email_body"><![CDATA[Hi, <br/><br/>Please find attached your freshly exported podcast list in an OPML file. <br/><br/>PodHopper Team]]></string>
     <string name="settings_no_file_browser_title">Unable to save file</string>
     <string name="settings_no_file_browser">Please check you have a file manager installed.</string>
     <string name="settings_opml_export_failed_title">OPML export failed</string>
@@ -1803,15 +1803,15 @@
     <string name="settings_status_service_ad_blocker_help_singular">The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock the domain %s</string>
     <string name="settings_status_service_ad_blocker_help_plural">The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock the domains %s</string>
     <string name="settings_status_service_hosts">Common Podcast Hosts</string>
-    <string name="settings_status_service_hosts_summary">Podcast authors host episode files in various hosting providers not managed by Pocket Casts.</string>
-    <string name="settings_status_service_hosts_help">The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock this domain to download podcasts. Please note Pocket Casts doesn’t host or choose where podcasts are hosted, that’s up to the author of the show and is out of our control.</string>
+    <string name="settings_status_service_hosts_summary">Podcast authors host episode files in various hosting providers not managed by PodHopper.</string>
+    <string name="settings_status_service_hosts_help">The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock this domain to download podcasts. Please note PodHopper doesn’t host or choose where podcasts are hosted, that’s up to the author of the show and is out of our control.</string>
     <string name="settings_status_service_support">Support</string>
     <string name="settings_status_service_support_summary">Access to the support FAQ and contact us.</string>
-    <string name="settings_forums">Pocket Casts Forums</string>
-    <string name="settings_forums_description">Please go to Pocket Casts\' forums (%1$s) where our support team can help you.</string>
+    <string name="settings_forums">PodHopper Forums</string>
+    <string name="settings_forums_description">Please go to PodHopper\'s forums (%1$s) where our support team can help you.</string>
     <string name="settings_take_me_there">Take me there</string>
     <string name="settings_about_share_with_friends">Share with friends</string>
-    <string name="settings_about_share_with_friends_message">Hey! Here is a link to download the Pocket Casts app. I\'m really enjoying it and thought you might too. \nhttps://www.pocketcasts.com</string>
+    <string name="settings_about_share_with_friends_message">Hey! Here is a link to download the PodHopper app. I\'m really enjoying it and thought you might too. \nhttps://www.pocketcasts.com</string>
     <string name="settings_about_rate_us">Rate us</string>
     <string name="settings_about_instagram">Instagram</string>
     <string name="settings_about_x" translatable="false">X</string>
@@ -1841,7 +1841,7 @@
     <string name="settings_advanced_sync_on_metered">Sync on Metered Networks</string>
     <string name="settings_advanced_sync_on_metered_summary">Permits automatic background sync on metered networks. This is enabled by default and has no effect if background refresh is turned off.</string>
     <string name="settings_advanced_prioritize_seek_accuracy">Prioritizing seek accuracy</string>
-    <string name="settings_advanced_prioritize_seek_accuracy_summary">Prioritizing seek accuracy can significantly slow down seek responsiveness and cause Pocket Casts to consume more data.</string>
+    <string name="settings_advanced_prioritize_seek_accuracy_summary">Prioritizing seek accuracy can significantly slow down seek responsiveness and cause PodHopper to consume more data.</string>
     <string name="settings_advanced_cache_entire_playing_episode">Cache playing episode</string>
     <string name="settings_advanced_cache_entire_playing_episode_summary">Entire playing episode is temporarily cached to minimize streaming.</string>
     <!-- Button title to upgrade to Plus. Don't translate "Plus" -->
@@ -1869,7 +1869,7 @@
     <string name="error_unable_to_play">Unable to play file</string>
     <string name="error_playing_format">File cannot be played. Try converting to another format.</string>
     <string name="error_playing_format_external">This episode appears to be in a format we can’t play, some other apps might be able to though?</string>
-    <string name="error_storage_permission">Denied! Pocket Casts can\'t play this file, please check your storage permissions.</string>
+    <string name="error_storage_permission">Denied! PodHopper can\'t play this file, please check your storage permissions.</string>
     <string name="error_file_not_found">Episode file not found, please try downloading again.</string>
     <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
@@ -2015,7 +2015,7 @@
     <string name="server_login_email_invalid">Invalid email</string>
     <string name="server_promo_already_redeemed">You have already claimed this promo code. It was worth a shot though!</string>
     <string name="server_promo_code_expired_or_invalid">This promo code has expired or is invalid.</string>
-    <string name="server_promo_already_plus">You are already a Pocket Casts Plus subscriber, there\'s no need to redeem any codes.</string>
+    <string name="server_promo_already_plus">You are already a PodHopper Plus subscriber, there\'s no need to redeem any codes.</string>
     <string name="server_files_upload_failed_generic">Unable to upload file, please try again later.</string>
     <string name="server_files_uuid_required">File uuid is required.</string>
     <string name="server_login_email_taken">Email taken</string>
@@ -2032,7 +2032,7 @@
     <string name="server_user_email_success">Successfully sent email.</string>
     <string name="server_user_email_verification_failed">Email verification failed.</string>
     <string name="server_user_change_email_success">Your email has been successfully changed.</string>
-    <string name="server_user_delete_account_with_sub_failed">Your account has an active Pocket Casts Plus subscription. Please cancel this first before deleting your account.</string>
+    <string name="server_user_delete_account_with_sub_failed">Your account has an active PodHopper Plus subscription. Please cancel this first before deleting your account.</string>
 
     <!-- End of Year -->
 
@@ -2139,11 +2139,11 @@
     <!-- Title of the story paywall if the user is already a Plus subscriber. -->
     <string name="end_of_year_stories_plus_title">Thanks for supporting Pocket&#160;Casts!</string>
     <!-- Subtitle explaining the user why they should subscribe to Plus in the context of the end of year stories. -->
-    <string name="end_of_year_stories_subscribe_to_plus">Subscribe to Pocket Casts Plus for extended stats, bookmarks, folders, chapter selection, and more ways to dig into your listening&#160;habits</string>
+    <string name="end_of_year_stories_subscribe_to_plus">Subscribe to PodHopper Plus for extended stats, bookmarks, folders, chapter selection, and more ways to dig into your listening&#160;habits</string>
     <!-- Subtitle explaining the user reason for having Plus in the context of the end of year stories. -->
     <string name="end_of_year_stories_already_subscribed_to_plus">Your Plus perks unlock extra stats and power&#160;features</string>
-    <!-- Label of a button to incentivize users to subscribe to Pocket Casts Plus. -->
-    <string name="eoy_story_stories_subscribe_to_plus_button_label">Get Pocket Casts Plus</string>
+    <!-- Label of a button to incentivize users to subscribe to PodHopper Plus. -->
+    <string name="eoy_story_stories_subscribe_to_plus_button_label">Get PodHopper Plus</string>
     <!-- Title for the story showing the podcast ratings given by the user when they gave high ratings. -->
     <string name="eoy_story_ratings_title_1">You dropped %1$d-star ratings like&#160;confetti!</string>
     <!-- Title for the story showing the podcast ratings given by the user when they gave low ratings. -->
@@ -2183,9 +2183,9 @@
     <string name="log_in_on_phone">Log in on phone</string>
     <string name="log_in_with_email">Log in with email</string>
     <string name="enter_email">Enter email</string>
-    <string name="log_in_watch_from_phone_instructions_1">Log into Pocket Casts on a paired Android phone.</string>
-    <string name="log_in_watch_from_phone_instructions_2">The next time you open Pocket Casts on your watch and have a network connection, you will be logged in.</string>
-    <string name="log_in_watch_from_phone_instructions_3">If you are having trouble, make sure your phone is running the same version of Pocket Casts as your watch (%s)</string>
+    <string name="log_in_watch_from_phone_instructions_1">Log into PodHopper on a paired Android phone.</string>
+    <string name="log_in_watch_from_phone_instructions_2">The next time you open PodHopper on your watch and have a network connection, you will be logged in.</string>
+    <string name="log_in_watch_from_phone_instructions_3">If you are having trouble, make sure your phone is running the same version of PodHopper as your watch (%s)</string>
 
     <!-- Watch sync status -->
     <string name="watch_sync_syncing">Syncing with phone…</string>
@@ -2219,7 +2219,7 @@
     <string name="onboarding_email_invalid_message">Please enter a valid email</string>
     <string name="onboarding_create_account">Create Account</string>
     <string name="onboarding_recommendations_find_favorite_podcasts">Find your favorite podcasts</string>
-    <string name="onboarding_recommendations_make_pocket_casts_yours">Make Pocket Casts yours by selecting your favorite podcasts or import them from another podcast player. You can always do this later.</string>
+    <string name="onboarding_recommendations_make_pocket_casts_yours">Make PodHopper yours by selecting your favorite podcasts or import them from another podcast player. You can always do this later.</string>
     <string name="onboarding_recommendations_import">Import</string>
     <string name="onboarding_recommendations_more">More %s</string>
     <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Everything you love about Pocket&#160;Casts, plus more</string>
@@ -2231,7 +2231,7 @@
     <string name="onboarding_patron_feature_early_access_title">Early access to features</string>
     <string name="onboarding_patron_feature_cloud_storage_title">100GB Cloud Storage</string>
     <string name="onboarding_patron_feature_profile_badge_title">Supporters profile badge</string>
-    <string name="onboarding_patron_feature_special_icons_title">Special Pocket Casts app icons</string>
+    <string name="onboarding_patron_feature_special_icons_title">Special PodHopper app icons</string>
     <string name="onboarding_patron_feature_gratitude_title" translatable="false">@string/onboarding_plus_feature_gratitude_title</string>
     <string name="onboarding_patron_subscribe">Subscribe to Pocket&#160;Casts Patron</string>
     <string name="onboarding_plus_features_title" translatable="false">@string/onboarding_upgrade_everything_you_love_about_pocket_casts_plus</string>
@@ -2248,7 +2248,7 @@
     <string name="onboarding_plus_feature_extra_themes_icons_title">Extra themes &amp; icons</string>
     <string name="onboarding_plus_feature_themes_icons_title">Themes &amp; Icons</string>
     <string name="onboarding_plus_feature_themes_icons_text">Fly your true colors. Exclusive icons and themes for the Plus club only.</string>
-    <string name="onboarding_plus_feature_gratitude_title">The undying gratitude of everyone here at Pocket Casts</string>
+    <string name="onboarding_plus_feature_gratitude_title">The undying gratitude of everyone here at PodHopper</string>
     <string name="onboarding_plus_feature_libro_title"><![CDATA[Free audiobook from <a href="https://libro.fm/">Libro.fm</a>]]></string>
     <!-- Do not translate Slumber Studios -->
     <string name="onboarding_plus_feature_slumber_studios_title"><![CDATA[1 year of exclusive content from <a href="https://slumberstudios.com/">Slumber&#160;Studios</a>]]></string>
@@ -2290,9 +2290,9 @@
     <string name="onboarding_import_from_castbox_step_4">Scroll down to \“OPML Export\” and tap it.</string>
     <string name="onboarding_import_from_castbox_step_5" translatable="false">@string/onboarding_import_from_other_apps_step_2</string>
     <string name="onboarding_import_from_castbox_open">Open Castbox&#8230;</string>
-    <string name="onboarding_can_import_from_opml">Pocket Casts can import podcasts from OPML files, so if your current app can export an OPML file, you can follow these steps:</string>
+    <string name="onboarding_can_import_from_opml">PodHopper can import podcasts from OPML files, so if your current app can export an OPML file, you can follow these steps:</string>
     <string name="onboarding_import_from_other_apps_step_1">Find the other app\’s export option and export an OPML file.</string>
-    <string name="onboarding_import_from_other_apps_step_2">Use your phone\’s \“Share\” menu to send the file to Pocket Casts. Alternatively, import the file from Pocket Casts\’ \“Import &amp; export OPML\” settings menu.</string>
+    <string name="onboarding_import_from_other_apps_step_2">Use your phone\’s \“Share\” menu to send the file to PodHopper. Alternatively, import the file from PodHopper\’ \“Import &amp; export OPML\” settings menu.</string>
     <string name="account_encourage_title">We noticed you’re not logged&#160;in</string>
     <string name="account_encourage_description">Create an account or log in to enjoy Pocket&#160;Casts to the fullest.</string>
     <string name="account_encourage_benefits_title">Account Benefits</string>
@@ -2305,10 +2305,10 @@
 
     <!-- Notification channel -->
 
-    <string name="notification_channel_description_download">Shows while Pocket Casts is downloading episodes</string>
+    <string name="notification_channel_description_download">Shows while PodHopper is downloading episodes</string>
     <string name="notification_channel_description_episode">Shows when a new episode comes out</string>
     <string name="notification_channel_description_playback_error">Errors during playback</string>
-    <string name="notification_channel_description_playback">Shows while Pocket Casts is playing audio</string>
+    <string name="notification_channel_description_playback">Shows while PodHopper is playing audio</string>
     <string name="notification_channel_description_podcast_import">Import podcast collections</string>
     <string name="notification_channel_description_sign_in_error">Shows when signed out in background and cannot auto re sign-in</string>
     <string name="notification_channel_description_bookmark">Shows when bookmark is added using headphones</string>
@@ -2316,8 +2316,8 @@
     <string name="notification_channel_description_fix_downloads_complete">Shows when downloads fix is complete</string>
     <string name="notification_channel_description_daily_reminders">Shows helpful suggestions to support your listening routine.</string>
     <string name="notification_channel_description_trending_and_recommendations">Shows trending podcasts and curated recommendations to help you discover new favorites</string>
-    <string name="notification_channel_description_new_features_and_tips">Shows notifications about new features, updates, and handy tips to help you optimize your Pocket Casts experience</string>
-    <string name="notification_channel_description_offers">Shows notifications about exclusive offers, discounts, and promotions to help you make the most of your Pocket Casts experience</string>
+    <string name="notification_channel_description_new_features_and_tips">Shows notifications about new features, updates, and handy tips to help you optimize your PodHopper experience</string>
+    <string name="notification_channel_description_offers">Shows notifications about exclusive offers, discounts, and promotions to help you make the most of your PodHopper experience</string>
 
     <!-- Bookmarks -->
 
@@ -2406,14 +2406,14 @@
     <string name="time_to_skip_to_not_valid">Time to skip to %1$s not valid</string>
     <string name="time_to_skip_not_valid">Time to skip %1$s not valid</string>
     <string name="playback_speed_not_valid">Playback Speed %1$s not valid</string>
-    <string name="pocket_casts_play_filter">Pocket Casts Play Playlist</string>
-    <string name="pocket_casts_control_playback">Pocket Casts Control Playback</string>
-    <string name="pocket_casts_query_podcasts">Pocket Casts Query Podcasts</string>
-    <string name="pocket_casts_query_podcast_episodes">Pocket Casts Query Podcast Episodes</string>
-    <string name="pocket_casts_add_to_up_next">Pocket Casts Add To Up Next</string>
-    <string name="pocket_casts_query_filters">Pocket Casts Query Playlists</string>
-    <string name="pocket_casts_query_filter_episodes">Pocket Casts Query Playlist Episodes</string>
-    <string name="pocket_casts_query_up_next_episodes">Pocket Casts Query Up Next Episodes</string>
+    <string name="pocket_casts_play_filter">PodHopper Play Playlist</string>
+    <string name="pocket_casts_control_playback">PodHopper Control Playback</string>
+    <string name="pocket_casts_query_podcasts">PodHopper Query Podcasts</string>
+    <string name="pocket_casts_query_podcast_episodes">PodHopper Query Podcast Episodes</string>
+    <string name="pocket_casts_add_to_up_next">PodHopper Add To Up Next</string>
+    <string name="pocket_casts_query_filters">PodHopper Query Playlists</string>
+    <string name="pocket_casts_query_filter_episodes">PodHopper Query Playlist Episodes</string>
+    <string name="pocket_casts_query_up_next_episodes">PodHopper Query Up Next Episodes</string>
     <string name="set_playback_speed">Set Playback Speed</string>
     <string name="playback_speed_between_values">Playback Speed (between 0.5 and 3)</string>
     <string name="set_trim_silence_mode">Set Trim Silence Mode</string>
@@ -2525,11 +2525,11 @@
     <string name="synced_transcripts_whats_new_message">Read fast, miss nothing. The name you blew past, the book they recommended, the stat you wanted — tap the word, jump&#160;back.</string>
     <string name="synced_transcripts_whats_new_button_note">Synced transcripts available for recent episodes only.</string>
 
-    <!-- Pocket Casts Champion -->
-    <string name="pocket_casts_champion_dialog_title">You’re a true champion of Pocket Casts!</string>
+    <!-- PodHopper Champion -->
+    <string name="pocket_casts_champion_dialog_title">You’re a true champion of PodHopper!</string>
     <string name="pocket_casts_champion_dialog_description">Thanks for being with us since the beginning! If you enjoy using our app, we’d love to hear your feedback.</string>
-    <string name="rate_pocket_casts">Rate Pocket Casts</string>
-    <string name="pocket_casts_logo">Pocket Casts logo</string>
+    <string name="rate_pocket_casts">Rate PodHopper</string>
+    <string name="pocket_casts_logo">PodHopper logo</string>
 
     <string name="folders_plus_prompt">Organize your podcasts with Pocket&#160;Casts&#160;Plus, and more</string>
     <string name="themes_plus_prompt">Get exclusive themes with Pocket&#160;Casts&#160;Plus, and more</string>
@@ -2588,10 +2588,10 @@
     <string name="winback_offer_header">Thinking of leaving?\nLet us help first</string>
     <string name="winback_offer_free_offer_title">Get your next month free and save %1$s</string>
     <string name="winback_offer_free_offer_yearly_title">Get 50%% off your next year and save %1$s</string>
-    <string name="winback_offer_free_offer_description">Enjoy one month of Pocket Casts Plus on us! The offer will be added to your current subscription.</string>
-    <string name="winback_offer_free_offer_yearly_description">Pay %1$s now to lock in a year of Pocket Casts Plus at half price. Your discounted year begins after your current plan ends.</string>
+    <string name="winback_offer_free_offer_description">Enjoy one month of PodHopper Plus on us! The offer will be added to your current subscription.</string>
+    <string name="winback_offer_free_offer_yearly_description">Pay %1$s now to lock in a year of PodHopper Plus at half price. Your discounted year begins after your current plan ends.</string>
     <string name="winback_offer_free_offer_installment_title">Get 50%% off your next year — pay just %1$s/month and save %2$s</string>
-    <string name="winback_offer_free_offer_installment_description">Lock in a year of Pocket Casts Plus at half price with 12 monthly payments of %1$s. Your discounted installment plan begins after your current plan ends.</string>
+    <string name="winback_offer_free_offer_installment_description">Lock in a year of PodHopper Plus at half price with 12 monthly payments of %1$s. Your discounted installment plan begins after your current plan ends.</string>
     <string name="winback_offer_free_offer_button_label">Claim offer</string>
     <string name="winback_offer_differnt_plan_title">Looking for a different plan?</string>
     <string name="winback_offer_differnt_plan_description">Find the plan that\'s right for you.</string>
@@ -2616,11 +2616,11 @@
     <string name="winback_cancel_subscription_header_description">This will change your plan to a free account.</string>
     <string name="winback_cancel_subscription_perk_active_with_date">Your current subscription will remain active until %1$s.</string>
     <string name="winback_cancel_subscription_perk_active_without_date">Your current subscription will remain active until its expiration date.</string>
-    <string name="winback_cancel_subscription_perk_plus">Access to Pocket Casts Plus features will be locked after this date.</string>
+    <string name="winback_cancel_subscription_perk_plus">Access to PodHopper Plus features will be locked after this date.</string>
     <string name="winback_cancel_subscription_perk_folders">Your folders will be removed and their contents will move back to the Podcasts screen.</string>
-    <string name="winback_cancel_subscription_perk_files">All files uploaded to your Pocket Casts account will be deleted (but downloaded files on your mobile devices will remain).</string>
+    <string name="winback_cancel_subscription_perk_files">All files uploaded to your PodHopper account will be deleted (but downloaded files on your mobile devices will remain).</string>
     <string name="winback_cancel_subscription_perk_history">Your podcasts and listening history will continue to be accessible.</string>
-    <string name="winback_cancel_subscription_header_description_installment">Cancelling ends your Pocket Casts subscription.\nYour Google Play payment plan will continue.</string>
+    <string name="winback_cancel_subscription_header_description_installment">Cancelling ends your PodHopper subscription.\nYour Google Play payment plan will continue.</string>
     <string name="winback_cancel_subscription_perk_installment">You\'re on a 12-month installment plan. Cancelling ends your access, but Google Play will continue charging the remaining months.</string>
     <string name="winback_cancel_subscription_stay_button_label">Keep my subscription</string>
     <string name="winback_cancel_subscription_cancel_button_label">Yes, Cancel my Subscription</string>
@@ -2659,7 +2659,7 @@
     <string name="notification_sync_title">Your shows, on any device!</string>
     <string name="notification_sync_message">Create a free account to sync your shows and listen anywhere.</string>
     <string name="notification_import_title">Easily import your podcasts</string>
-    <string name="notification_import_message">Switching from another app? Bring all your favorite shows to Pocket Casts.</string>
+    <string name="notification_import_message">Switching from another app? Bring all your favorite shows to PodHopper.</string>
     <string name="notification_up_next_title">Simplify your queue</string>
     <string name="notification_up_next_message">Build a playback queue and say goodbye to jumping around between episodes.</string>
     <string name="notification_filters_title">Organize your episodes</string>
@@ -2682,14 +2682,14 @@
     <string name="notification_content_recommendations_title">New recommendations for you</string>
     <string name="notification_content_recommendations_message">Wondering what to listen to next? Check out these shows!</string>
     <string name="notifications_settings_turn_on_push_title">Turn on push notifications?</string>
-    <string name="notifications_settings_turn_on_push_message">To get notifications from Pocket Casts, you\'ll need to turn them on in your device settings.</string>
+    <string name="notifications_settings_turn_on_push_message">To get notifications from PodHopper, you\'ll need to turn them on in your device settings.</string>
     <string name="notifications_settings_turn_on_push_button">Go to device settings</string>
     <string name="notification_new_features_smart_folders_title">Your podcasts organized</string>
     <string name="notification_new_features_smart_folders_message">Try Plus and automatically organize your shows with folders</string>
     <string name="notification_offers_upgrade_title">Level up your podcast game</string>
     <string name="notification_offers_upgrade_message">Unblock exclusive features like folders, bookmarks, and more with Plus!</string>
     <string name="notification_prompt_title">Stay up to date!</string>
-    <string name="notification_prompt_message">Notifications are the best way to keep track of new episodes, get recommendations of new shows and tips about Pocket Casts.</string>
+    <string name="notification_prompt_message">Notifications are the best way to keep track of new episodes, get recommendations of new shows and tips about PodHopper.</string>
     <string name="notification_prompt_cta">Allow Notifications</string>
     <string name="notification_snack_message">Please allow notifications in your device settings</string>
     <string name="notification_snack_cta">Open Settings</string>
@@ -2721,8 +2721,8 @@
     <string name="onboarding_upgrade_patron_early_access">Early access to new features</string>
     <string name="onboarding_upgrade_patron_cloud_storage">100 GB Cloud Storage for your files</string>
     <string name="onboarding_upgrade_patron_badge">Supporters profile badge</string>
-    <string name="onboarding_upgrade_app_icons">Special Pocket Casts app icons</string>
-    <string name="onboarding_upgrade_gratitude">The undying gratitude of everyone here at Pocket Casts</string>
+    <string name="onboarding_upgrade_app_icons">Special PodHopper app icons</string>
+    <string name="onboarding_upgrade_gratitude">The undying gratitude of everyone here at PodHopper</string>
     <string name="onboarding_upgrade_account_message">Unlock all paid features like Folders, Shuffle, Bookmarks and many more</string>
     <string name="onboarding_folders_title">Folders: your podcasts, perfectly placed</string>
     <string name="onboarding_folders_title_1">Books</string>
@@ -2750,7 +2750,7 @@
     <string name="onboarding_intro_carousel_best_app_title">\"The best podcast app out there. By far\"</string>
     <string name="onboarding_intro_carousel_customization_insane_title">\"The amount of customization is insane\"</string>
     <string name="onboarding_intro_carousel_organizing_podcasts_title">\"Organizing my podcasts by folders is genius\"</string>
-    <string name="onboarding_intro_carousel_pc_user">Pocket Casts user</string>
+    <string name="onboarding_intro_carousel_pc_user">PodHopper user</string>
     <string name="onboarding_intro_get_started">Get Started</string>
     <string name="onboarding_login_continue_with_email">Continue with email</string>
     <string name="onboarding_login_or">OR</string>
@@ -2805,8 +2805,8 @@
     <string name="play_this_episode">Play this episode</string>
 
     <!-- TV Onboarding -->
-    <string name="tv_onboarding_welcome">Welcome to Pocket Casts</string>
-    <string name="tv_onboarding_welcome_tv">Welcome to Pocket Casts TV</string>
+    <string name="tv_onboarding_welcome">Welcome to PodHopper</string>
+    <string name="tv_onboarding_welcome_tv">Welcome to PodHopper TV</string>
     <string name="tv_onboarding_subtitle">Your podcasts, on the big screen</string>
     <string name="tv_onboarding_create_free_account">Create free account</string>
     <string name="tv_onboarding_browse_without_account">Browse without an account</string>
