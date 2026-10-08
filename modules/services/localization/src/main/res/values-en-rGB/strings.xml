@@ -99,8 +99,8 @@ Language: en_GB
     <string name="settings_app_icon_patron_round">Patron Round</string>
     <string name="settings_app_icon_patron_chrome">Patron Chrome</string>
     <string name="profile_upgrade_to_patron">Upgrade to Patron</string>
-    <string name="onboarding_plus_subscribe">Subscribe to Pocket Casts Plus</string>
-    <string name="onboarding_patron_subscribe">Subscribe to Pocket Casts Patron</string>
+    <string name="onboarding_plus_subscribe">Subscribe to PodHopper Plus</string>
+    <string name="onboarding_patron_subscribe">Subscribe to PodHopper Patron</string>
     <string name="upgrade_to">Upgrade to %s</string>
     <string name="profile_patron_expires_in">Patron expires in %s</string>
     <string name="profile_account">Account</string>
@@ -205,10 +205,10 @@ Language: en_GB
     <string name="onboarding_plus_can_be_canceled_at_any_time">Can be cancelled at any time.</string>
     <string name="profile_cancel_confirm_cancel_button_title">Yes, cancel my subscription</string>
     <string name="profile_cancel_confirm_stay_button_title">Actually, I want to stay</string>
-    <string name="profile_cancel_confirm_item_web_player">You will no longer be able to access Pocket Casts using your web browser, or desktop computer.</string>
-    <string name="profile_cancel_confirm_item_uploads">All files uploaded to your Pocket Casts account will be deleted (but downloaded files on your mobile devices will remain).</string>
+    <string name="profile_cancel_confirm_item_web_player">You will no longer be able to access PodHopper using your web browser, or desktop computer.</string>
+    <string name="profile_cancel_confirm_item_uploads">All files uploaded to your PodHopper account will be deleted (but downloaded files on your mobile devices will remain).</string>
     <string name="profile_cancel_confirm_item_folders">Your folders will be removed and their contents will move back to the Podcasts screen.</string>
-    <string name="profile_cancel_confirm_item_plus">Access to Pocket Casts Plus features will be locked after this date.</string>
+    <string name="profile_cancel_confirm_item_plus">Access to PodHopper Plus features will be locked after this date.</string>
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">your expiration date</string>
     <string name="profile_cancel_confirm_sub_expiry">Your current subscription will remain active until %1$s.</string>
     <string name="profile_cancel_confirm_subtitle">This will change your plan to a free account.</string>
@@ -240,7 +240,7 @@ Language: en_GB
     <string name="onboarding_plus_terms_and_conditions">Terms and Conditions</string>
     <string name="onboarding_plus_privacy_policy">Privacy Policy</string>
     <string name="onboarding_plus_continuing_agrees_to">By continuing, you agree to our %1$s and %2$s.</string>
-    <string name="onboarding_plus_become_a_plus_member">Become a Plus member and unlock all Pocket Casts features</string>
+    <string name="onboarding_plus_become_a_plus_member">Become a Plus member and unlock all PodHopper features</string>
     <string name="onboarding_sign_up">Sign up</string>
     <string name="onboarding_create_account">Create Account</string>
     <string name="onboarding_log_in">Log in</string>
@@ -251,7 +251,7 @@ Language: en_GB
     <string name="onboarding_plus_feature_themes_icons_title">Themes &amp; Icons</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Upload your files to cloud storage and have them available everywhere.</string>
     <string name="onboarding_plus_feature_desktop_apps_text">Listen in more places with our Windows, macOS, and Web apps.</string>
-    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Everything you love about Pocket Casts, plus more</string>
+    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Everything you love about PodHopper, plus more</string>
     <string name="onboarding_recommendations_import">Import</string>
     <string name="onboarding_recommendations_make_pocket_casts_yours">Make PodHopper yours by selecting your favourite podcasts or import them from another podcast player. You can always do this later.</string>
     <string name="onboarding_recommendations_find_favorite_podcasts">Find your favourite podcasts</string>
@@ -833,14 +833,12 @@ Language: en_GB
     <string name="profile_supporter_no_podcasts">No supporter podcasts found</string>
     <string name="profile_supporter_become_a_supporter">Become a supporter</string>
     <string name="profile_subscribed_current_total">%1$d/%2$d SUBSCRIBED</string>
-    <string name="profile_sub_web_goto">To cancel your subscription, you’ll need to cancel via Pocketcasts.com.</string>
     <string name="profile_sub_thankyou_for_support">Thank you for your support as a paid subscriber. Your account has now been downgraded to free.</string>
     <string name="profile_sub_sorry_to_see_you_go">Sorry to see you go!</string>
     <string name="profile_sub_ios_goto">To cancel your subscription, you’ll need to cancel via Settings.</string>
     <string name="profile_sub_from_web">It looks like you subscribed to PodHopper Plus from the web</string>
     <string name="profile_sub_from_ios">Your subscription is managed by the Apple App Store</string>
     <string name="profile_sub_from_android">It looks like you subscribed to PodHopper Plus from an Android device</string>
-    <string name="profile_sub_cancel_web_link">https://play.pocketcasts.com</string>
     <string name="profile_sub_cancel_hint2">All files uploaded to your PodHopper account will be deleted</string>
     <string name="profile_sub_cancel_hint1">Access to PodHopper Plus features will be locked</string>
     <string name="profile_sub_cancel_hint0">Your current subscription will remain active until</string>

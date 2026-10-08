@@ -89,8 +89,8 @@ Language: nb_NO
     <string name="settings_take_me_there">Bring meg dit</string>
     <string name="profile_upgrade_to_patron">Oppgrader til Patron</string>
     <string name="upgrade_to">Oppgrader til %s</string>
-    <string name="onboarding_patron_subscribe">Abonner på Pocket Casts Patron</string>
-    <string name="onboarding_plus_subscribe">Abonner på Pocket Casts Plus</string>
+    <string name="onboarding_patron_subscribe">Abonner på PodHopper Patron</string>
+    <string name="onboarding_plus_subscribe">Abonner på PodHopper Plus</string>
     <string name="profile_account">Konto</string>
     <string name="profile_patron_expires_in">Patron utløper om %s</string>
     <string name="log_in_subtitle">Begynn å lytte til favorittpodcastene</string>
@@ -192,10 +192,10 @@ Language: nb_NO
     <string name="no_episode_ids_provided">Ingen episode-ID oppgitt</string>
     <string name="no_episodes_found_for_episode_ids_x">Fant ingen episoder for episode-ID %1$s</string>
     <string name="episode_count">Antall episoder</string>
-    <string name="profile_cancel_confirm_item_plus">Tilgang til Pocket Casts Plus-funksjoner blir sperret etter denne datoen.</string>
+    <string name="profile_cancel_confirm_item_plus">Tilgang til PodHopper Plus-funksjoner blir sperret etter denne datoen.</string>
     <string name="profile_cancel_confirm_item_folders">Mappene blir fjernet og innholdet flyttes tilbake til Podcasts-skjermbildet.</string>
-    <string name="profile_cancel_confirm_item_uploads">Alle filer lastet opp til Pocket Casts-kontoen din, blir slettet (men filer lastet ned på mobilenhetene dine, blir værende).</string>
-    <string name="profile_cancel_confirm_item_web_player">Du vil ikke lenger ha tilgang til Pocket Casts gjennom nettleseren eller datamaskinen din.</string>
+    <string name="profile_cancel_confirm_item_uploads">Alle filer lastet opp til PodHopper-kontoen din, blir slettet (men filer lastet ned på mobilenhetene dine, blir værende).</string>
+    <string name="profile_cancel_confirm_item_web_player">Du vil ikke lenger ha tilgang til PodHopper gjennom nettleseren eller datamaskinen din.</string>
     <string name="profile_cancel_confirm_stay_button_title">Jeg vil faktisk bli værende</string>
     <string name="profile_cancel_confirm_cancel_button_title">Ja, kanseller abonnementet</string>
     <string name="profile_cancel_confirm_subtitle">Dette endrer abonnementet til en gratiskonto.</string>
@@ -224,7 +224,7 @@ Language: nb_NO
     <string name="onboarding_log_in">Logg på</string>
     <string name="onboarding_create_account">Opprett konto</string>
     <string name="onboarding_sign_up">Registrer deg</string>
-    <string name="onboarding_plus_become_a_plus_member">Bli Plus-medlem og lås opp alle Pocket Cast-funksjonene</string>
+    <string name="onboarding_plus_become_a_plus_member">Bli Plus-medlem og lås opp alle PodHopper-funksjonene</string>
     <string name="onboarding_plus_continuing_agrees_to">Ved å fortsette godtar du %1$s og %2$s</string>
     <string name="onboarding_plus_privacy_policy">Retningslinjer for personvern</string>
     <string name="onboarding_plus_terms_and_conditions">Vilkår</string>
@@ -238,7 +238,7 @@ Language: nb_NO
     <string name="onboarding_recommendations_find_favorite_podcasts">Finn favorittpodcasten din</string>
     <string name="onboarding_recommendations_make_pocket_casts_yours">Gjør PodHopper til din egen ved å velge favorittpodcaster eller importere dem fra en annen podcastspiller. Du kan alltids gjøre dette senere.</string>
     <string name="onboarding_recommendations_import">Importer</string>
-    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Alt du liker med Pocket Casts, pluss mye mer</string>
+    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Alt du liker med PodHopper, pluss mye mer</string>
     <string name="onboarding_plus_feature_desktop_apps_text">Lytt på flere steder med appene våre for Windows, macOS og nett.</string>
     <string name="onboarding_plus_feature_folders_title">Mapper</string>
     <string name="onboarding_plus_feature_folders_text">Ordne podcastene i mapper og synkroniser dem mellom alle enhetene dine.</string>
@@ -819,14 +819,12 @@ Language: nb_NO
     <string name="profile_supporter_no_podcasts">Fant ingen podcaster for støttemedlemmer</string>
     <string name="profile_supporter_become_a_supporter">Bli støttemedlem</string>
     <string name="profile_subscribed_current_total">%1$d/%2$d ABONNERT PÅ</string>
-    <string name="profile_sub_web_goto">Hvis du vil annullere abonnementet, må du annullere via Pocketcasts.com.</string>
     <string name="profile_sub_thankyou_for_support">Takk for støtten din som betalingsabonnent. Kontoen din er nå nedgradert til gratiskonto.</string>
     <string name="profile_sub_sorry_to_see_you_go">Vi er lei oss for at du forlater oss!</string>
     <string name="profile_sub_ios_goto">Hvis du vil annullere abonnementet, må du annullere via Innstillinger.</string>
     <string name="profile_sub_from_web">Det ser ut til at du har abonnert på PodHopper Plus fra nettet</string>
     <string name="profile_sub_from_ios">Abonnementet ditt administres av Apple App Store</string>
     <string name="profile_sub_from_android">Det ser ut til at du har abonnert på PodHopper Plus fra en Android-enhet</string>
-    <string name="profile_sub_cancel_web_link">https://play.pocketcasts.com</string>
     <string name="profile_sub_cancel_hint2">Alle filer lastet opp til PodHopper-kontoen din blir slettet</string>
     <string name="profile_sub_cancel_hint1">Tilgang til PodHopper Plus-funksjoner blir sperret</string>
     <string name="profile_sub_cancel_hint0">Det nåværende abonnementet ditt vil forbli aktivt til</string>

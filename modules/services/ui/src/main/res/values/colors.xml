@@ -3,6 +3,7 @@
     <color name="transparent">#00000000</color>
 
     <color name="pocketcastsreddark">#C62828</color>
+    <color name="podhopper_green">#269E5F</color>
 
     <!-- Export from Zeplin -->
     <color name="pocketcastsred">#f44336</color>

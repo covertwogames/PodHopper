@@ -201,20 +201,6 @@ data class ShowPodcastFromUrlDeepLink(
     val url: String,
 ) : DeepLink
 
-data class ShareListDeepLink(
-    val path: String,
-    val sourceView: String?,
-) : UriDeepLink {
-    override fun toUri(shareHost: String): Uri {
-        return Uri.Builder()
-            .scheme("https")
-            .authority(shareHost)
-            .appendPath(path)
-            .let { if (sourceView != null) it.appendQueryParameter(EXTRA_SOURCE_VIEW, sourceView) else it }
-            .build()
-    }
-}
-
 data object CloudFilesDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
         .setData(Uri.parse("pktc://cloudfiles"))

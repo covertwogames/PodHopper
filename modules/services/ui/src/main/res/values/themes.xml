@@ -1528,10 +1528,10 @@
 
     <!-- Android Auto themes -->
     <style name="CarTheme" parent="ThemeDark">
-        <item name="android:colorAccent">@color/pocketcastsreddark</item>
-        <item name="colorAccent">@color/pocketcastsreddark</item>
-        <item name="android:colorControlActivated">@color/pocketcastsreddark</item>
-        <item name="colorControlActivated">@color/pocketcastsreddark</item>
+        <item name="android:colorAccent">@color/podhopper_green</item>
+        <item name="colorAccent">@color/podhopper_green</item>
+        <item name="android:colorControlActivated">@color/podhopper_green</item>
+        <item name="colorControlActivated">@color/podhopper_green</item>
     </style>
 
     <!-- Text styles from Zeplin -->

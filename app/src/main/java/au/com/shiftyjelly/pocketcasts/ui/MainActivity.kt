@@ -56,6 +56,7 @@ import androidx.mediarouter.media.MediaControlIntent
 import androidx.mediarouter.media.MediaRouteSelector
 import androidx.mediarouter.media.MediaRouter
 import androidx.transition.Slide
+import au.com.shiftyjelly.pocketcasts.BuildConfig
 import au.com.shiftyjelly.pocketcasts.R
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
@@ -85,7 +86,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.OpmlImportDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.PlayFromSearchDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.PocketCastsWebsiteGetDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ReferralsDeepLink
-import au.com.shiftyjelly.pocketcasts.deeplink.ShareListDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowBookmarkDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowDiscoverDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ShowEpisodeDeepLink
@@ -127,12 +127,10 @@ import au.com.shiftyjelly.pocketcasts.podcasts.view.episode.EpisodeContainerFrag
 import au.com.shiftyjelly.pocketcasts.podcasts.view.folders.SuggestedFoldersFragment
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcast.PodcastFragment
 import au.com.shiftyjelly.pocketcasts.podcasts.view.podcasts.PodcastsFragment
-import au.com.shiftyjelly.pocketcasts.podcasts.view.share.ShareListIncomingFragment
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.profile.ProfileFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFileBottomSheetFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFilesFragment
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsGuestPassFragment
 import au.com.shiftyjelly.pocketcasts.repositories.appreview.AppReviewManager
 import au.com.shiftyjelly.pocketcasts.repositories.di.NotificationPermissionChecker
 import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
@@ -1591,15 +1589,11 @@ class MainActivity :
                 }
 
                 is ReferralsDeepLink -> {
-                    openReferralClaim(deepLink.code)
+                    // PodHopper: Pocket Casts Plus guest pass links are ignored. PodHopper has no Plus to claim.
                 }
 
                 is ShowPodcastFromUrlDeepLink -> {
                     openPodcastUrl(deepLink.url)
-                }
-
-                is ShareListDeepLink -> {
-                    addFragment(ShareListIncomingFragment.newInstance(deepLink.path, SourceView.fromString(deepLink.sourceView)))
                 }
 
                 is CloudFilesDeepLink -> {
@@ -1646,8 +1640,11 @@ class MainActivity :
                 }
 
                 is DeveloperOptionsDeeplink -> {
-                    closePlayer()
-                    addFragment(DeveloperFragment())
+                    // PodHopper: the developer screen only opens in debug and prototype builds, never in the release build.
+                    if (BuildConfig.DEBUG || BuildConfig.IS_PROTOTYPE) {
+                        closePlayer()
+                        addFragment(DeveloperFragment())
+                    }
                 }
 
                 null -> {
@@ -1658,13 +1655,6 @@ class MainActivity :
             Timber.e(e)
             crashLogging.sendReport(e)
         }
-    }
-
-    private fun openReferralClaim(code: String) {
-        settings.referralClaimCode.set(code, false)
-        openTab(VR.id.navigation_profile)
-        val fragment = ReferralsGuestPassFragment.newInstance(ReferralsGuestPassFragment.ReferralsPageType.Claim)
-        showBottomSheet(fragment)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

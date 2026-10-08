@@ -12,7 +12,7 @@
         android:pathData="M58,0 C90.0325,0,116,25.9675,116,58 C116,90.0325,90.0325,116,58,116
 C25.9675,116,0,90.0325,0,58 C0,25.9675,25.9675,0,58,0 Z" />
     <path
-        android:fillColor="#F44336"
+        android:fillColor="#269E5F"
         android:fillType="evenOdd"
         android:strokeWidth="1"
         android:pathData="M57.99,38 C46.94,38,38,46.95,38,58 C38,69.05,46.94,78,57.99,78

@@ -345,102 +345,26 @@ class DeepLinkFactoryTest {
     }
 
     @Test
-    fun shareListHttp() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("http://lists.pocketcasts.com/path/to/list"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = null), deepLink)
-    }
-
-    @Test
-    fun shareListHttps() {
+    fun shareListLinkIsNotHandled() {
+        // PodHopper: shared podcast lists lived on Pocket Casts' list server and are no longer opened.
         val intent = Intent()
             .setAction(ACTION_VIEW)
             .setData(Uri.parse("https://lists.pocketcasts.com/path/to/list"))
 
         val deepLink = factory.create(intent)
 
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = null), deepLink)
+        assertNull(deepLink)
     }
 
     @Test
-    fun shareListNative() {
+    fun shareListNativeLinkIsNotHandled() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
             .setData(Uri.parse("pktc://sharelist/path/to/list"))
 
         val deepLink = factory.create(intent)
 
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = null), deepLink)
-    }
-
-    @Test
-    fun shareListWithoutPath() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("https://lists.pocketcasts.com/"))
-
-        val deepLink = factory.create(intent)
-
         assertNull(deepLink)
-    }
-
-    @Test
-    fun shareListNativeWithoutPath() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://sharelist/"))
-
-        val deepLink = factory.create(intent)
-
-        assertNull(deepLink)
-    }
-
-    @Test
-    fun shareListWithQuery() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("https://lists.pocketcasts.com/path/to/list?someKey=someValue"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = null), deepLink)
-    }
-
-    @Test
-    fun shareListNativeWithQuery() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://sharelist/path/to/list?someKey=someValue"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = null), deepLink)
-    }
-
-    @Test
-    fun shareListWithSource() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("https://lists.pocketcasts.com/path/to/list?source_view=someValue"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = "someValue"), deepLink)
-    }
-
-    @Test
-    fun shareListNativeWithSource() {
-        val intent = Intent()
-            .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://sharelist/path/to/list?source_view=someValue"))
-
-        val deepLink = factory.create(intent)
-
-        assertEquals(ShareListDeepLink("/path/to/list", sourceView = "someValue"), deepLink)
     }
 
     @Test
@@ -510,14 +434,15 @@ class DeepLinkFactoryTest {
     }
 
     @Test
-    fun cloudFiles() {
+    fun cloudFilesLinkIsNotHandled() {
+        // PodHopper: the Files screen is not opened from outside links.
         val intent = Intent()
             .setAction(ACTION_VIEW)
             .setData(Uri.parse("pktc://cloudfiles"))
 
         val deepLink = factory.create(intent)
 
-        assertEquals(CloudFilesDeepLink, deepLink)
+        assertNull(deepLink)
     }
 
     @Test

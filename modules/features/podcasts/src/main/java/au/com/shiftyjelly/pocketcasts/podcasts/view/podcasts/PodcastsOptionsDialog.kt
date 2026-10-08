@@ -1,12 +1,10 @@
 package au.com.shiftyjelly.pocketcasts.podcasts.view.podcasts
 
-import android.content.Intent
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import au.com.shiftyjelly.pocketcasts.compose.buttons.ToggleButtonOption
 import au.com.shiftyjelly.pocketcasts.models.type.PodcastsSortType
 import au.com.shiftyjelly.pocketcasts.podcasts.R
-import au.com.shiftyjelly.pocketcasts.podcasts.view.share.ShareListCreateActivity
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.model.BadgeType
 import au.com.shiftyjelly.pocketcasts.preferences.model.PodcastGridLayoutType
@@ -85,23 +83,10 @@ class PodcastsOptionsDialog(
                     trackTapOnModalOption(ModalOption.BADGE)
                 },
             )
-            .addTextOption(
-                titleId = LR.string.podcasts_menu_share_podcasts,
-                imageId = R.drawable.ic_share_option,
-                click = {
-                    sharePodcasts()
-                    trackTapOnModalOption(ModalOption.SHARE)
-                },
-            )
         fragmentManager?.let {
             dialog.show(it, "podcasts_options_dialog")
             showDialog = dialog
         }
-    }
-
-    private fun sharePodcasts() {
-        val activity = fragment.activity ?: return
-        activity.startActivity(Intent(activity, ShareListCreateActivity::class.java))
     }
 
     private fun openSortOptions() {
@@ -211,9 +196,6 @@ class PodcastsOptionsDialog(
         ),
         BADGE(
             analyticsValue = PodcastListModalOptionType.Badge,
-        ),
-        SHARE(
-            analyticsValue = PodcastListModalOptionType.Share,
         ),
     }
 }

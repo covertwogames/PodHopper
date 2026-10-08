@@ -103,7 +103,7 @@ Language: ca
     <string name="profile_last_refresh_at">Darrera actualització: %s</string>
     <string name="profile_just_now">Ara mateix</string>
     <string name="referrals_claim_guest_pass_description_installment">Gratuït durant %1$s, després %2$s/mes durant %3$d mesos. Compromís total: %4$s en 1 any.</string>
-    <string name="winback_claimed_offer_message_6">Gràcies per triar Pocket Casts. El teu pla de pagament a terminis de 12 mesos amb descompte comença després del teu període de facturació actual.</string>
+    <string name="winback_claimed_offer_message_6">Gràcies per triar PodHopper. El teu pla de pagament a terminis de 12 mesos amb descompte comença després del teu període de facturació actual.</string>
     <string name="winback_claimed_offer_message_5">50% de descompte el teu any vinent amb pagaments mensuals!</string>
     <string name="winback_offer_free_offer_installment_description">Assegura\'t un any de PodHopper Plus a meitat de preu amb 12 pagaments mensuals de %1$s. El teu pla de pagament a terminis amb descompte comença quan acabi el teu pla actual.</string>
     <string name="winback_offer_free_offer_installment_title">Aconsegueix un 50%% de descompte el teu any vinent — paga només %1$s/mes i estalvia %2$s</string>
@@ -196,9 +196,9 @@ Language: ca
     <string name="app_rating_yes_label">Sí!</string>
     <string name="app_rating_no_label">No gaire</string>
     <string name="app_rating_body">Hola! Ens encantaria saber si estàs gaudint de la nostra\u00A0app.</string>
-    <string name="app_rating_title">Gaudeixes de Pocket\u00A0Casts?</string>
+    <string name="app_rating_title">Gaudeixes de PodHopper?</string>
     <string name="end_of_year_story_epilogue_subtitle">Comparteix la teva reproducció amb els amics i mostra afecte als podcasters que t’han fet companyia durant tot l’any</string>
-    <string name="end_of_year_story_epilogue_title">Gràcies per passar el teu any amb Pocket\u00A0Casts</string>
+    <string name="end_of_year_story_epilogue_title">Gràcies per passar el teu any amb PodHopper</string>
     <string name="end_of_year_stories_year_completion_rate_subtitle">De %2$d episodis començats, n\'has acabat %1$d.\nUn seguiment més fort que la majoria de les subscripcions al gimnàs.</string>
     <string name="search_suggestions_no_results_message">Prova una nova cerca, o afegeix una URL de feed de pòdcast</string>
     <string name="search_suggestions_no_results_title">Cap resultat</string>
@@ -273,8 +273,8 @@ Language: ca
     <string name="onboarding_create_account_sign_up_email">Registra\'t amb un correu electrònic</string>
     <string name="onboarding_login_or">O</string>
     <string name="onboarding_login_continue_with_email">Continua amb el correu electrònic</string>
-    <string name="onboarding_create_account_title">Crea el teu compte de Pocket\u00A0Casts</string>
-    <string name="onboarding_create_account_message">Els teus pòdcasts, sempre sincronitzats. Mantén la teva biblioteca segura i gaudeix de Pocket\u00A0Casts a la web i a l\'escriptori.</string>
+    <string name="onboarding_create_account_title">Crea el teu compte de PodHopper</string>
+    <string name="onboarding_create_account_message">Els teus pòdcasts, sempre sincronitzats. Mantén la teva biblioteca segura i gaudeix de PodHopper a la web i a l\'escriptori.</string>
     <string name="playlist_artwork_description">Caràtula de la llista de reproducció</string>
     <string name="onboarding_intro_get_started">Començar</string>
     <string name="onboarding_intro_carousel_pc_user">Usuari de PodHopper</string>
@@ -568,7 +568,7 @@ Language: ca
     <string name="winback_changing_plan">Canviant el pla</string>
     <string name="winback_too_many_subscritpions_title">S\'han trobat diverses subscripcions</string>
     <string name="winback_too_many_subscritpions_button_label">Gestiona les subscripcions a Play Store</string>
-    <string name="winback_too_many_subscritpions_note">Tens més d\'una subscripció activa a Pocket Casts. Gestiona les teves subscripcions a la Play Store per evitar càrrecs duplicats.</string>
+    <string name="winback_too_many_subscritpions_note">Tens més d\'una subscripció activa a PodHopper. Gestiona les teves subscripcions a la Play Store per evitar càrrecs duplicats.</string>
     <string name="winback_available_plans_billing_note">El teu nou pla s\'activarà al final del teu període de facturació actual.</string>
     <string name="winback_available_plans_title">Plans disponibles</string>
     <string name="winback_error_fetch_description">Hi ha hagut un problema per obtenir els teus plans.</string>
@@ -661,7 +661,7 @@ Language: ca
     <string name="referrals_claim_guest_pass_description">La subscripció es renovarà automàticament a un pagament anual de %s.</string>
     <string name="error_generic_message">Alguna cosa ha anat malament. Torna-ho a provar més tard.</string>
     <string name="player_sleep_timer_settings">Configuració del temporitzador de son</string>
-    <string name="referrals_share_subject">%1$s accés de convidat a Pocket Casts</string>
+    <string name="referrals_share_subject">%1$s accés de convidat a PodHopper</string>
     <string name="referrals_invalid_offer_title">Aquesta oferta no està disponible</string>
     <string name="referrals_invalid_offer_description">La invitació només es bescanviar una vegada i està disponible per a aquells sense una subscripció Plus o Patron activa. Gràcies per escoltar!</string>
     <string name="referrals_activate_my_pass">Activa la meva invitació</string>
@@ -842,7 +842,7 @@ Language: ca
     <string name="podcast_submit_rating_no_internet">No s\'ha trobat connexió a Internet. Connecta\'t per enviar una valoració.</string>
     <string name="podcast_rate">Valoració %s</string>
     <string name="submit">Envia</string>
-    <string name="bookmarks_upsell_instructions">Desa les marques de temps dels teus episodis favorits i desbloqueja moltes més funcions amb Pocket Casts Plus.</string>
+    <string name="bookmarks_upsell_instructions">Desa les marques de temps dels teus episodis favorits i desbloqueja moltes més funcions amb PodHopper Plus.</string>
     <string name="bookmarks_upsell_instructions_early_access">Aconsegueix accés anticipat a aquesta funció amb PodHopper Patron i guarda els marcadors de temps dels teus episodis preferits. Disponible aviat per als subscriptors Plus.</string>
     <string name="error_loading_show_notes">No s\'han pogut trobar les notes d\'aquest episodi.</string>
     <string name="player_tab_notes">Notes</string>
@@ -1743,7 +1743,6 @@ Language: ca
     <string name="profile_sub_from_ios">La teva subscripció s\'administra a través de l\'App Store d\'Apple</string>
     <string name="profile_sub_from_web">Sembla que t\'has subscrit a PodHopper Plus des de la web</string>
     <string name="profile_sub_ios_goto">Per cancel·lar la subscripció, ho hauràs de fer anant a Configuració.</string>
-    <string name="profile_sub_web_goto">Per cancel·lar la subscripció, ho hauràs de fer anant a  Pocketcasts.com.</string>
     <string name="profile_supporter_thanks">Gràcies pel teu suport!</string>
     <string name="profile_terms_of_use_title">Condicions d\'ús</string>
     <string name="profile_welcome_to_free">Benvigut a PodHopper!</string>
@@ -1792,7 +1791,6 @@ Language: ca
     <string name="profile_supporter_no_podcasts">No s\'han trobat pòdcasts de col·laboradors</string>
     <string name="profile_subscribed_current_total">%1$d/%2$d SUBSCRIT</string>
     <string name="profile_sub_thankyou_for_support">Gràcies pel teu suport com a subscriptor de pagament. El teu compte torna a tenir la versió gratuïta.</string>
-    <string name="profile_sub_cancel_web_link">https://play.pocketcasts.com</string>
     <string name="profile_signed_in_as">Connectat com a</string>
     <string name="profile_sign_out_confirm">Estàs segur que vols tancar la sessió i aturar la sincronització?</string>
     <string name="profile_reset_password_check_email">Comprova el teu correu electrònic</string>

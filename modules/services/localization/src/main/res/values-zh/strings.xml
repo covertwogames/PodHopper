@@ -935,8 +935,8 @@ Language: zh_CN
     <string name="settings_app_icon_patron_round">Patron 圆形</string>
     <string name="settings_app_icon_patron_chrome">Patron 铬黄色</string>
     <string name="profile_upgrade_to_patron">升级至 Patron</string>
-    <string name="onboarding_plus_subscribe">订阅 Pocket Casts Plus</string>
-    <string name="onboarding_patron_subscribe">订阅 Pocket Casts Patron</string>
+    <string name="onboarding_plus_subscribe">订阅 PodHopper Plus</string>
+    <string name="onboarding_patron_subscribe">订阅 PodHopper Patron</string>
     <string name="upgrade_to">升级至 %s</string>
     <string name="profile_patron_expires_in">Patron 到期时间 %s</string>
     <string name="profile_account">账户</string>
@@ -964,7 +964,7 @@ Language: zh_CN
     <string name="onboarding_patron_feature_everything_in_plus_title">Plus 版的所有功能</string>
     <string name="onboarding_patron_features_title">相信我们的使命，想要表达您的支持？</string>
     <string name="onboarding_patron_feature_cloud_storage_title">100GB 云存储空间</string>
-    <string name="server_user_delete_account_with_sub_failed">您的账户有一个有效的 Pocket casting Plus 订阅。 请先将其取消，然后再删除您的账户。</string>
+    <string name="server_user_delete_account_with_sub_failed">您的账户有一个有效的 PodHopper Plus 订阅。 请先将其取消，然后再删除您的账户。</string>
     <string name="server_user_change_email_success">已成功更改您的电子邮件。</string>
     <string name="server_user_email_verification_failed">SSL验证失败。</string>
     <string name="server_user_email_success">已成功发送电子邮件。</string>
@@ -1047,9 +1047,9 @@ Language: zh_CN
     <string name="profile_cancel_confirm_cancel_button_title">是的，取消我的订阅“</string>
     <string name="profile_cancel_confirm_stay_button_title">实际上，我想留下来”</string>
     <string name="profile_cancel_confirm_item_web_player">您将无法再使用 Web 浏览器或台式计算机访问 PodHopper。</string>
-    <string name="profile_cancel_confirm_item_uploads">上传至您的 Pocket Casts 帐户的文件将会删除（但下载到您移动设备上的文件会保留）。</string>
+    <string name="profile_cancel_confirm_item_uploads">上传至您的 PodHopper 帐户的文件将会删除（但下载到您移动设备上的文件会保留）。</string>
     <string name="profile_cancel_confirm_item_folders">您的文件夹将被删除，并且其中的内容将移回“播客”屏幕。</string>
-    <string name="profile_cancel_confirm_item_plus">在此日期后，对 Pocket Casts Plus 功能的访问将被锁定。</string>
+    <string name="profile_cancel_confirm_item_plus">在此日期后，对 PodHopper Plus 功能的访问将被锁定。</string>
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">您的到期日期</string>
     <string name="profile_cancel_confirm_sub_expiry">您的当前订阅将保持启用状态，直到 %1$s</string>
     <string name="profile_cancel_confirm_subtitle">这会将您的套餐更改为免费帐户。</string>
@@ -1081,7 +1081,7 @@ Language: zh_CN
     <string name="onboarding_plus_terms_and_conditions">条款和条件</string>
     <string name="onboarding_plus_privacy_policy">隐私政策</string>
     <string name="onboarding_plus_continuing_agrees_to">继续即表示您同意我们的%1$s和%2$s。</string>
-    <string name="onboarding_plus_become_a_plus_member">成为 Plus 会员并解锁所有 Pocket Casts 功能</string>
+    <string name="onboarding_plus_become_a_plus_member">成为 Plus 会员并解锁所有 PodHopper 功能</string>
     <string name="onboarding_sign_up">注册</string>
     <string name="onboarding_create_account">创建账户</string>
     <string name="onboarding_log_in">登录</string>
@@ -1719,7 +1719,6 @@ Language: zh_CN
     <string name="profile_sub_ios_goto">要取消订阅，您需要通过“设置”取消。</string>
     <string name="profile_sub_from_android">您似乎从 Android 设备订阅了 PodHopper Plus</string>
     <string name="profile_sub_from_web">您似乎从 Web 订阅了 PodHopper Plus</string>
-    <string name="profile_sub_web_goto">要取消订阅，您将需要通过 Pocketcasts.com 取消。</string>
     <string name="profile_reset_password_sent">密码重置链接已发送</string>
     <string name="profile_refresh_failed">刷新失败</string>
     <string name="profile_cloud_files_added_uploaded">添加到此设备的文件将自动上传到云。</string>
@@ -1753,7 +1752,6 @@ Language: zh_CN
     <string name="profile_subscribed_current_total">已订阅 %1$d/%2$d</string>
     <string name="profile_sub_thankyou_for_support">感谢您以付费订阅者身份提供支持。 您的账户现已降级为免费使用。</string>
     <string name="profile_sub_sorry_to_see_you_go">对于您转移此域，我们深表遗憾！</string>
-    <string name="profile_sub_cancel_web_link">https://play.pocketcasts.com</string>
     <string name="profile_sub_cancel_hint2">所有上传到 PodHopper 账户的文件都将被删除</string>
     <string name="profile_sub_cancel_hint1">对 PodHopper Plus 功能的访问将被锁定</string>
     <string name="profile_sub_cancel_hint0">您的当前订阅将保持活动状态，直到</string>

@@ -49,11 +49,8 @@ class DeepLinkFactory(
         PocketCastsWebsiteGetAdapter(webBaseHost),
         ReferralsAdapter(webBaseHost),
         PodloveAdapter(),
-        ShareListAdapter(listHost),
-        ShareListNativeAdapter(),
         SubscribeOnAndroidAdapter(),
         AppleAdapter(),
-        CloudFilesAdapter(),
         ShareLinkNativeAdapter(),
         SignInAdapter(shareHost),
         ShareLinkAdapter(shareHost),
@@ -299,40 +296,6 @@ private class PodloveAdapter : DeepLinkAdapter {
     }
 }
 
-private class ShareListAdapter(
-    private val listHost: String,
-) : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val scheme = uriData?.scheme
-        val host = uriData?.host
-        val path = uriData?.path?.takeIf { it != "/" }
-        val source = uriData?.getQueryParameter(EXTRA_SOURCE_VIEW)
-
-        return if (intent.action == ACTION_VIEW && scheme in listOf("http", "https") && host == listHost && path != null) {
-            ShareListDeepLink(path, source)
-        } else {
-            null
-        }
-    }
-}
-
-private class ShareListNativeAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val scheme = uriData?.scheme
-        val host = uriData?.host
-        val path = uriData?.path?.takeIf { it != "/" }
-        val source = uriData?.getQueryParameter(EXTRA_SOURCE_VIEW)
-
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "sharelist" && path != null) {
-            ShareListDeepLink(path, source)
-        } else {
-            null
-        }
-    }
-}
-
 // http://subscribeonandroid.com/geeknewscentral.com/podcast.xml
 private class SubscribeOnAndroidAdapter : DeepLinkAdapter {
     override fun create(intent: Intent): DeepLink? {
@@ -360,20 +323,6 @@ private class AppleAdapter : DeepLinkAdapter {
 
         return if (intent.action == ACTION_VIEW && host in listOf("itunes.apple.com", "podcasts.apple.com") && uriData != null) {
             ShowPodcastFromUrlDeepLink(uriData.toString())
-        } else {
-            null
-        }
-    }
-}
-
-private class CloudFilesAdapter : DeepLinkAdapter {
-    override fun create(intent: Intent): DeepLink? {
-        val uriData = intent.data
-        val scheme = uriData?.scheme
-        val host = uriData?.host
-
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "cloudfiles") {
-            CloudFilesDeepLink
         } else {
             null
         }

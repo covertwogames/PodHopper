@@ -64,8 +64,8 @@ private val DefaultColors = ColorProviders(
         onSecondary = Color(0xFFE0E6EA),
         secondaryContainer = Color(0xFFFAFAF9),
         onSecondaryContainer = Color(0xFF292B2E),
-        // Used as a trick for different Pocket Casts logo colors
-        tertiary = Color(0xFFF43E37),
+        // Used as a trick for the logo circle colour. PodHopper icon green.
+        tertiary = Color(0xFF269E5F),
         onTertiary = Color(0xFFFAFAF9),
         tertiaryContainer = UndefinedColor,
         onTertiaryContainer = UndefinedColor,
@@ -116,8 +116,8 @@ private val DefaultColors = ColorProviders(
         onSecondary = Color(0xFF333438),
         secondaryContainer = Color(0xFF292B2E),
         onSecondaryContainer = Color(0xFFFFFFFF),
-        // Used as a trick for different Pocket Casts logo colors
-        tertiary = Color(0xFFD9201C),
+        // Used as a trick for the logo circle colour. PodHopper icon green.
+        tertiary = Color(0xFF269E5F),
         onTertiary = Color(0xFFFAFAF9),
         tertiaryContainer = UndefinedColor,
         onTertiaryContainer = UndefinedColor,
