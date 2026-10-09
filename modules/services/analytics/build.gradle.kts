@@ -23,9 +23,6 @@ dependencies {
     api(projects.modules.services.utils)
     implementation(projects.modules.services.servers)
 
-    implementation(libs.automattic.explat)
-    implementation(libs.automattic.tracks)
-
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)

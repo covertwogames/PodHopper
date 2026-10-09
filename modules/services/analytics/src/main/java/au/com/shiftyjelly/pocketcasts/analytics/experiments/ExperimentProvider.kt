@@ -6,13 +6,11 @@
 package au.com.shiftyjelly.pocketcasts.analytics.experiments
 
 import au.com.shiftyjelly.pocketcasts.analytics.AccountStatusInfo
-import com.automattic.android.experimentation.VariationsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
 class ExperimentProvider @Inject constructor(
-    private val repository: VariationsRepository,
     private val accountStatusInfo: AccountStatusInfo,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
