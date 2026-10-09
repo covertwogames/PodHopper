@@ -26,11 +26,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
@@ -99,9 +97,6 @@ import au.com.shiftyjelly.pocketcasts.deeplink.ShowUpNextTabDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SignInDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.SmartFoldersDeepLink
 import au.com.shiftyjelly.pocketcasts.deeplink.ThemesDeepLink
-import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity
-import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity.StoriesSource
-import au.com.shiftyjelly.pocketcasts.endofyear.ui.EndOfYearLaunchBottomSheet
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
@@ -133,7 +128,6 @@ import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFileBottomSheetFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFilesFragment
 import au.com.shiftyjelly.pocketcasts.repositories.appreview.AppReviewManager
 import au.com.shiftyjelly.pocketcasts.repositories.di.NotificationPermissionChecker
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.opml.OpmlImportTask
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -177,9 +171,6 @@ import au.com.shiftyjelly.pocketcasts.views.helper.OffsettingBottomSheetCallback
 import au.com.shiftyjelly.pocketcasts.views.helper.UiUtil
 import au.com.shiftyjelly.pocketcasts.views.helper.WarningsHelper
 import com.automattic.eventhorizon.DiscoverTabOpenedEvent
-import com.automattic.eventhorizon.EndOfYearModalDismissedEvent
-import com.automattic.eventhorizon.EndOfYearModalShownEvent
-import com.automattic.eventhorizon.EndOfYearModalTappedEvent
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.FiltersTabOpenedEvent
 import com.automattic.eventhorizon.PlaybackErrorShownEvent
@@ -374,24 +365,6 @@ class MainActivity :
         showViewBookmarksSnackbar(result)
     }
 
-    private val endOfYearActivityLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(StoriesActivity.StoriesActivityContract()) { result ->
-        when (result) {
-            is StoriesActivity.StoriesActivityContract.Result.Failure -> {
-                result.source?.let { source ->
-                    val view = snackBarView()
-                    val action = View.OnClickListener {
-                        showStories(source = source)
-                    }
-                    Snackbar.make(view, getString(LR.string.end_of_year_failed_to_load_message), Snackbar.LENGTH_LONG)
-                        .setAction(LR.string.retry, action)
-                        .show()
-                }
-            }
-
-            else -> Unit
-        }
-    }
-
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) {}
@@ -522,20 +495,6 @@ class MainActivity :
 
         binding.bottomNavigation.inflateMenu(VR.menu.navigation)
 
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
-                val isEligible = viewModel.isEndOfYearStoriesEligible()
-                if (isEligible) {
-                    if (settings.getEndOfYearShowModal()) {
-                        setupEndOfYearLaunchBottomSheet()
-                    }
-                    if (settings.getEndOfYearShowBadge2025()) {
-                        binding.bottomNavigation.getOrCreateBadge(VR.id.navigation_profile)
-                    }
-                }
-            }
-        }
-
         var selectedTab = settings.selectedTab()
         val tabs = buildMap {
             put(VR.id.navigation_podcasts) { FragmentInfo(PodcastsFragment(), true) }
@@ -615,15 +574,8 @@ class MainActivity :
                     val currentTab = navigator.currentTab()
                     if (settings.selectedTab() != currentTab) {
                         trackTabOpened(currentTab)
-                        when (currentTab) {
-                            VR.id.navigation_profile -> resetEoYBadgeIfNeeded()
-                        }
                     }
                     settings.setSelectedTab(currentTab)
-                } else if (it is NavigatorAction.NewFragmentAdded) {
-                    if (navigator.currentTab() == VR.id.navigation_profile) {
-                        resetEoYBadgeIfNeeded()
-                    }
                 }
             }
             .subscribe()
@@ -638,15 +590,6 @@ class MainActivity :
         ThemeSettingObserver(this, theme, settings.themeReconfigurationEvents).observeThemeChanges()
 
         setupAppReviewPrompt()
-    }
-
-    private fun resetEoYBadgeIfNeeded() {
-        if (binding.bottomNavigation.getBadge(VR.id.navigation_profile) != null &&
-            settings.getEndOfYearShowBadge2025()
-        ) {
-            binding.bottomNavigation.removeBadge(VR.id.navigation_profile)
-            settings.setEndOfYearShowBadge2025(false)
-        }
     }
 
     override fun launchIntent(onboardingFlow: OnboardingFlow): Intent {
@@ -948,69 +891,6 @@ class MainActivity :
         showBottomSheet(UpNextFragment.newInstance(source = source))
     }
 
-    private fun setupEndOfYearLaunchBottomSheet() {
-        val viewGroup = binding.modalBottomSheet
-        viewGroup.removeAllViews()
-        viewGroup.addView(
-            ComposeView(viewGroup.context).apply {
-                setContent {
-                    val shouldShow by viewModel.shouldShowStoriesModal.collectAsState()
-                    AppTheme(theme.activeTheme) {
-                        EndOfYearLaunchBottomSheet(
-                            parent = viewGroup,
-                            shouldShow = shouldShow,
-                            onClick = {
-                                eventHorizon.track(
-                                    EndOfYearModalTappedEvent(
-                                        currentYear = EndOfYearManager.YEAR_TO_SYNC.value.toLong(),
-                                    ),
-                                )
-                                showStoriesOrAccount(StoriesSource.MODAL.key)
-                            },
-                            onExpand = {
-                                eventHorizon.track(
-                                    EndOfYearModalShownEvent(
-                                        currentYear = EndOfYearManager.YEAR_TO_SYNC.value.toLong(),
-                                    ),
-                                )
-                                settings.setEndOfYearShowModal(false)
-                            },
-                            onCollapse = {
-                                eventHorizon.track(
-                                    EndOfYearModalDismissedEvent(
-                                        currentYear = EndOfYearManager.YEAR_TO_SYNC.value.toLong(),
-                                    ),
-                                )
-                            },
-                        )
-                    }
-                }
-            },
-        )
-    }
-
-    private fun showEndOfYearModal() {
-        viewModel.updateStoriesModalShowState(true)
-        launch(Dispatchers.Main) {
-            if (viewModel.isEndOfYearStoriesEligible()) setupEndOfYearLaunchBottomSheet()
-        }
-    }
-
-    override fun showStoriesOrAccount(source: String) {
-        if (viewModel.isSignedIn) {
-            showStories(StoriesSource.fromString(source))
-        } else {
-            viewModel.waitingForSignInToShowStories = true
-            openOnboardingFlow(OnboardingFlow.LoggedOut)
-        }
-    }
-
-    private fun showStories(source: StoriesSource) {
-        endOfYearActivityLauncher.launch(
-            StoriesActivity.intent(activity = this, source = source),
-        )
-    }
-
     private fun setupPlayerViews(animateMiniPlayer: Boolean) {
         binding.playerBottomSheet.listener = this
         binding.playerBottomSheet.initializeBottomSheetBehavior()
@@ -1074,16 +954,6 @@ class MainActivity :
 
         viewModel.signInState.observe(this) { signinState ->
             val subscription = (signinState as? SignInState.SignedIn)?.subscription
-
-            if (signinState.isSignedIn) {
-                if (viewModel.waitingForSignInToShowStories) {
-                    showStories(StoriesSource.USER_LOGIN)
-                    viewModel.waitingForSignInToShowStories = false
-                } else if (settings.getEndOfYearShowModal()) {
-                    if (isWhatsNewShowing()) return@observe
-                    showEndOfYearModal()
-                }
-            }
 
             if (subscription == null) {
                 applicationScope.launch { userEpisodeManager.removeCloudStatusFromFiles(playbackManager) }
@@ -1183,10 +1053,7 @@ class MainActivity :
         frameBottomSheetBehavior.addBottomSheetCallback(OffsettingBottomSheetCallback(binding.frameBottomSheet))
     }
 
-    override fun whatsNewDismissed(fromConfirmAction: Boolean) {
-        if (fromConfirmAction) return
-        if (settings.getEndOfYearShowModal()) showEndOfYearModal()
-    }
+    override fun whatsNewDismissed(fromConfirmAction: Boolean) = Unit
 
     override fun getPlayerBottomSheetState(): Int {
         return binding.playerBottomSheet.sheetBehavior?.state ?: BottomSheetBehavior.STATE_COLLAPSED
@@ -1342,8 +1209,6 @@ class MainActivity :
     }
 
     override fun isUpNextShowing() = bottomSheetTag == UpNextFragment::class.java.name
-
-    private fun isWhatsNewShowing() = bottomSheetTag == WhatsNewFragment::class.java.name
 
     private fun removeBottomSheetFragment(fragment: Fragment) {
         val tag = fragment::class.java.name
@@ -1864,7 +1729,6 @@ class MainActivity :
     private fun canDisplayAppRatingsPrompt(): Boolean {
         return !binding.root.wasTouchedInLast(2.seconds) &&
             frameBottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED &&
-            !viewModel.shouldShowStoriesModal.value &&
             !binding.playerBottomSheet.isPlayerOpen &&
             isAtRootOfStack() &&
             isNoDialogShown() &&

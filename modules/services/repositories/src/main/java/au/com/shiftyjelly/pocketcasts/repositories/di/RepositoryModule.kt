@@ -23,10 +23,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadQueue
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserver
 import au.com.shiftyjelly.pocketcasts.repositories.download.MediaDurationExtractor
 import au.com.shiftyjelly.pocketcasts.repositories.download.MediaDurationExtractorImpl
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManagerImpl
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSync
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSyncImpl
 import au.com.shiftyjelly.pocketcasts.repositories.history.upnext.UpNextHistoryManager
 import au.com.shiftyjelly.pocketcasts.repositories.history.upnext.UpNextHistoryManagerImpl
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationDrawer
@@ -173,10 +169,6 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun provideEndOfYearManager(endOfYearManagerImpl: EndOfYearManagerImpl): EndOfYearManager
-
-    @Binds
-    @Singleton
     abstract fun provideSearchHistoryManager(searchHistoryManagerImpl: SearchHistoryManagerImpl): SearchHistoryManager
 
     @Binds
@@ -195,9 +187,6 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun provideReferralManager(referralManagerImpl: ReferralManagerImpl): ReferralManager
-
-    @Binds
-    abstract fun provideEndOfYearSync(endOfYearSyncImpl: EndOfYearSyncImpl): EndOfYearSync
 
     @Binds
     abstract fun provideUpNextHistoryManager(upNextHistoryManagerImpl: UpNextHistoryManagerImpl): UpNextHistoryManager

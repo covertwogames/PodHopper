@@ -9,7 +9,6 @@ import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.bookmark.BookmarkManager
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackNoticeManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackState
@@ -63,9 +62,6 @@ class MainActivityViewModelTest {
 
     @Mock
     lateinit var settings: Settings
-
-    @Mock
-    lateinit var endOfYearManager: EndOfYearManager
 
     @Mock
     lateinit var multiSelectBookmarksHelper: MultiSelectBookmarksHelper
@@ -237,7 +233,6 @@ class MainActivityViewModelTest {
             playbackNoticeManager = playbackNoticeManager,
             userManager = userManager,
             settings = settings,
-            endOfYearManager = endOfYearManager,
             multiSelectBookmarksHelper = multiSelectBookmarksHelper,
             podcastManager = podcastManager,
             bookmarkManager = bookmarkManager,

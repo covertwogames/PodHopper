@@ -162,9 +162,6 @@ class AutomotiveSettingsActivity :
         return false
     }
 
-    override fun showStoriesOrAccount(source: String) {
-    }
-
     override fun whatsNewDismissed(fromConfirmAction: Boolean) {
     }
 

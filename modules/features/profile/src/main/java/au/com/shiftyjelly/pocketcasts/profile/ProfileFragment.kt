@@ -15,7 +15,6 @@ import au.com.shiftyjelly.pocketcasts.account.onboarding.podhopper.PodHopperOnbo
 import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.compose.CallOnce
 import au.com.shiftyjelly.pocketcasts.compose.extensions.contentWithoutConsumedInsets
-import au.com.shiftyjelly.pocketcasts.endofyear.StoriesActivity.StoriesSource
 import au.com.shiftyjelly.pocketcasts.player.view.bookmark.BookmarksContainerFragment
 import au.com.shiftyjelly.pocketcasts.podcasts.view.ProfileEpisodeListFragment
 import au.com.shiftyjelly.pocketcasts.settings.HelpFeedbackFragment
@@ -58,7 +57,6 @@ class ProfileFragment :
         }
         val state = ProfilePageState(
             sections = ProfileSection.visibleEntries(),
-            isPlaybackEnabled = profileViewModel.isPlaybackAvailable.collectAsState().value,
             isFreeAccountBannerVisible = profileViewModel.isFreeAccountBannerVisible.collectAsState().value,
             isUpgradeBannerVisible = profileViewModel.showUpgradeBanner.collectAsState(false).value,
             miniPlayerPadding = profileViewModel.miniPlayerInset.collectAsState().value.pxToDp(requireContext()).dp,
@@ -112,13 +110,6 @@ class ProfileFragment :
             },
             onDismissCreateFreeAccountBannerClick = {
                 profileViewModel.dismissFreeAccountBanner()
-            },
-            onEndOfYearCardShow = {
-                profileViewModel.onEndOfYearCardShown()
-            },
-            onPlaybackClick = {
-                profileViewModel.onPlaybackClick()
-                (activity as? FragmentHostListener)?.showStoriesOrAccount(StoriesSource.PROFILE.key)
             },
             onClaimReferralsClick = {
                 fragmentHostListener.showBottomSheet(ReferralsGuestPassFragment.newInstance(ReferralsPageType.Claim))

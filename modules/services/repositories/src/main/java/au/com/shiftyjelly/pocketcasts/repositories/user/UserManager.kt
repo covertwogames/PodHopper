@@ -9,7 +9,6 @@ import au.com.shiftyjelly.pocketcasts.coroutines.di.ApplicationScope
 import au.com.shiftyjelly.pocketcasts.models.db.dao.PlaylistDao
 import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSync
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationScheduler
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationSchedulerImpl.Companion.TAG_TRENDING_RECOMMENDATIONS
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -63,7 +62,6 @@ class UserManagerImpl @Inject constructor(
     private val accountStatusInfo: AccountStatusInfo,
     @ApplicationScope private val applicationScope: CoroutineScope,
     private val experimentProvider: ExperimentProvider,
-    private val endOfYearSync: EndOfYearSync,
     private val notificationScheduler: NotificationScheduler,
 ) : UserManager,
     CoroutineScope {
@@ -141,9 +139,6 @@ class UserManagerImpl @Inject constructor(
 
                     val anonId = accountStatusInfo.recreateAnonId()
                     experimentProvider.refreshExperiments(anonId)
-
-                    settings.setEndOfYearShowModal(true)
-                    endOfYearSync.reset()
                 }
                 subscriptionManager.clearCachedMembership()
             }

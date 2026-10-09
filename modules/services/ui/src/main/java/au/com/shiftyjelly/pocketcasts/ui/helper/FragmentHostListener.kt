@@ -41,7 +41,6 @@ interface FragmentHostListener {
     fun updateSystemColors()
     fun overrideNextRefreshTimer()
     fun isUpNextShowing(): Boolean
-    fun showStoriesOrAccount(source: String)
     fun whatsNewDismissed(fromConfirmAction: Boolean = false)
     fun onPlayerBackstackChanged()
 }

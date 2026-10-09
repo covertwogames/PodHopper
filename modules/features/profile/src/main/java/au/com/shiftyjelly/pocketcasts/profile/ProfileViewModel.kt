@@ -6,7 +6,6 @@ import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
@@ -18,8 +17,6 @@ import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
 import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import au.com.shiftyjelly.pocketcasts.utils.toDurationFromNow
 import com.automattic.eventhorizon.DownloadsShownEvent
-import com.automattic.eventhorizon.EndOfYearProfileCardShownEvent
-import com.automattic.eventhorizon.EndOfYearProfileCardTappedEvent
 import com.automattic.eventhorizon.EventHorizon
 import com.automattic.eventhorizon.InformationalBannerViewCreateAccountTapEvent
 import com.automattic.eventhorizon.InformationalBannerViewDismissedEvent
@@ -38,11 +35,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -54,7 +49,6 @@ class ProfileViewModel @Inject constructor(
     private val podcastManager: PodcastManager,
     private val statsManager: StatsManager,
     private val userManager: UserManager,
-    private val endOfYearManager: EndOfYearManager,
     private val eventHorizon: EventHorizon,
     private val supabaseClient: SupabaseClient,
     private val positionSync: PodHopperPositionSync,
@@ -137,17 +131,6 @@ class ProfileViewModel @Inject constructor(
         initialValue = PodHopperAccountState(isSignedIn = false, email = null),
     )
 
-    internal val isPlaybackAvailable = flow {
-        while (true) {
-            emit(endOfYearManager.isEligibleForEndOfYear())
-            delay(10_000)
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false,
-    )
-
     internal val isFreeAccountBannerVisible = combine(
         signInState.map { it.isSignedIn },
         settings.isFreeAccountProfileBannerDismissed.flow,
@@ -203,26 +186,6 @@ class ProfileViewModel @Inject constructor(
 
     internal fun refreshStats() {
         refreshStatsTrigger.tryEmit(Unit)
-    }
-
-    internal fun onEndOfYearCardShown() {
-        eventHorizon.track(
-            EndOfYearProfileCardShownEvent(
-                currentYear = EndOfYearManager.YEAR_TO_SYNC.value.toLong(),
-            ),
-        )
-    }
-
-    internal fun onPlaybackClick() {
-        eventHorizon.track(
-            EndOfYearProfileCardTappedEvent(
-                currentYear = EndOfYearManager.YEAR_TO_SYNC.value.toLong(),
-            ),
-        )
-        // once stories prompt card is tapped, we don't want to show stories launch modal if not already shown
-        if (settings.getEndOfYearShowModal()) {
-            settings.setEndOfYearShowModal(false)
-        }
     }
 
     internal fun onSectionClick(section: ProfileSection) {

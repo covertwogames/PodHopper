@@ -14,7 +14,6 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.appreview.AppReviewExceptionHandler
 import au.com.shiftyjelly.pocketcasts.repositories.appreview.AppReviewManager
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserver
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearSync
 import au.com.shiftyjelly.pocketcasts.repositories.file.FileStorage
 import au.com.shiftyjelly.pocketcasts.repositories.file.StorageOptions
 import au.com.shiftyjelly.pocketcasts.repositories.jobs.VersionMigrationsWorker
@@ -36,8 +35,6 @@ import au.com.shiftyjelly.pocketcasts.shared.DownloadStatisticsReporter
 import au.com.shiftyjelly.pocketcasts.ui.helper.AppIcon
 import au.com.shiftyjelly.pocketcasts.utils.ChainedExceptionHandler
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBufferUncaughtExceptionHandler
 import au.com.shiftyjelly.pocketcasts.utils.log.RxJavaUncaughtExceptionHandling
@@ -115,8 +112,6 @@ class PocketCastsApplication :
     @Inject lateinit var databaseExportHelper: DatabaseExportHelper
 
     @Inject lateinit var experimentProvider: ExperimentProvider
-
-    @Inject lateinit var endOfYearSync: EndOfYearSync
 
     @Inject lateinit var notificationManager: NotificationManager
 
@@ -280,10 +275,6 @@ class PocketCastsApplication :
         applicationScope.launch { appReviewManager.monitorAppReviewReasons() }
 
         keepPlayerWidgetsUpdated()
-
-        if (FeatureFlag.isEnabled(Feature.SYNC_EOY_DATA_ON_STARTUP)) {
-            applicationScope.launch { endOfYearSync.sync() }
-        }
 
         Timber.i("Launched ${BuildConfig.APPLICATION_ID}")
     }

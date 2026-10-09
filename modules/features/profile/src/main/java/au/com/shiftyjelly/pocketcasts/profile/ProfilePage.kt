@@ -42,7 +42,6 @@ import au.com.shiftyjelly.pocketcasts.compose.components.Banner
 import au.com.shiftyjelly.pocketcasts.compose.components.HorizontalDivider
 import au.com.shiftyjelly.pocketcasts.compose.preview.ThemePreviewParameterProvider
 import au.com.shiftyjelly.pocketcasts.compose.theme
-import au.com.shiftyjelly.pocketcasts.endofyear.ui.EndOfYearPromptCard
 import au.com.shiftyjelly.pocketcasts.images.R
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.payment.BillingCycle
@@ -74,8 +73,6 @@ internal fun ProfilePage(
     onLogoutClick: () -> Unit,
     onCreateFreeAccountBannerClick: () -> Unit,
     onDismissCreateFreeAccountBannerClick: () -> Unit,
-    onEndOfYearCardShow: () -> Unit,
-    onPlaybackClick: () -> Unit,
     onClaimReferralsClick: () -> Unit,
     onHideReferralsCardClick: () -> Unit,
     onReferralsCardShow: () -> Unit,
@@ -130,18 +127,6 @@ internal fun ProfilePage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = horizontalPadding),
-                        )
-                    }
-                    item {
-                        VerticalSpacer()
-                    }
-                }
-                if (state.isPlaybackEnabled) {
-                    item {
-                        EndOfYearPromptCard(
-                            onClick = onPlaybackClick,
-                            onShow = onEndOfYearCardShow,
-                            modifier = Modifier.padding(horizontal = horizontalPadding),
                         )
                     }
                     item {
@@ -219,7 +204,6 @@ internal fun ProfilePage(
 
 internal data class ProfilePageState(
     val sections: List<ProfileSection>,
-    val isPlaybackEnabled: Boolean,
     val isFreeAccountBannerVisible: Boolean,
     val isUpgradeBannerVisible: Boolean,
     val miniPlayerPadding: Dp,
@@ -372,7 +356,6 @@ private fun ProfilePageStub(
     ProfilePage(
         state = ProfilePageState(
             sections = ProfileSection.entries,
-            isPlaybackEnabled = true,
             isUpgradeBannerVisible = true,
             isFreeAccountBannerVisible = true,
             miniPlayerPadding = 64.dp,
@@ -406,8 +389,6 @@ private fun ProfilePageStub(
         onLogoutClick = {},
         onCreateFreeAccountBannerClick = {},
         onDismissCreateFreeAccountBannerClick = {},
-        onEndOfYearCardShow = {},
-        onPlaybackClick = {},
         onSendReferralsClick = {},
         onHideReferralsCardClick = {},
         onReferralsCardShow = {},

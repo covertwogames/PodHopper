@@ -88,7 +88,6 @@ dependencies {
 
     implementation(projects.modules.features.account)
     implementation(projects.modules.features.appreview)
-    implementation(projects.modules.features.endofyear)
     implementation(projects.modules.features.filters)
     implementation(projects.modules.features.navigation)
     implementation(projects.modules.features.player)

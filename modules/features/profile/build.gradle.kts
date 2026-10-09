@@ -65,13 +65,13 @@ dependencies {
     implementation(libs.timber)
 
     implementation(projects.modules.features.cartheme)
-    implementation(projects.modules.features.endofyear)
     implementation(projects.modules.features.player)
     implementation(projects.modules.features.referrals)
     implementation(projects.modules.services.compose)
     implementation(projects.modules.services.deeplink)
     implementation(projects.modules.services.images)
     implementation(projects.modules.services.localization)
+    implementation(projects.modules.services.sharing)
     implementation(projects.modules.services.utils)
 
     testImplementation(libs.coroutines.test)

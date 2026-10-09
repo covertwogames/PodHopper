@@ -12,7 +12,6 @@ import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.player.view.bookmark.BookmarkArguments
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.bookmark.BookmarkManager
-import au.com.shiftyjelly.pocketcasts.repositories.endofyear.EndOfYearManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackNoticeInfo
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackNoticeManager
@@ -49,7 +48,6 @@ class MainActivityViewModel
     playbackNoticeManager: PlaybackNoticeManager,
     userManager: UserManager,
     private val settings: Settings,
-    private val endOfYearManager: EndOfYearManager,
     private val multiSelectBookmarksHelper: MultiSelectBookmarksHelper,
     private val podcastManager: PodcastManager,
     private val bookmarkManager: BookmarkManager,
@@ -78,15 +76,10 @@ class MainActivityViewModel
 
     val playbackNoticeFlow: StateFlow<PlaybackNoticeInfo?> = playbackNoticeManager.playbackNotice
         .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), initialValue = null)
-    val shouldShowStoriesModal = MutableStateFlow(false)
-    var waitingForSignInToShowStories = false
 
     init {
         viewModelScope.launch {
             showWhatsNewIfNeeded()
-            if (!state.value.shouldShowWhatsNew) {
-                updateStoriesModalShowState(settings.getEndOfYearShowModal())
-            }
         }
 
         viewModelScope.launch {
@@ -121,16 +114,6 @@ class MainActivityViewModel
     val signInState: LiveData<SignInState> = userManager.getSignInState().toLiveData()
     val isSignedIn: Boolean
         get() = signInState.value?.isSignedIn ?: false
-
-    suspend fun isEndOfYearStoriesEligible() = endOfYearManager.isEligibleForEndOfYear()
-
-    fun updateStoriesModalShowState(show: Boolean) {
-        viewModelScope.launch {
-            shouldShowStoriesModal.value = show &&
-                isEndOfYearStoriesEligible() &&
-                !state.value.shouldShowWhatsNew
-        }
-    }
 
     fun closeMultiSelect() {
         multiSelectBookmarksHelper.closeMultiSelect()
