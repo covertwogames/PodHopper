@@ -87,7 +87,6 @@ dependencies {
     implementation(libs.work.runtime)
 
     implementation(projects.modules.features.account)
-    implementation(projects.modules.features.appreview)
     implementation(projects.modules.features.filters)
     implementation(projects.modules.features.navigation)
     implementation(projects.modules.features.player)

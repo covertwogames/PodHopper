@@ -179,8 +179,6 @@
     <color name="cellPlayLast">#30b4f0</color>
 
     <!-- Light theme colours -->
-    <color name="textColorPrimaryLight">#1E1F1E</color>
-    <color name="textColorSecondaryLight">#8F97A4</color>
     <color name="navigationCheckedColorLight">#03A9F4</color>
     <color name="searchBoxLight">#f2f4f5</color>
     <color name="cellArchiveLight">#8f97a4</color>
@@ -389,9 +387,6 @@
     <style name="DarkToolbarTheme" parent="ThemeOverlay.AppCompat"></style>
 
     <!-- Dark theme colours -->
-    <color name="textColorPrimaryDark">#FFFFFF</color>
-    <color name="textColorSecondaryDark">#8f97a4</color>
-    <color name="navigationCheckedColorDark">#FFFFFF</color>
     <color name="searchBoxDark">#131313</color>
     <color name="cellArchiveDark">#131313</color>
     <color name="colorMessageBackgroundDark">#3a3a3b</color>
