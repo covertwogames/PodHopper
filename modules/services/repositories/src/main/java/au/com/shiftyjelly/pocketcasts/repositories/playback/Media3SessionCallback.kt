@@ -128,6 +128,9 @@ internal class Media3SessionCallback(
 
         val searchQuery = item.requestMetadata.searchQuery
         if (!searchQuery.isNullOrEmpty()) {
+            // PodHopper: the driver chose what to play, so the Play the car sends with it must not be
+            // replaced by another device's episode.
+            playbackManager.noteDriverChoseEpisode(episodeUuid = null)
             launchCommand("Play from search") { actions.performPlayFromSearchSuspend(searchQuery) }
             return Futures.immediateFuture(emptyList())
         }
@@ -136,6 +139,9 @@ internal class Media3SessionCallback(
         if (mediaId.isEmpty()) {
             return Futures.immediateFuture(emptyList())
         }
+        // PodHopper: recorded here, before anything is launched, so it is in place before the Play that
+        // follows a pick can be handled.
+        playbackManager.noteDriverChoseEpisode(episodeUuid = runCatching { AutoMediaId.fromMediaId(mediaId).episodeId }.getOrNull())
 
         val future = SettableFuture.create<List<MediaItem>>()
         scope.launch {

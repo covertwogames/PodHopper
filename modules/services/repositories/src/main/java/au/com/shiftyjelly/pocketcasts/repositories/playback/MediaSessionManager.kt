@@ -324,7 +324,9 @@ class MediaSessionManager(
                 }
             },
             onPlay = {
-                scope.launch { commandMutex.withLock { playbackManager.playQueueSuspend(sourceView = SourceView.MEDIA_BUTTON_BROADCAST_ACTION) } }
+                // PodHopper: a Play with no episode chosen. On the car it first asks whether another
+                // device played something more recently; elsewhere it is playQueueSuspend as before.
+                scope.launch { commandMutex.withLock { playbackManager.playLoadedEpisodeFromControlsSuspend(sourceView = SourceView.MEDIA_BUTTON_BROADCAST_ACTION) } }
             },
             onPause = {
                 scope.launch { commandMutex.withLock { playbackManager.pauseSuspend(sourceView = SourceView.MEDIA_BUTTON_BROADCAST_ACTION) } }
@@ -522,8 +524,12 @@ class MediaSessionManager(
         replayMetadataToPlayer(player)
         transientMessageJob = scope.launch {
             delay(durationMs)
-            player.transientMessage = null
-            replayMetadataToPlayer(player)
+            // PodHopper: clear it on the player the session wraps now. Switching episode builds a new
+            // player and swaps it in, carrying the message across; clearing the one captured above
+            // would leave the message on screen for good.
+            val current = forwardingPlayer ?: return@launch
+            current.transientMessage = null
+            replayMetadataToPlayer(current)
         }
     }
 

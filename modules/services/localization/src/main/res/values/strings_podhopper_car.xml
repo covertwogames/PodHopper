@@ -7,14 +7,14 @@
     <string name="podhopper_car_signin_button">Sign In</string>
     <string name="podhopper_car_signin_message">Sign in to see your podcasts here. While parked, tap Sign In to connect this car to PodHopper on your phone.</string>
 
-    <!-- Car settings: automatic switch after auto-resume -->
-    <string name="podhopper_car_auto_switch_after_resume">Automatically change playback when a newer sync point is found after auto-resume</string>
-    <string name="podhopper_car_auto_switch_after_resume_summary">When the car resumes an episode and then finds another device is further ahead or has moved to a new episode, switch to it and show a brief message. Off: never interrupt what the car resumed.</string>
+    <!-- Car settings: switch to newer playback from another device when the car plays without an episode being picked -->
+    <string name="podhopper_car_auto_switch_after_resume">Continue from what you last played on another device</string>
+    <string name="podhopper_car_auto_switch_after_resume_summary">When the car starts playing on its own, or you press Play without picking an episode, and another device has played something more recently, switch to that episode or position and show a brief message. Never replaces an episode you just picked in the car or a position you just moved to. Off: always continue what the car has loaded.</string>
 
     <!-- Playback screen messages shown briefly in place of the episode name when the car switches -->
     <string name="podhopper_car_sync_newer_position_title">Newer position found on another device</string>
     <string name="podhopper_car_sync_newer_position_subtitle">Resuming from there…</string>
-    <string name="podhopper_car_sync_new_episode_title">Picking up where your phone left off</string>
+    <string name="podhopper_car_sync_new_episode_title">Picking up where your other device left off</string>
     <string name="podhopper_car_sync_new_episode_subtitle">Switching to: %1$s</string>
 
     <!-- Pairing screen -->

@@ -72,6 +72,8 @@ class PocketCastsForwardingPlayer(
             it.currentMediaItem = this.currentMediaItem
             it.previousMediaId = this.previousMediaId
             it.isTransientLoss = this.isTransientLoss
+            // PodHopper: a car sync message is shown across an episode switch, which swaps the player.
+            it.transientMessage = this.transientMessage
         }
     }
 

@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.annotation.MainThread
 import androidx.annotation.OptIn
@@ -116,7 +117,10 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -190,6 +194,21 @@ open class PlaybackManager @Inject constructor(
 
         // PodHopper, car: how long the sync message replaces the episode name on the playback screen.
         private const val CAR_SYNC_MESSAGE_MS = 5_000L
+
+        // PodHopper, car: how long the question "has another device played something more recently?"
+        // may take. Before a play it is asked alongside the position check, which has the same limit,
+        // so it adds no wait of its own; when it gets no answer, what is loaded plays and the question
+        // is asked again in the background.
+        private const val NEWER_EPISODE_CHECK_TIMEOUT_MS = 5_000L
+
+        // PodHopper, car: a Play within this long of the driver choosing what to play is part of that
+        // choice. The car sends one straight after an episode is picked from a list.
+        private const val DRIVER_CHOICE_PLAY_MS = 10_000L
+
+        // PodHopper, car: how long an episode the driver picked in the car, or a position they moved
+        // to, is kept by a later Play nobody chose an episode for. Covers the car's record of the pick
+        // not having reached the server yet, which happens when the car has no signal.
+        private const val DRIVER_CHOICE_KEEP_MS = 10 * 60_000L
     }
 
     private var notificationPermissionChecker: NotificationPermissionChecker? = null
@@ -541,10 +560,113 @@ open class PlaybackManager @Inject constructor(
     fun playPause(sourceView: SourceView = SourceView.UNKNOWN) {
         if (isPlaying()) {
             pause(sourceView = sourceView)
+        } else if (Util.isAutomotive(application)) {
+            // PodHopper, car: a play/pause button with no episode chosen. See
+            // playLoadedEpisodeFromControlsSuspend.
+            launch { playLoadedEpisodeFromControlsSuspend(sourceView) }
         } else {
             playQueue(sourceView)
         }
     }
+
+    /**
+     * PodHopper: Play from the media session with no episode chosen: the car starting playback by
+     * itself when it is switched on, the Play button on its screen, or a steering wheel button.
+     *
+     * Off the car this is exactly [playQueueSuspend]. On the car it first asks whether another device
+     * has played something more recently than this car, and if so plays that instead, showing a short
+     * message on the playback screen. Every car, whatever its make, ends up sending a plain Play like
+     * this, so this is the one place the question reliably gets asked.
+     *
+     * The question is sent at the same moment as the position check every play already makes, and
+     * both are waited for together, so it adds no wait of its own. When it gets no answer (no signal
+     * yet, which is common for the first seconds after a car is switched on), what is loaded starts
+     * playing and the question keeps being asked in the background, see [correctPositionOnceOnline],
+     * switching once the answer arrives.
+     *
+     * Never replaces an episode the driver has just picked in the car or a position they have just
+     * moved to, see [newerEpisodeCheckSkipReason]. Respects both switching settings.
+     */
+    suspend fun playLoadedEpisodeFromControlsSuspend(sourceView: SourceView = SourceView.UNKNOWN) {
+        if (!Util.isAutomotive(application)) {
+            playQueueSuspend(sourceView)
+            return
+        }
+        // One at a time: a second press while the first is still waiting for its answers then sees
+        // playback already started, rather than asking and switching a second time alongside it.
+        controlsPlayMutex.withLock {
+            playLoadedEpisodeOnCar(sourceView)
+        }
+    }
+
+    private val controlsPlayMutex = Mutex()
+
+    private suspend fun playLoadedEpisodeOnCar(sourceView: SourceView) {
+        val current = getCurrentEpisode()
+        if (current == null) {
+            playQueueSuspend(sourceView)
+            return
+        }
+        val skipReason = newerEpisodeCheckSkipReason(current)
+        if (skipReason != null) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check skipped: $skipReason")
+            playQueueSuspend(sourceView)
+            return
+        }
+        val startedAtElapsedMs = SystemClock.elapsedRealtime()
+        // This car's newest listening that has not reached the server yet (done without signal), read
+        // before this Play can add to it. The server cannot know about it, so the check is told.
+        val unsentActivityAtPlayMs = podHopperPositionSync.newestUnsentActivityMs()
+        val (newer, positionCheck) = coroutineScope {
+            val newerAnswer = async {
+                podHopperPositionSync.findNewerEpisodeFromOtherDevice(
+                    currentEpisodeUuid = current.uuid,
+                    unsentActivityAtPlayMs = unsentActivityAtPlayMs,
+                    allowFeedDownload = false,
+                    timeoutMs = NEWER_EPISODE_CHECK_TIMEOUT_MS,
+                )
+            }
+            val positionAnswer = async { podHopperPositionSync.applyRemotePositionBeforePlay(current) }
+            newerAnswer.await() to positionAnswer.await()
+        }
+        if (playbackMovedOnSince(current, startedAtElapsedMs)) {
+            // Something else changed what is loaded, or the driver chose, while the answers were on
+            // their way. Do what this Play would have done before the check existed.
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: playback changed while it ran, playing what is loaded")
+            playQueueSuspend(sourceView)
+            return
+        }
+        val alreadyChecked = PrePlayPositionCheck(current.uuid, positionCheck)
+        when (newer) {
+            is PodHopperPositionSync.NewerEpisodeResult.Newer -> {
+                switchToEpisodeFromAnotherDevice(newer.episode, play = true)
+            }
+
+            PodHopperPositionSync.NewerEpisodeResult.NothingNewer -> {
+                if (upNextQueue.currentEpisode != null) {
+                    loadEpisodeWhenRequired(sourceView, positionCheck = alreadyChecked)
+                }
+            }
+
+            PodHopperPositionSync.NewerEpisodeResult.Unreachable -> {
+                // The background check asks again, comparing against this car's position as it was
+                // before this Play, not as playing goes on to change it.
+                openNewerEpisodeQuestion = OpenNewerEpisodeQuestion(current.uuid, startedAtElapsedMs, unsentActivityAtPlayMs)
+                if (upNextQueue.currentEpisode != null) {
+                    loadEpisodeWhenRequired(sourceView, positionCheck = alreadyChecked, lookForNewerEpisode = true)
+                }
+            }
+        }
+    }
+
+    /**
+     * PodHopper: the play-time position check, already made for [episodeUuid] just before playing, so
+     * [play] uses its answer instead of asking again. Ignored if a different episode ends up playing.
+     */
+    private data class PrePlayPositionCheck(
+        val episodeUuid: String,
+        val result: PodHopperPositionSync.PlayPullResult,
+    )
 
     fun playQueue(
         sourceView: SourceView = SourceView.UNKNOWN,
@@ -833,9 +955,16 @@ open class PlaybackManager @Inject constructor(
         }
     }
 
+    /**
+     * @param positionCheck PodHopper, car: the play-time position check, already made just before.
+     * @param lookForNewerEpisode PodHopper, car: the newer-episode check could not get an answer
+     * before this play, so the play keeps asking in the background. See [correctPositionOnceOnline].
+     */
     private suspend fun loadEpisodeWhenRequired(
         sourceView: SourceView = SourceView.UNKNOWN,
         showedStreamWarning: Boolean = false,
+        positionCheck: PrePlayPositionCheck? = null,
+        lookForNewerEpisode: Boolean = false,
     ) {
         // PodHopper: the switch test only covers a missing player and the local/cast swap, so a
         // player still holding a previous episode used to be resumed as-is while the app treated
@@ -850,9 +979,11 @@ open class PlaybackManager @Inject constructor(
                 play = true,
                 showedStreamWarning = showedStreamWarning,
                 sourceView = sourceView,
+                positionCheck = positionCheck,
+                lookForNewerEpisode = lookForNewerEpisode,
             )
         } else {
-            play(sourceView)
+            play(sourceView, positionCheck = positionCheck, lookForNewerEpisode = lookForNewerEpisode)
         }
     }
 
@@ -1092,6 +1223,7 @@ open class PlaybackManager @Inject constructor(
             // moved deliberately for this episode" is recorded.
             if (!automatic) {
                 userSeekedEpisodeUuid = episode.uuid
+                userSeekAtElapsedMs = SystemClock.elapsedRealtime()
             }
         }
 
@@ -2069,6 +2201,8 @@ open class PlaybackManager @Inject constructor(
         showedStreamWarning: Boolean = false,
         forceStream: Boolean = false,
         sourceView: SourceView = SourceView.UNKNOWN,
+        positionCheck: PrePlayPositionCheck? = null,
+        lookForNewerEpisode: Boolean = false,
     ) {
         loadMutex.withLock {
             loadCurrentEpisodeLocked(
@@ -2076,6 +2210,8 @@ open class PlaybackManager @Inject constructor(
                 showedStreamWarning = showedStreamWarning,
                 forceStream = forceStream,
                 sourceView = sourceView,
+                positionCheck = positionCheck,
+                lookForNewerEpisode = lookForNewerEpisode,
             )
         }
     }
@@ -2088,6 +2224,8 @@ open class PlaybackManager @Inject constructor(
         showedStreamWarning: Boolean = false,
         forceStream: Boolean = false,
         sourceView: SourceView = SourceView.UNKNOWN,
+        positionCheck: PrePlayPositionCheck? = null,
+        lookForNewerEpisode: Boolean = false,
     ) {
         // make sure we have the most recent copy from the database
         val episode = when (val currentUpNextEpisode = upNextQueue.currentEpisode) {
@@ -2326,7 +2464,7 @@ open class PlaybackManager @Inject constructor(
             if (sameEpisode && currentPositionMs != null) {
                 player?.seekToTimeMs(currentPositionMs)
             }
-            play(sourceView, posUpdatedOnPlayerReset)
+            play(sourceView, posUpdatedOnPlayerReset, positionCheck, lookForNewerEpisode)
         } else {
             player?.load(episode.playedUpToMs)
             // PodHopper: load() prepares a new ExoPlayer when the old one was stopped for an episode
@@ -2478,6 +2616,140 @@ open class PlaybackManager @Inject constructor(
         if (currentUuid != null && userSeekedEpisodeUuid == currentUuid) return false
         lastPlayWasAutoResume = false
         return true
+    }
+
+    // PodHopper, car: when the driver last chose what to play in the car (picked an episode from a list
+    // or used voice search), and which episode when that is known. Null until the first choice. Read by
+    // the newer-episode check so it never replaces a pick. On the elapsed-time clock, which does not
+    // jump when the car corrects its wall clock at start-up and keeps counting while the car sleeps.
+    @Volatile private var driverChoiceAtElapsedMs: Long? = null
+
+    @Volatile private var driverChoiceEpisodeUuid: String? = null
+
+    // PodHopper: when the position was last moved on purpose, on the same clock, alongside
+    // [userSeekedEpisodeUuid]. A seek from an earlier drive must not stop today's check.
+    @Volatile private var userSeekAtElapsedMs: Long? = null
+
+    /**
+     * PodHopper, car: a newer-episode question the late check is still waiting to have answered: when
+     * it was asked, and this car's newest listening that had not reached the server at that Play.
+     */
+    private data class OpenNewerEpisodeQuestion(
+        val episodeUuid: String,
+        val askedAtElapsedMs: Long,
+        val unsentActivityAtPlayMs: Long?,
+    )
+
+    @Volatile private var openNewerEpisodeQuestion: OpenNewerEpisodeQuestion? = null
+
+    /** Ends [question] if it is still the open one. A replacement check's question is left alone. */
+    private fun closeNewerEpisodeQuestion(question: OpenNewerEpisodeQuestion?) {
+        if (question != null && openNewerEpisodeQuestion === question) {
+            openNewerEpisodeQuestion = null
+        }
+    }
+
+    /**
+     * PodHopper, car: the driver has just chosen what to play, [episodeUuid] when it is known. Called
+     * by the media session for an episode picked from a list and for voice search, before playback of
+     * the choice starts.
+     */
+    fun noteDriverChoseEpisode(episodeUuid: String?) {
+        driverChoiceEpisodeUuid = episodeUuid
+        driverChoiceAtElapsedMs = SystemClock.elapsedRealtime()
+    }
+
+    /** Why switching to another device's episode is off right now, or null when it is on. */
+    private fun newerEpisodeSwitchOffReason(): String? {
+        if (!settings.podhopperCarAutoSwitchAfterResume.value) return "the car's switch-to-newer-playback setting is off"
+        if (!settings.autoSwitchPlayerToCurrentPodcast.value) return "the switch-player-to-current-podcast setting is off"
+        return null
+    }
+
+    /**
+     * PodHopper, car: why a Play with no episode chosen should not ask whether another device played
+     * something more recently, or null when it should. Each reason is logged, so the car's log shows
+     * which case applied.
+     */
+    private fun newerEpisodeCheckSkipReason(current: BaseEpisode): String? {
+        if (isPlaying()) return "already playing"
+        if (isPlaybackRemote()) return "casting"
+        newerEpisodeSwitchOffReason()?.let { return it }
+        val now = SystemClock.elapsedRealtime()
+        val choiceAt = driverChoiceAtElapsedMs
+        if (choiceAt != null) {
+            val sinceChoiceMs = now - choiceAt
+            if (sinceChoiceMs < DRIVER_CHOICE_PLAY_MS) {
+                return "the driver just chose what to play"
+            }
+            if (driverChoiceEpisodeUuid == current.uuid && sinceChoiceMs < DRIVER_CHOICE_KEEP_MS) {
+                return "the driver picked this episode in the car ${sinceChoiceMs / 1000}s ago"
+            }
+        }
+        val seekAt = userSeekAtElapsedMs
+        if (seekAt != null && userSeekedEpisodeUuid == current.uuid && now - seekAt < DRIVER_CHOICE_KEEP_MS) {
+            return "the position in this episode was moved ${(now - seekAt) / 1000}s ago"
+        }
+        return null
+    }
+
+    /**
+     * PodHopper, car: whether playback has moved on from [episode] since [sinceElapsedMs]: a different
+     * episode is loaded, the driver chose what to play, or the position in this episode was moved on
+     * purpose. Any of these means a newer-episode answer that arrives now must not be acted on.
+     */
+    private fun playbackMovedOnSince(
+        episode: BaseEpisode,
+        sinceElapsedMs: Long,
+    ): Boolean {
+        if (getCurrentEpisode()?.uuid != episode.uuid) return true
+        val choiceAt = driverChoiceAtElapsedMs
+        if (choiceAt != null && choiceAt >= sinceElapsedMs) return true
+        val seekAt = userSeekAtElapsedMs
+        if (seekAt != null && seekAt >= sinceElapsedMs && userSeekedEpisodeUuid == episode.uuid) return true
+        return false
+    }
+
+    /**
+     * PodHopper, car: make [episode], which another device played more recently than this car, the one
+     * loaded here, playing when [play] is true and paused otherwise, with the "Picking up where your
+     * other device left off" message on the playback screen for a few seconds. The episode the car had
+     * loaded stays next in Up Next when the queue has anything else in it; on its own it is replaced, as
+     * it is by any play. Like adopting from sync, this mirrors another device rather than
+     * deciding anything, so it is not sent to the account's queue. Its synced position was already
+     * stored by the check that found it.
+     */
+    private suspend fun switchToEpisodeFromAnotherDevice(
+        episode: BaseEpisode,
+        play: Boolean,
+    ) {
+        if (upNextQueue.isCurrentEpisode(episode)) {
+            return
+        }
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: switching to ${episode.uuid} ${episode.title}, played on another device more recently (play=$play)")
+        mediaSessionManager.showTransientMessage(
+            application.getString(LR.string.podhopper_car_sync_new_episode_title),
+            application.getString(LR.string.podhopper_car_sync_new_episode_subtitle, episode.title),
+            CAR_SYNC_MESSAGE_MS,
+        )
+        // This switch is the correction an auto-resume waits for; nothing later switches again on the
+        // strength of that resume.
+        lastPlayWasAutoResume = false
+        withContext(Dispatchers.IO) {
+            if (episode.isArchived) {
+                episodeManager.unarchiveBlocking(episode)
+            }
+        }
+        upNextQueue.playNow(
+            episode = episode,
+            automaticUpNextSource = null,
+            isUserInitiated = false,
+            onAdd = {
+                launch {
+                    loadCurrentEpisode(play = play, sourceView = SourceView.AUTO_PLAY)
+                }
+            },
+        )
     }
 
     /**
@@ -2668,19 +2940,96 @@ open class PlaybackManager @Inject constructor(
      * stops the moment the listener seeks or changes episode, and on the car it respects the
      * auto-switch setting. It used to try twice, five seconds apart, then give up, and could only
      * offer a Now Playing button, which the car's display does not show.
+     *
+     * On the car, [lookForNewerEpisode] means the newer-episode check before this play could not get
+     * an answer (see [playLoadedEpisodeFromControlsSuspend]). That question is asked first on each
+     * pass, because if another device has moved on to a different episode, the position in this one
+     * no longer matters: the car switches to that episode and this check ends. Asking both here, in
+     * one loop under one hold, keeps this car's writes for the episode held until both are answered,
+     * so its own position cannot reach the server first and pass itself off as the newest activity.
+     * [positionAlreadyChecked] means the play-time position check did get through, so only the
+     * newer-episode question is left.
      */
-    private fun correctPositionOnceOnline(episode: BaseEpisode) {
+    private fun correctPositionOnceOnline(
+        episode: BaseEpisode,
+        lookForNewerEpisode: Boolean = false,
+        positionAlreadyChecked: Boolean = false,
+    ) {
+        // A second play command moments after the first (the car can send two within a fraction of a
+        // second) restarts this check. A newer-episode question the first one was still waiting on is
+        // carried over with the time it was first asked, so the restart neither drops it nor forgets a
+        // choice the driver made in between. Read before the first check is cancelled, whose cleanup
+        // would otherwise close it.
+        // A question older than the window is abandoned, never carried.
+        val carriedQuestion = openNewerEpisodeQuestion?.takeIf {
+            it.episodeUuid == episode.uuid && SystemClock.elapsedRealtime() - it.askedAtElapsedMs < AUTO_JUMP_WINDOW_MS
+        }
         pendingSyncedOfferJob?.cancel()
         val startedAt = System.currentTimeMillis()
+        val askNewerEpisode = lookForNewerEpisode || carriedQuestion != null
+        val questionAskedAtElapsedMs = carriedQuestion?.askedAtElapsedMs ?: SystemClock.elapsedRealtime()
+        val unsentActivityAtPlayMs = when {
+            carriedQuestion != null -> carriedQuestion.unsentActivityAtPlayMs
+            askNewerEpisode -> podHopperPositionSync.newestUnsentActivityMs()
+            else -> null
+        }
+        val question = if (askNewerEpisode) OpenNewerEpisodeQuestion(episode.uuid, questionAskedAtElapsedMs, unsentActivityAtPlayMs) else null
+        openNewerEpisodeQuestion = question
         // The token ties this check to its own hold. If a second play command replaces this check, the
         // cleanup below runs after the new check has set its hold, and must not release that one.
         val holdToken = podHopperPositionSync.holdPositionPushes(episode.uuid, startedAt + AUTO_JUMP_WINDOW_MS)
         pendingSyncedOfferJob = launch {
             try {
+                var newerEpisodeQuestionOpen = askNewerEpisode
                 while (System.currentTimeMillis() - startedAt < AUTO_JUMP_WINDOW_MS) {
                     delay(LATE_CHECK_RETRY_MS)
                     if (getCurrentEpisode()?.uuid != episode.uuid || userSeekedEpisodeUuid == episode.uuid) {
                         return@launch
+                    }
+                    if (newerEpisodeQuestionOpen) {
+                        if (playbackMovedOnSince(episode, questionAskedAtElapsedMs)) {
+                            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late newer-episode check: the driver chose or moved the position since it was asked, not switching")
+                            newerEpisodeQuestionOpen = false
+                        } else {
+                            val newer = podHopperPositionSync.findNewerEpisodeFromOtherDevice(
+                                currentEpisodeUuid = episode.uuid,
+                                unsentActivityAtPlayMs = unsentActivityAtPlayMs,
+                                allowFeedDownload = true,
+                                timeoutMs = NEWER_EPISODE_CHECK_TIMEOUT_MS,
+                            )
+                            when (newer) {
+                                PodHopperPositionSync.NewerEpisodeResult.Unreachable -> continue
+
+                                PodHopperPositionSync.NewerEpisodeResult.NothingNewer -> {
+                                    newerEpisodeQuestionOpen = false
+                                }
+
+                                is PodHopperPositionSync.NewerEpisodeResult.Newer -> {
+                                    if (!isPlaying() && focusWasPlaying != null) {
+                                        // Paused because a call or a navigation prompt has the audio.
+                                        // Switching now would resume the other episode when the call
+                                        // ends, with the message long gone; ask again on the next pass.
+                                        continue
+                                    }
+                                    if (playbackMovedOnSince(episode, questionAskedAtElapsedMs) || newerEpisodeSwitchOffReason() != null) {
+                                        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late newer-episode check: not switching, the driver chose or switching was turned off")
+                                        newerEpisodeQuestionOpen = false
+                                    } else {
+                                        // Not if this check was replaced while the answer was on its way.
+                                        ensureActive()
+                                        closeNewerEpisodeQuestion(question)
+                                        // Paused by the driver, it is loaded paused, so the next Play
+                                        // starts the right episode; playing, it keeps playing.
+                                        switchToEpisodeFromAnotherDevice(newer.episode, play = isPlaying())
+                                        return@launch
+                                    }
+                                }
+                            }
+                        }
+                        closeNewerEpisodeQuestion(question)
+                        if (positionAlreadyChecked) {
+                            return@launch
+                        }
                     }
                     // Null means the server could not be reached yet, so ask again inside the window.
                     val state = podHopperPositionSync.fetchRemoteEpisodeState(episode) ?: continue
@@ -2704,6 +3053,8 @@ open class PlaybackManager @Inject constructor(
                 }
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper late position check: no answer within the window, keeping local")
             } finally {
+                // Only this check's own question; one carried into a replacement check is a new one.
+                closeNewerEpisodeQuestion(question)
                 podHopperPositionSync.releasePositionPushHold(episode.uuid, holdToken)
             }
         }
@@ -2776,6 +3127,8 @@ open class PlaybackManager @Inject constructor(
     private suspend fun play(
         sourceView: SourceView = SourceView.UNKNOWN,
         posUpdatedOnPlayerReset: Boolean = false,
+        positionCheck: PrePlayPositionCheck? = null,
+        lookForNewerEpisode: Boolean = false,
     ) {
         val episode = getCurrentEpisode()?.let {
             if (posUpdatedOnPlayerReset) {
@@ -2822,13 +3175,23 @@ open class PlaybackManager @Inject constructor(
         // PodHopper: pull this episode's latest cross-device position and apply it before we read
         // the resume point, so play starts from the synced position. Time-bounded, so a slow or
         // offline network falls back to the local position instead of hanging.
-        val podHopperPullResult = podHopperPositionSync.applyRemotePositionBeforePlay(episode)
+        // On the car, a Play nobody chose an episode for has already made this check, alongside the
+        // newer-episode check; its answer is used rather than asking again.
+        val podHopperPullResult = positionCheck?.takeIf { it.episodeUuid == episode.uuid }?.result
+            ?: podHopperPositionSync.applyRemotePositionBeforePlay(episode)
         if (podHopperPullResult == PodHopperPositionSync.PlayPullResult.FAILED) {
             showToast("Couldn't sync playback position from the cloud. Playing from this device.")
             // PodHopper: the pull failed, so playback starts from the local position rather than
             // blocking. Hold this device's writes for the episode and keep checking until the
-            // network answers; if another device is meaningfully ahead, jump there once.
-            correctPositionOnceOnline(episode)
+            // network answers; if another device is meaningfully ahead, jump there once. On the car,
+            // when the newer-episode check before this play could not get an answer either, the same
+            // background check asks that first.
+            correctPositionOnceOnline(episode, lookForNewerEpisode = lookForNewerEpisode)
+        } else if (lookForNewerEpisode) {
+            // PodHopper, car: the position check got through but the newer-episode check just before
+            // it did not, so keep asking that one in the background, holding this car's writes for the
+            // episode until it answers.
+            correctPositionOnceOnline(episode, lookForNewerEpisode = true, positionAlreadyChecked = true)
         }
 
         val currentTimeMs = resumptionHelper.adjustedStartTimeMsFor(episode)

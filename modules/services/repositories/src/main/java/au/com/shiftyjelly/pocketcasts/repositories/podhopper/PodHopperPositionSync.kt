@@ -11,6 +11,7 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
+import au.com.shiftyjelly.pocketcasts.utils.Util
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -966,6 +968,156 @@ class PodHopperPositionSync @Inject constructor(
         }
     }
 
+    /**
+     * PodHopper, car: answers "has another device played something more recently than this device,
+     * and if so, what?" for a Play that nobody chose an episode for: the car starting playback on its
+     * own when it is switched on, its Play button, or a steering wheel button. Every car sends one of
+     * these, however it starts up, which is why the question is asked here rather than only on the
+     * media library's resume request, which a car that sleeps instead of shutting down never sends.
+     *
+     * One query reads the account's most recent rows from every device, newest first, in the order
+     * the database stamped them, so the order comes from one clock. Walking down from the top: a row
+     * this device wrote means this device acted last, so nothing is newer; another device's finished
+     * episode, or a row with no position (an episode marked unplayed), is passed over; the first
+     * other-device row still in progress above every row of this device's is the answer.
+     *
+     * The server only knows what reached it. Listening this device did without signal may still be
+     * waiting to be sent, so [unsentActivityAtPlayMs], the newest of those waiting writes (see
+     * [newestUnsentActivityMs], read before the Play), is weighed too: if it is later than the other
+     * device's row, this device was the last to listen and nothing is newer. The same device-time
+     * against server-time comparison the play-time position check makes.
+     *
+     * Nothing is adopted here. When the answer is an episode other than [currentEpisodeUuid], it is
+     * resolved locally and its synced position is stored unless this device changed it more recently,
+     * so the switch starts from the right place even if the play-time position check cannot reach the
+     * server. An episode whose podcast this device has never seen needs its feed downloaded first,
+     * which cannot be cut short; with [allowFeedDownload] false (before a play, where the driver is
+     * waiting) that answer is Unreachable instead, and the background check downloads it.
+     */
+    suspend fun findNewerEpisodeFromOtherDevice(
+        currentEpisodeUuid: String,
+        unsentActivityAtPlayMs: Long?,
+        allowFeedDownload: Boolean,
+        timeoutMs: Long,
+    ): NewerEpisodeResult {
+        if (!supabaseClient.isLoggedIn()) {
+            return NewerEpisodeResult.NothingNewer
+        }
+        return try {
+            val outcome = withTimeoutOrNull(timeoutMs) {
+                withContext(Dispatchers.IO) {
+                    scanForNewerEpisode(currentEpisodeUuid, unsentActivityAtPlayMs, allowFeedDownload)
+                }
+            }
+            if (outcome == null) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check timed out")
+                NewerEpisodeResult.Unreachable
+            } else {
+                outcome
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check failed: ${e.message}")
+            NewerEpisodeResult.Unreachable
+        }
+    }
+
+    private suspend fun scanForNewerEpisode(
+        currentEpisodeUuid: String,
+        unsentActivityAtPlayMs: Long?,
+        allowFeedDownload: Boolean,
+    ): NewerEpisodeResult {
+        val installId = getOrCreateInstallId()
+        val query = "select=episode_key,feed_url,position_sec,total_sec,completed,updated_at_ms,device_id" +
+            "&order=updated_at_ms.desc" +
+            "&limit=$NEWER_EPISODE_SCAN_LIMIT"
+        val rows = supabaseClient.select(TABLE_PLAYBACK_STATE, query)
+        var candidate: NewerEpisodeCandidate? = null
+        for (i in 0 until rows.length()) {
+            val row = rows.getJSONObject(i)
+            if (row.optString("device_id") == installId) {
+                break
+            }
+            val episodeKey = row.optString("episode_key")
+            if (episodeKey.isEmpty()) {
+                continue
+            }
+            val positionSec = row.optInt("position_sec", -1)
+            val totalSec = row.optInt("total_sec", 0)
+            val completed = row.optBoolean("completed", false)
+            val isCompletion = completed || (totalSec > 0 && positionSec >= totalSec)
+            if (isCompletion || positionSec <= 0) {
+                continue
+            }
+            candidate = NewerEpisodeCandidate(
+                episodeKey = episodeKey,
+                // A missing feed url comes back as JSON null, which optString turns into "null".
+                feedUrl = if (row.isNull("feed_url")) null else row.optString("feed_url").takeIf { it.isNotEmpty() },
+                positionSec = positionSec,
+                updatedAtMs = row.optLong("updated_at_ms", 0L),
+            )
+            break
+        }
+        val found = candidate
+        if (found == null) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: no other device has played anything more recently than this one")
+            return NewerEpisodeResult.NothingNewer
+        }
+        if (found.episodeKey == currentEpisodeUuid) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: the most recent play on another device is this same episode")
+            return NewerEpisodeResult.NothingNewer
+        }
+        if (localPositionIsNewer(unsentActivityAtPlayMs, found.updatedAtMs)) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: this device listened more recently than ${found.episodeKey} was played elsewhere, keeping what is loaded")
+            return NewerEpisodeResult.NothingNewer
+        }
+        var episode = episodeManager.findByUuid(found.episodeKey)
+        if (episode == null && !found.feedUrl.isNullOrBlank() && !allowFeedDownload) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: ${found.episodeKey} is not on this device yet, fetching it in the background")
+            return NewerEpisodeResult.Unreachable
+        }
+        if (episode == null && !found.feedUrl.isNullOrBlank()) {
+            try {
+                podcastManager.addFeedUrlForEpisode(found.feedUrl, found.episodeKey)
+                episode = episodeManager.findByUuid(found.episodeKey)
+            } catch (e: CancellationException) {
+                // Out of time: let the caller see the timeout, so it asks again rather than giving up.
+                throw e
+            } catch (e: Exception) {
+                LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check could not fetch ${found.feedUrl}: ${e.message}")
+            }
+        }
+        if (episode == null) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: ${found.episodeKey} was played on another device more recently but is not available here, keeping what is loaded")
+            return NewerEpisodeResult.NothingNewer
+        }
+        if (localPositionIsNewer(episode.playedUpToModified, found.updatedAtMs)) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: keeping this device's own position for ${episode.uuid}, it changed after the remote row was written")
+        } else {
+            episodeManager.updatePlayedUpToBlocking(episode, found.positionSec.toDouble(), forceUpdate = true)
+            recordReceivedPosition(episode.uuid, found.positionSec)
+        }
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper newer-episode check: ${episode.uuid} was played on another device more recently (pos=${found.positionSec}s ts=${found.updatedAtMs})")
+        return NewerEpisodeResult.Newer(episode)
+    }
+
+    private data class NewerEpisodeCandidate(
+        val episodeKey: String,
+        val feedUrl: String?,
+        val positionSec: Int,
+        val updatedAtMs: Long,
+    )
+
+    /** The answer from [findNewerEpisodeFromOtherDevice]. Unreachable means ask again later. */
+    sealed interface NewerEpisodeResult {
+        data class Newer(val episode: BaseEpisode) : NewerEpisodeResult
+
+        data object NothingNewer : NewerEpisodeResult
+
+        data object Unreachable : NewerEpisodeResult
+    }
+
     /** Applies every row in a page, parking those whose episode is not local yet. Returns the
      *  highest updated_at_ms seen, so the caller can advance the cursor past the whole page. */
     private suspend fun applyRows(rows: JSONArray): ApplyResult {
@@ -1208,7 +1360,7 @@ class PodHopperPositionSync @Inject constructor(
         if (!supabaseClient.isLoggedIn()) {
             return
         }
-        val snapshot = withContext(Dispatchers.IO) {
+        val queued = withContext(Dispatchers.IO) {
             synchronized(outboxLock) {
                 val outbox = try {
                     readOutbox()
@@ -1218,6 +1370,22 @@ class PodHopperPositionSync @Inject constructor(
                 outbox.keys().asSequence().toList().mapNotNull { key -> outbox.optJSONObject(key)?.let { key to it } }
             }
         }
+        // PodHopper: a row for an episode whose writes are held stays queued until the hold ends. A
+        // queued row is stamped with the time it reaches the server, not the time it was recorded, so
+        // sending a stale row for the episode being checked would make it look like this device's
+        // newest activity and hide what another device did since, which is exactly what the check is
+        // there to find. Once the hold ends the row goes out with the next drain as usual.
+        // Car only: that check runs only there, and the phone and watch keep draining as before.
+        val now = System.currentTimeMillis()
+        val heldKeys = if (Util.isAutomotive(context)) {
+            queued.map { it.first }.filter { isPositionPushHeld(it, now) }.toSet()
+        } else {
+            emptySet()
+        }
+        if (heldKeys.isNotEmpty()) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper outbox drain keeping ${heldKeys.size} row(s) queued while their position is being checked")
+        }
+        val snapshot = queued.filterNot { heldKeys.contains(it.first) }
         if (snapshot.isEmpty()) {
             return
         }
@@ -1290,6 +1458,26 @@ class PodHopperPositionSync @Inject constructor(
             } catch (e: Exception) {
                 LogBuffer.i(LogBuffer.TAG_PLAYBACK, "PodHopper could not update the retry queue: ${e.message}")
             }
+        }
+    }
+
+    /**
+     * PodHopper: when this device's newest write that has not reached the server was made, in this
+     * device's time, or null when nothing is waiting. These are writes from real listening that failed
+     * to send (no signal); sync never adds to them, so unlike an episode's saved position time this is
+     * never moved by another device's progress being applied here.
+     */
+    fun newestUnsentActivityMs(): Long? {
+        synchronized(outboxLock) {
+            val outbox = readOutbox()
+            var newest = 0L
+            for (key in outbox.keys().asSequence()) {
+                val ts = outbox.optJSONObject(key)?.optLong("updated_at_ms", 0L) ?: 0L
+                if (ts > newest) {
+                    newest = ts
+                }
+            }
+            return newest.takeIf { it > 0L }
         }
     }
 
@@ -1498,6 +1686,10 @@ class PodHopperPositionSync @Inject constructor(
         private const val RECONCILE_MIN_INTERVAL_MS = 5000L
         private const val LOCAL_ACTIVITY_ADOPT_GRACE_MS = 5 * 60 * 1000L
         private const val ADOPT_SCAN_LIMIT = 10
+
+        // Rows read by the newer-episode check. Generous, so a burst of finished episodes from a bulk
+        // mark-as-played on another device cannot push an episode still in progress out of the page.
+        private const val NEWER_EPISODE_SCAN_LIMIT = 50
         private const val FIRST_SYNC_SENTINEL = -1L
         private const val MAX_PARKED = 500
         private const val MAX_OUTBOX = 500
