@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,49 +36,25 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import au.com.shiftyjelly.pocketcasts.compose.AppTheme
 import au.com.shiftyjelly.pocketcasts.compose.PreviewOrientation
-import au.com.shiftyjelly.pocketcasts.compose.components.Banner
 import au.com.shiftyjelly.pocketcasts.compose.components.HorizontalDivider
 import au.com.shiftyjelly.pocketcasts.compose.preview.ThemePreviewParameterProvider
 import au.com.shiftyjelly.pocketcasts.compose.theme
 import au.com.shiftyjelly.pocketcasts.images.R
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
-import au.com.shiftyjelly.pocketcasts.payment.BillingCycle
-import au.com.shiftyjelly.pocketcasts.payment.SubscriptionOffer
-import au.com.shiftyjelly.pocketcasts.payment.SubscriptionPlans
-import au.com.shiftyjelly.pocketcasts.payment.SubscriptionTier
-import au.com.shiftyjelly.pocketcasts.payment.flatMap
-import au.com.shiftyjelly.pocketcasts.payment.getOrNull
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralSubscriptionPlan
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsClaimGuestPassBannerCard
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsIconWithTooltip
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsViewModel
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
 import java.util.Date
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
-import au.com.shiftyjelly.pocketcasts.images.R as IR
-import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 @Composable
 internal fun ProfilePage(
     state: ProfilePageState,
     themeType: Theme.ThemeType,
-    onSendReferralsClick: () -> Unit,
-    onReferralsTooltipClick: () -> Unit,
-    onReferralsTooltipShow: () -> Unit,
     onSettingsClick: () -> Unit,
     onLoginClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onCreateFreeAccountBannerClick: () -> Unit,
-    onDismissCreateFreeAccountBannerClick: () -> Unit,
-    onClaimReferralsClick: () -> Unit,
-    onHideReferralsCardClick: () -> Unit,
-    onReferralsCardShow: () -> Unit,
-    onReferralsSheetShow: () -> Unit,
     onSectionClick: (ProfileSection) -> Unit,
     onRefreshClick: () -> Unit,
-    onUpgradeProfileClick: () -> Unit,
-    onCloseUpgradeProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
@@ -92,10 +66,6 @@ internal fun ProfilePage(
                 .background(MaterialTheme.theme.colors.primaryUi02),
         ) {
             Toolbar(
-                state = state.referralsState,
-                onSendReferralsClick = onSendReferralsClick,
-                onReferralsTooltipClick = onReferralsTooltipClick,
-                onReferralsTooltipShow = onReferralsTooltipShow,
                 onSettingsClick = onSettingsClick,
             )
             LazyColumn(
@@ -114,39 +84,6 @@ internal fun ProfilePage(
                 )
                 item {
                     VerticalSpacer()
-                }
-                if (state.isFreeAccountBannerVisible) {
-                    item {
-                        Banner(
-                            title = stringResource(LR.string.encourage_account_sync_banner_title),
-                            description = stringResource(LR.string.encourage_account_sync_banner_description),
-                            actionLabel = stringResource(LR.string.encourage_account_banner_action_label),
-                            icon = painterResource(IR.drawable.ic_heart_2),
-                            onActionClick = onCreateFreeAccountBannerClick,
-                            onDismiss = onDismissCreateFreeAccountBannerClick,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = horizontalPadding),
-                        )
-                    }
-                    item {
-                        VerticalSpacer()
-                    }
-                }
-                item {
-                    ReferralsClaimGuestPassBannerCard(
-                        state = state.referralsState,
-                        onClick = onClaimReferralsClick,
-                        onHideBannerClick = onHideReferralsCardClick,
-                        onBannerShow = onReferralsCardShow,
-                        onShowReferralsSheet = onReferralsSheetShow,
-                        modifier = Modifier.padding(horizontal = horizontalPadding),
-                    )
-                }
-                if ((state.referralsState as? ReferralsViewModel.UiState.Loaded)?.showProfileBanner == true) {
-                    item {
-                        VerticalSpacer()
-                    }
                 }
                 item {
                     HorizontalDivider()
@@ -178,23 +115,8 @@ internal fun ProfilePage(
                     VerticalSpacer()
                 }
                 item {
-                    ProfileUpgradeSection(
-                        isVisible = state.isUpgradeBannerVisible,
-                        contentPadding = PaddingValues(
-                            horizontal = 64.dp,
-                            vertical = verticalSpacing,
-                        ),
-                        onClick = onUpgradeProfileClick,
-                        onCloseClick = onCloseUpgradeProfileClick,
-                        modifier = Modifier
-                            .background(MaterialTheme.colors.background)
-                            .fillMaxWidth(),
-                    )
-                }
-                item {
                     MiniPlayerPadding(
                         padding = state.miniPlayerPadding,
-                        isUpgradeBannerVisible = state.isUpgradeBannerVisible,
                     )
                 }
             }
@@ -204,12 +126,9 @@ internal fun ProfilePage(
 
 internal data class ProfilePageState(
     val sections: List<ProfileSection>,
-    val isFreeAccountBannerVisible: Boolean,
-    val isUpgradeBannerVisible: Boolean,
     val miniPlayerPadding: Dp,
     val podHopperAccount: PodHopperAccountState,
     val statsState: ProfileStatsState,
-    val referralsState: ReferralsViewModel.UiState,
     val refreshState: RefreshState,
 )
 
@@ -225,10 +144,6 @@ private fun VerticalSpacer() {
 
 @Composable
 private fun Toolbar(
-    state: ReferralsViewModel.UiState,
-    onSendReferralsClick: () -> Unit,
-    onReferralsTooltipClick: () -> Unit,
-    onReferralsTooltipShow: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     Row(
@@ -241,17 +156,6 @@ private fun Toolbar(
             .height(56.dp)
             .padding(horizontal = horizontalPadding),
     ) {
-        ReferralsIconWithTooltip(
-            state = state,
-            onIconClick = onSendReferralsClick,
-            onTooltipClick = onReferralsTooltipClick,
-            onTooltipShow = onReferralsTooltipShow,
-        )
-        if (LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE) {
-            Spacer(
-                modifier = Modifier.weight(1f),
-            )
-        }
         IconButton(
             onClick = onSettingsClick,
         ) {
@@ -325,11 +229,9 @@ private fun LazyListScope.headerWithStats(
 @Composable
 private fun MiniPlayerPadding(
     padding: Dp,
-    isUpgradeBannerVisible: Boolean,
 ) {
     Box(
         modifier = Modifier
-            .background(if (isUpgradeBannerVisible) MaterialTheme.colors.background else Color.Transparent)
             .fillMaxWidth()
             .height(padding),
     )
@@ -356,8 +258,6 @@ private fun ProfilePageStub(
     ProfilePage(
         state = ProfilePageState(
             sections = ProfileSection.entries,
-            isUpgradeBannerVisible = true,
-            isFreeAccountBannerVisible = true,
             miniPlayerPadding = 64.dp,
             podHopperAccount = PodHopperAccountState(
                 isSignedIn = true,
@@ -368,34 +268,13 @@ private fun ProfilePageStub(
                 listenedDuration = 75.hours,
                 savedDuration = 35.minutes,
             ),
-            referralsState = ReferralsViewModel.UiState.Loaded(
-                referralPlan = SubscriptionPlans.Preview
-                    .findOfferPlan(SubscriptionTier.Plus, BillingCycle.Yearly, SubscriptionOffer.Referral)
-                    .flatMap(ReferralSubscriptionPlan::create)
-                    .getOrNull()!!,
-                showIcon = true,
-                showTooltip = false,
-                showProfileBanner = true,
-                showHideBannerPopup = false,
-            ),
             refreshState = RefreshState.Success(Date()),
         ),
         themeType = theme,
-        onClaimReferralsClick = {},
-        onReferralsTooltipClick = {},
-        onReferralsTooltipShow = {},
         onSettingsClick = {},
         onLoginClick = {},
         onLogoutClick = {},
-        onCreateFreeAccountBannerClick = {},
-        onDismissCreateFreeAccountBannerClick = {},
-        onSendReferralsClick = {},
-        onHideReferralsCardClick = {},
-        onReferralsCardShow = {},
-        onReferralsSheetShow = {},
         onSectionClick = {},
         onRefreshClick = {},
-        onUpgradeProfileClick = {},
-        onCloseUpgradeProfileClick = {},
     )
 }

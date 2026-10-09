@@ -19,13 +19,7 @@ import au.com.shiftyjelly.pocketcasts.player.view.bookmark.BookmarksContainerFra
 import au.com.shiftyjelly.pocketcasts.podcasts.view.ProfileEpisodeListFragment
 import au.com.shiftyjelly.pocketcasts.settings.HelpFeedbackFragment
 import au.com.shiftyjelly.pocketcasts.profile.cloud.CloudFilesFragment
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsGuestPassFragment
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsGuestPassFragment.ReferralsPageType
-import au.com.shiftyjelly.pocketcasts.referrals.ReferralsViewModel
 import au.com.shiftyjelly.pocketcasts.settings.SettingsFragment
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingLauncher
-import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingUpgradeSource
 import au.com.shiftyjelly.pocketcasts.settings.stats.StatsFragment
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.utils.extensions.pxToDp
@@ -41,7 +35,6 @@ class ProfileFragment :
     BaseFragment(),
     TopScrollable {
     private val profileViewModel by viewModels<ProfileViewModel>()
-    private val referralsViewModel by viewModels<ReferralsViewModel>()
 
     private val scrollToTopSignal = MutableSharedFlow<Unit>()
 
@@ -57,12 +50,9 @@ class ProfileFragment :
         }
         val state = ProfilePageState(
             sections = ProfileSection.visibleEntries(),
-            isFreeAccountBannerVisible = profileViewModel.isFreeAccountBannerVisible.collectAsState().value,
-            isUpgradeBannerVisible = profileViewModel.showUpgradeBanner.collectAsState(false).value,
             miniPlayerPadding = profileViewModel.miniPlayerInset.collectAsState().value.pxToDp(requireContext()).dp,
             podHopperAccount = profileViewModel.podHopperAccountState.collectAsState().value,
             statsState = profileViewModel.profileStatsState.collectAsState().value,
-            referralsState = referralsViewModel.state.collectAsState().value,
             refreshState = profileViewModel.refreshState.collectAsState().value,
         )
 
@@ -80,16 +70,6 @@ class ProfileFragment :
             state = state,
             themeType = theme.activeTheme,
             listState = listState,
-            onSendReferralsClick = {
-                referralsViewModel.onIconClick()
-                fragmentHostListener.showBottomSheet(ReferralsGuestPassFragment.newInstance(ReferralsPageType.Send))
-            },
-            onReferralsTooltipClick = {
-                referralsViewModel.onTooltipClick()
-            },
-            onReferralsTooltipShow = {
-                referralsViewModel.onTooltipShown()
-            },
             onSettingsClick = {
                 profileViewModel.onSettingsClick()
                 fragmentHostListener.addFragment(SettingsFragment())
@@ -100,45 +80,11 @@ class ProfileFragment :
             onLogoutClick = {
                 profileViewModel.logoutPodHopper()
             },
-            onCreateFreeAccountBannerClick = {
-                profileViewModel.onCreateFreeAccountClick()
-                // PodHopper: this banner used to open the old Pocket Casts onboarding
-                // (OnboardingFlow.LoggedOut), which was the last UI path that could create a
-                // Pocket Casts account and arm the dormant PC sync layer. Route it to the
-                // PodHopper (Supabase) sign up flow instead.
-                startActivity(PodHopperOnboardingActivity.newInstance(requireContext()))
-            },
-            onDismissCreateFreeAccountBannerClick = {
-                profileViewModel.dismissFreeAccountBanner()
-            },
-            onClaimReferralsClick = {
-                fragmentHostListener.showBottomSheet(ReferralsGuestPassFragment.newInstance(ReferralsPageType.Claim))
-            },
-            onHideReferralsCardClick = {
-                referralsViewModel.onHideBannerClick()
-            },
-            onReferralsCardShow = {
-                referralsViewModel.onBannerShown()
-            },
-            onReferralsSheetShow = {
-                requireActivity().supportFragmentManager
-                    .findFragmentByTag(ReferralsGuestPassFragment::class.java.name)
-                    ?.let { fragmentHostListener.showBottomSheet(it) }
-            },
             onSectionClick = { section ->
                 goToSection(section)
             },
             onRefreshClick = {
                 profileViewModel.refreshProfile()
-            },
-            onUpgradeProfileClick = {
-                OnboardingLauncher.openOnboardingFlow(
-                    activity = requireActivity(),
-                    onboardingFlow = OnboardingFlow.Upsell(OnboardingUpgradeSource.PROFILE),
-                )
-            },
-            onCloseUpgradeProfileClick = {
-                profileViewModel.closeUpgradeProfile(SourceView.PROFILE)
             },
             modifier = Modifier.fillMaxSize(),
         )

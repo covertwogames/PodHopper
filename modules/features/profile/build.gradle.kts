@@ -66,7 +66,6 @@ dependencies {
 
     implementation(projects.modules.features.cartheme)
     implementation(projects.modules.features.player)
-    implementation(projects.modules.features.referrals)
     implementation(projects.modules.services.compose)
     implementation(projects.modules.services.deeplink)
     implementation(projects.modules.services.images)

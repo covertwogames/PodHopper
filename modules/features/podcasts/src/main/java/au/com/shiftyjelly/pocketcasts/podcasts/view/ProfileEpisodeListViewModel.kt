@@ -129,8 +129,11 @@ class ProfileEpisodeListViewModel @Inject constructor(
     internal val isFreeAccountBannerVisible = combine(
         userManager.getSignInState().asFlow().map { it.isSignedIn },
         settings.isFreeAccountHistoryBannerDismissed.flow,
-    ) { isSignedIn, isBannerDismissed ->
-        !isSignedIn && !isBannerDismissed
+    ) { _, _ ->
+        // PodHopper: never nag to create an account here. This banner opened the legacy onboarding,
+        // which closes itself immediately, so its button did nothing. The PodHopper account lives in
+        // settings, matching the Profile and Playlists banners, which are hidden the same way.
+        false
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,

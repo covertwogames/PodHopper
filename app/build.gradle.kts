@@ -93,7 +93,6 @@ dependencies {
     implementation(projects.modules.features.player)
     implementation(projects.modules.features.podcasts)
     implementation(projects.modules.features.profile)
-    implementation(projects.modules.features.referrals)
     implementation(projects.modules.features.reimagine)
     implementation(projects.modules.features.search)
     implementation(projects.modules.features.settings)

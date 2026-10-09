@@ -2,7 +2,6 @@ package au.com.shiftyjelly.pocketcasts.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.models.type.SignInState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -18,8 +17,6 @@ import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureFlag
 import au.com.shiftyjelly.pocketcasts.utils.toDurationFromNow
 import com.automattic.eventhorizon.DownloadsShownEvent
 import com.automattic.eventhorizon.EventHorizon
-import com.automattic.eventhorizon.InformationalBannerViewCreateAccountTapEvent
-import com.automattic.eventhorizon.InformationalBannerViewDismissedEvent
 import com.automattic.eventhorizon.ListeningHistoryShownEvent
 import com.automattic.eventhorizon.ProfileAccountButtonTappedEvent
 import com.automattic.eventhorizon.ProfileBookmarksShowEvent
@@ -29,7 +26,6 @@ import com.automattic.eventhorizon.ProfileShownEvent
 import com.automattic.eventhorizon.SettingsHelpShownEvent
 import com.automattic.eventhorizon.StarredShownEvent
 import com.automattic.eventhorizon.StatsShownEvent
-import com.automattic.eventhorizon.UpgradeBannerDismissedEvent
 import com.automattic.eventhorizon.UploadedFilesShownEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -38,7 +34,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.reactive.asFlow
@@ -131,28 +126,7 @@ class ProfileViewModel @Inject constructor(
         initialValue = PodHopperAccountState(isSignedIn = false, email = null),
     )
 
-    internal val isFreeAccountBannerVisible = combine(
-        signInState.map { it.isSignedIn },
-        settings.isFreeAccountProfileBannerDismissed.flow,
-    ) { _, _ ->
-        // PodHopper: never nag to sign into a Pocket Casts account. The PodHopper account lives in
-        // settings and is independent of this Pocket Casts sign-in state.
-        false
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false,
-    )
-
     internal val refreshState = settings.refreshStateFlow
-
-    internal val showUpgradeBanner = combine(
-        settings.upgradeProfileClosed.flow,
-        signInState.map { it.isSignedInAsPlusOrPatron },
-    ) { _, _ ->
-        // PodHopper: no Pocket Casts Plus upsell on the profile page.
-        false
-    }
 
     internal val miniPlayerInset = settings.bottomInset.stateIn(
         scope = viewModelScope,
@@ -211,31 +185,5 @@ class ProfileViewModel @Inject constructor(
         if (settings.getRefreshState() is RefreshState.Failed && lastSuccess != null) {
             settings.setRefreshState(lastSuccess)
         }
-    }
-
-    internal fun closeUpgradeProfile(source: SourceView) {
-        eventHorizon.track(
-            UpgradeBannerDismissedEvent(
-                source = source.analyticsValue,
-            ),
-        )
-        settings.upgradeProfileClosed.set(true, updateModifiedAt = false)
-    }
-
-    internal fun onCreateFreeAccountClick() {
-        eventHorizon.track(
-            InformationalBannerViewCreateAccountTapEvent(
-                source = SourceView.PROFILE.analyticsValue,
-            ),
-        )
-    }
-
-    internal fun dismissFreeAccountBanner() {
-        eventHorizon.track(
-            InformationalBannerViewDismissedEvent(
-                source = SourceView.PROFILE.analyticsValue,
-            ),
-        )
-        settings.isFreeAccountProfileBannerDismissed.set(true, updateModifiedAt = true)
     }
 }

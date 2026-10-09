@@ -60,7 +60,6 @@ include(":modules:features:search")
 include(":modules:features:settings")
 include(":modules:features:shared")
 include(":modules:features:reimagine")
-include(":modules:features:referrals")
 include(":modules:features:transcripts")
 include(":modules:features:widgets")
 
