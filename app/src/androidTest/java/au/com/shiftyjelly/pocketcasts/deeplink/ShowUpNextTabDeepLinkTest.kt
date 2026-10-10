@@ -17,6 +17,6 @@ class ShowUpNextTabDeepLinkTest {
         val intent = ShowUpNextTabDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://upnext?location=tab"), intent.data)
+        assertEquals(Uri.parse("podhopper://upnext?location=tab"), intent.data)
     }
 }

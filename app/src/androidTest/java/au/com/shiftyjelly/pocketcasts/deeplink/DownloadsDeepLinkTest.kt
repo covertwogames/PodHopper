@@ -17,6 +17,6 @@ class DownloadsDeepLinkTest {
         val intent = DownloadsDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://profile/downloads"), intent.data)
+        assertEquals(Uri.parse("podhopper://profile/downloads"), intent.data)
     }
 }

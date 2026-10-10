@@ -52,7 +52,7 @@ sealed interface UriDeepLink : DeepLink {
 }
 
 data object DownloadsDeepLink : IntentableDeepLink {
-    private val uri = Uri.parse("pktc://profile/downloads")
+    private val uri = Uri.parse("podhopper://profile/downloads")
 
     override fun toIntent(context: Context): Intent = Intent(ACTION_VIEW, uri)
         .setPackage(context.packageName)
@@ -182,17 +182,17 @@ data class ShowPlaylistDeepLink(
 
 data object ShowFiltersDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://filters"))
+        .setData(Uri.parse("podhopper://filters"))
 }
 
 data object CreateAccountDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://signup"))
+        .setData(Uri.parse("podhopper://signup"))
 }
 
 data object ShowUpNextTabDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://upnext?location=tab"))
+        .setData(Uri.parse("podhopper://upnext?location=tab"))
 }
 
 data object PocketCastsWebsiteGetDeepLink : DeepLink
@@ -203,7 +203,7 @@ data class ShowPodcastFromUrlDeepLink(
 
 data object CloudFilesDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://cloudfiles"))
+        .setData(Uri.parse("podhopper://cloudfiles"))
 }
 
 data class NativeShareDeepLink(
@@ -225,12 +225,12 @@ data class OpmlImportDeepLink(
 
 data object ImportDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://settings/import"))
+        .setData(Uri.parse("podhopper://settings/import"))
 }
 
 data object AppOpenDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://open"))
+        .setData(Uri.parse("podhopper://open"))
 }
 
 data class PlayFromSearchDeepLink(
@@ -268,18 +268,18 @@ data class ReferralsDeepLink(
 
 data object ThemesDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://settings/themes"))
+        .setData(Uri.parse("podhopper://settings/themes"))
 }
 
 data object SmartFoldersDeepLink : IntentableDeepLink {
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://features/suggestedFolders"))
+        .setData(Uri.parse("podhopper://features/suggestedFolders"))
 }
 
 data object DeveloperOptionsDeeplink : IntentableDeepLink {
 
     override fun toIntent(context: Context) = Intent(ACTION_VIEW)
-        .setData(Uri.parse("pktc://developer_options"))
+        .setData(Uri.parse("podhopper://developer_options"))
 }
 
 private val Context.launcherIntent get() = requireNotNull(packageManager.getLaunchIntentForPackage(packageName)) {

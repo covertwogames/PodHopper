@@ -17,6 +17,6 @@ class AppOpenDeepLinkTest {
         val intent = AppOpenDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://open"), intent.data)
+        assertEquals(Uri.parse("podhopper://open"), intent.data)
     }
 }

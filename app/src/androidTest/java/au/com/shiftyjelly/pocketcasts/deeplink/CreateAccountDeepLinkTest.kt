@@ -17,6 +17,6 @@ class CreateAccountDeepLinkTest {
         val intent = CreateAccountDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://signup"), intent.data)
+        assertEquals(Uri.parse("podhopper://signup"), intent.data)
     }
 }

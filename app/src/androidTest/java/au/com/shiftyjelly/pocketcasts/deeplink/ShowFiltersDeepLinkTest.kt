@@ -17,6 +17,6 @@ class ShowFiltersDeepLinkTest {
         val intent = ShowFiltersDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://filters"), intent.data)
+        assertEquals(Uri.parse("podhopper://filters"), intent.data)
     }
 }

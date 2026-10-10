@@ -87,13 +87,17 @@
                 <data android:mimeType="text/x-opml"/>
                 <data android:mimeType="application/octet-stream"/>
             </intent-filter>
+            <!-- PodHopper: the app's own link type. This used to be pktc, the upstream app's link type,
+                 so links PodHopper sent itself could open the other app when both were installed, and
+                 other apps' and websites' pktc links opened PodHopper. DeepLinkFactory still reads
+                 pktc, but only for an intent that names MainActivity directly. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data
                         android:host="*"
-                        android:scheme="pktc"/>
+                        android:scheme="podhopper"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

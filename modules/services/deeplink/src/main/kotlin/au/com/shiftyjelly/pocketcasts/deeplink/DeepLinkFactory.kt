@@ -97,6 +97,11 @@ private interface DeepLinkAdapter {
     fun create(intent: Intent): DeepLink?
 }
 
+// PodHopper: podhopper is the app's own link type and the one AndroidManifest.xml registers.
+// pktc, the upstream app's link type, is still read here, but the manifest no longer registers
+// it, so it only arrives in an intent that names MainActivity directly.
+private val APP_LINK_SCHEMES = listOf("podhopper", "pktc")
+
 private class DownloadsAdapter : DeepLinkAdapter {
     override fun create(intent: Intent): DeepLink? {
         return when {
@@ -109,7 +114,7 @@ private class DownloadsAdapter : DeepLinkAdapter {
     private fun isUriMatch(intent: Intent): Boolean {
         val uri = intent.data ?: return false
         return intent.action == ACTION_VIEW &&
-            uri.scheme == "pktc" &&
+            uri.scheme in APP_LINK_SCHEMES &&
             uri.host == "profile" &&
             uri.path == "/downloads"
     }
@@ -208,7 +213,7 @@ private class ShowFiltersAdapter : DeepLinkAdapter {
         val scheme = uriData?.scheme
         val host = uriData?.host
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "filters") {
+        return if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "filters") {
             ShowFiltersDeepLink
         } else {
             null
@@ -222,7 +227,7 @@ private class CreateAccountAdapter : DeepLinkAdapter {
         val scheme = uriData?.scheme
         val host = uriData?.host
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "signup") {
+        return if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "signup") {
             CreateAccountDeepLink
         } else {
             null
@@ -237,7 +242,7 @@ private class UpNextAdapter : DeepLinkAdapter {
         val host = uriData.host
         val location = uriData.getQueryParameter("location")
 
-        if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "upnext" && location == "tab") {
+        if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "upnext" && location == "tab") {
             return ShowUpNextTabDeepLink
         }
         return null
@@ -292,7 +297,7 @@ private class PodloveAdapter : DeepLinkAdapter {
     }
 
     private companion object {
-        private val PODLOVE_REGEX = """^pktc://(subscribe|subscribehttps)/(.{3,})$""".toRegex()
+        private val PODLOVE_REGEX = """^(?:podhopper|pktc)://(subscribe|subscribehttps)/(.{3,})$""".toRegex()
     }
 }
 
@@ -338,7 +343,9 @@ private class ShareLinkNativeAdapter : DeepLinkAdapter {
         val host = uriData?.host
         val pathSegments = uriData?.pathSegments.orEmpty()
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && pathSegments.isNotEmpty() && host !in EXCLUDED_HOSTS) {
+        // PodHopper: uriData != null is checked explicitly because the scheme check is now a list
+        // lookup, which (unlike the old == "pktc" comparison) does not prove uriData is non-null.
+        return if (intent.action == ACTION_VIEW && uriData != null && scheme in APP_LINK_SCHEMES && pathSegments.isNotEmpty() && host !in EXCLUDED_HOSTS) {
             val timestamps = uriData.getQueryParameter("t")?.let(timestampParser::parseTimestamp)
             NativeShareDeepLink(
                 uri = uriData,
@@ -505,7 +512,7 @@ private class ImportAdapter : DeepLinkAdapter {
         val host = uriData.host
         val path = uriData.path
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "settings" && path == "/import") {
+        return if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "settings" && path == "/import") {
             ImportDeepLink
         } else {
             null
@@ -519,7 +526,7 @@ private class AppOpenAdapter : DeepLinkAdapter {
         val scheme = uriData.scheme
         val host = uriData.host
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "open") {
+        return if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "open") {
             AppOpenDeepLink
         } else {
             null
@@ -607,7 +614,7 @@ private class ThemesAdapter : DeepLinkAdapter {
         val host = uriData.host
         val path = uriData.path
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "settings" && path == "/themes") {
+        return if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "settings" && path == "/themes") {
             ThemesDeepLink
         } else {
             null
@@ -621,7 +628,7 @@ private class DeveloperOptionsAdapter : DeepLinkAdapter {
         val scheme = uriData.scheme
         val host = uriData.host
 
-        return if (intent.action == ACTION_VIEW && scheme == "pktc" && host == "developer_options") {
+        return if (intent.action == ACTION_VIEW && scheme in APP_LINK_SCHEMES && host == "developer_options") {
             DeveloperOptionsDeeplink
         } else {
             null

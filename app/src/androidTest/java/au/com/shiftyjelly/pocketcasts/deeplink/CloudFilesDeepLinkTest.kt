@@ -17,6 +17,6 @@ class CloudFilesDeepLinkTest {
         val intent = CloudFilesDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://cloudfiles"), intent.data)
+        assertEquals(Uri.parse("podhopper://cloudfiles"), intent.data)
     }
 }

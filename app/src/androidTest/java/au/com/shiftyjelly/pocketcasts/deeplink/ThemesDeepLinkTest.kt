@@ -17,6 +17,6 @@ class ThemesDeepLinkTest {
         val intent = ThemesDeepLink.toIntent(context)
 
         assertEquals(ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("pktc://settings/themes"), intent.data)
+        assertEquals(Uri.parse("podhopper://settings/themes"), intent.data)
     }
 }

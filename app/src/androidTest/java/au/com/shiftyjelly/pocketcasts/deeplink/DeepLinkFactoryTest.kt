@@ -27,7 +27,7 @@ class DeepLinkFactoryTest {
     fun downloads() {
         val intent = Intent()
             .setAction("INTENT_OPEN_APP_DOWNLOADING")
-            .setData(Uri.parse("pktc://profile/downloads"))
+            .setData(Uri.parse("podhopper://profile/downloads"))
 
         val deepLink = factory.create(intent)
 
@@ -239,7 +239,7 @@ class DeepLinkFactoryTest {
     fun showUpNextTab() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://upnext?location=tab"))
+            .setData(Uri.parse("podhopper://upnext?location=tab"))
 
         val deepLink = factory.create(intent)
 
@@ -282,7 +282,7 @@ class DeepLinkFactoryTest {
     fun podloveHttps() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://subscribehttps/mypodcast.com/rss/123"))
+            .setData(Uri.parse("podhopper://subscribehttps/mypodcast.com/rss/123"))
 
         val deepLink = factory.create(intent)
 
@@ -293,7 +293,7 @@ class DeepLinkFactoryTest {
     fun podloveHttpsWithParams() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://subscribehttps/mypodcast.com/rss/123?someKey=someValue"))
+            .setData(Uri.parse("podhopper://subscribehttps/mypodcast.com/rss/123?someKey=someValue"))
 
         val deepLink = factory.create(intent)
 
@@ -304,7 +304,7 @@ class DeepLinkFactoryTest {
     fun podloveHttp() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://subscribe/mypodcast.com/rss/123"))
+            .setData(Uri.parse("podhopper://subscribe/mypodcast.com/rss/123"))
 
         val deepLink = factory.create(intent)
 
@@ -315,7 +315,7 @@ class DeepLinkFactoryTest {
     fun podloveHttpWithParams() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://subscribe/mypodcast.com/rss/123?someKey=someValue"))
+            .setData(Uri.parse("podhopper://subscribe/mypodcast.com/rss/123?someKey=someValue"))
 
         val deepLink = factory.create(intent)
 
@@ -337,7 +337,7 @@ class DeepLinkFactoryTest {
     fun podloveWithShortPath() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://subscribe/aa"))
+            .setData(Uri.parse("podhopper://subscribe/aa"))
 
         val deepLink = factory.create(intent)
 
@@ -360,7 +360,7 @@ class DeepLinkFactoryTest {
     fun shareListNativeLinkIsNotHandled() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://sharelist/path/to/list"))
+            .setData(Uri.parse("podhopper://sharelist/path/to/list"))
 
         val deepLink = factory.create(intent)
 
@@ -438,7 +438,7 @@ class DeepLinkFactoryTest {
         // PodHopper: the Files screen is not opened from outside links.
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://cloudfiles"))
+            .setData(Uri.parse("podhopper://cloudfiles"))
 
         val deepLink = factory.create(intent)
 
@@ -449,7 +449,7 @@ class DeepLinkFactoryTest {
     fun filtersTab() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://filters"))
+            .setData(Uri.parse("podhopper://filters"))
 
         val deepLink = factory.create(intent)
 
@@ -460,7 +460,7 @@ class DeepLinkFactoryTest {
     fun createAccount() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://signup"))
+            .setData(Uri.parse("podhopper://signup"))
 
         val deepLink = factory.create(intent)
 
@@ -471,7 +471,7 @@ class DeepLinkFactoryTest {
     fun openApp() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://open"))
+            .setData(Uri.parse("podhopper://open"))
 
         val deepLink = factory.create(intent)
 
@@ -482,7 +482,7 @@ class DeepLinkFactoryTest {
     fun import() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://settings/import"))
+            .setData(Uri.parse("podhopper://settings/import"))
 
         val deepLink = factory.create(intent)
 
@@ -493,13 +493,13 @@ class DeepLinkFactoryTest {
     fun nativeShare() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://some/link"))
+            .setData(Uri.parse("podhopper://some/link"))
 
         val deepLink = factory.create(intent)
 
         assertEquals(
             NativeShareDeepLink(
-                uri = Uri.parse("pktc://some/link"),
+                uri = Uri.parse("podhopper://some/link"),
                 startTimestamp = null,
                 endTimestamp = null,
             ),
@@ -511,13 +511,13 @@ class DeepLinkFactoryTest {
     fun nativeShareWithStartTimestamp() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://some/link?t=15"))
+            .setData(Uri.parse("podhopper://some/link?t=15"))
 
         val deepLink = factory.create(intent)
 
         assertEquals(
             NativeShareDeepLink(
-                uri = Uri.parse("pktc://some/link?t=15"),
+                uri = Uri.parse("podhopper://some/link?t=15"),
                 startTimestamp = 15.seconds,
                 endTimestamp = null,
             ),
@@ -529,13 +529,13 @@ class DeepLinkFactoryTest {
     fun nativeShareWithTimestamps() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://some/link?t=75,125"))
+            .setData(Uri.parse("podhopper://some/link?t=75,125"))
 
         val deepLink = factory.create(intent)
 
         assertEquals(
             NativeShareDeepLink(
-                uri = Uri.parse("pktc://some/link?t=75,125"),
+                uri = Uri.parse("podhopper://some/link?t=75,125"),
                 startTimestamp = 75.seconds,
                 endTimestamp = 125.seconds,
             ),
@@ -966,7 +966,7 @@ class DeepLinkFactoryTest {
     fun themes() {
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://settings/themes"))
+            .setData(Uri.parse("podhopper://settings/themes"))
 
         val deepLink = factory.create(intent)
 
@@ -978,7 +978,7 @@ class DeepLinkFactoryTest {
         // PodHopper: this route led to the Pocket Casts Plus upsell and was removed.
         val intent = Intent()
             .setAction(ACTION_VIEW)
-            .setData(Uri.parse("pktc://features/suggestedFolders"))
+            .setData(Uri.parse("podhopper://features/suggestedFolders"))
 
         val deepLink = factory.create(intent)
 
@@ -988,10 +988,35 @@ class DeepLinkFactoryTest {
     @Test
     fun developerOptions() {
         val intent = Intent(ACTION_VIEW)
-            .setData(Uri.parse("pktc://developer_options"))
+            .setData(Uri.parse("podhopper://developer_options"))
 
         val deeplink = factory.create(intent)
 
         assertEquals(DeveloperOptionsDeeplink, deeplink)
+    }
+
+    @Test
+    fun legacyPktcLinksAreStillAccepted() {
+        // PodHopper: the manifest no longer registers pktc links, but the factory still reads them.
+        val cases = mapOf<String, DeepLink>(
+            "pktc://profile/downloads" to DownloadsDeepLink,
+            "pktc://upnext?location=tab" to ShowUpNextTabDeepLink,
+            "pktc://filters" to ShowFiltersDeepLink,
+            "pktc://signup" to CreateAccountDeepLink,
+            "pktc://open" to AppOpenDeepLink,
+            "pktc://settings/import" to ImportDeepLink,
+            "pktc://settings/themes" to ThemesDeepLink,
+            "pktc://developer_options" to DeveloperOptionsDeeplink,
+            "pktc://subscribe/mypodcast.com/rss/123" to ShowPodcastFromUrlDeepLink("http://mypodcast.com/rss/123"),
+            "pktc://subscribehttps/mypodcast.com/rss/123" to ShowPodcastFromUrlDeepLink("https://mypodcast.com/rss/123"),
+        )
+
+        cases.forEach { (url, expected) ->
+            val intent = Intent()
+                .setAction(ACTION_VIEW)
+                .setData(Uri.parse(url))
+
+            assertEquals(url, expected, factory.create(intent))
+        }
     }
 }
