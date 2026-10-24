@@ -358,6 +358,7 @@ class MediaSessionManager(
             bookmarkHelper = bookmarkHelper,
             scopeProvider = { scope },
             contextProvider = { context },
+            isAutomotive = isAutomotive,
             commandMutex = commandMutex,
         )
         media3LibraryCallback = Media3LibrarySessionCallback(
@@ -727,7 +728,11 @@ class MediaSessionManager(
         combine(
             settings.customMediaActionsVisibility.flow,
             settings.mediaControlItems.flow,
-        ) { visibility, items -> visibility to items }
+            // PodHopper: the car's skip buttons show the skip amounts, so rebuild the layout when
+            // either amount changes.
+            settings.skipForwardInSecs.flow,
+            settings.skipBackInSecs.flow,
+        ) { visibility, items, _, _ -> visibility to items }
             .onEach { withContext(Dispatchers.Main) { updateMedia3CustomLayout() } }
             .catch { Timber.e(it) }
             .launchIn(scope)

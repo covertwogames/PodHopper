@@ -35,6 +35,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -104,10 +105,12 @@ class Media3SessionCallbackTest {
         assertTrue(playerCommands.contains(Player.COMMAND_PLAY_PAUSE))
         assertTrue(playerCommands.contains(Player.COMMAND_SET_MEDIA_ITEM))
         assertTrue(playerCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM))
-        assertFalse(playerCommands.contains(Player.COMMAND_SEEK_FORWARD))
-        assertFalse(playerCommands.contains(Player.COMMAND_SEEK_BACK))
-        assertFalse(playerCommands.contains(Player.COMMAND_SEEK_TO_NEXT))
-        assertFalse(playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
+        // PodHopper: seek and next/previous are granted so car controls and steering wheels reach
+        // the player's skip overrides.
+        assertTrue(playerCommands.contains(Player.COMMAND_SEEK_FORWARD))
+        assertTrue(playerCommands.contains(Player.COMMAND_SEEK_BACK))
+        assertTrue(playerCommands.contains(Player.COMMAND_SEEK_TO_NEXT))
+        assertTrue(playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
         assertTrue(playerCommands.contains(Player.COMMAND_STOP))
         assertTrue(playerCommands.contains(Player.COMMAND_GET_CURRENT_MEDIA_ITEM))
         assertTrue(playerCommands.contains(Player.COMMAND_GET_METADATA))
@@ -436,6 +439,105 @@ class Media3SessionCallbackTest {
         )
     }
 
+    // --- Car steering-wheel key tests (PodHopper) ---
+
+    @Test
+    fun `car NEXT key skips forward directly without headphone settings`() = runTest {
+        val carCallback = buildCarCallback()
+        mockSkipSettings()
+        mockHeadphoneNextAction(HeadphoneAction.ADD_BOOKMARK)
+
+        sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_NEXT, target = carCallback)
+        testScope.advanceUntilIdle()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        verify(playbackManager).skipForwardSuspend(
+            sourceView = any(),
+            jumpAmountSeconds = eq(30),
+        )
+        verify(bookmarkHelper, never()).handleAddBookmarkAction(any(), any())
+    }
+
+    @Test
+    fun `car PREVIOUS key skips back directly without headphone settings`() = runTest {
+        val carCallback = buildCarCallback()
+        mockSkipSettings()
+        mockHeadphonePreviousAction(HeadphoneAction.ADD_BOOKMARK)
+
+        sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_PREVIOUS, target = carCallback)
+        testScope.advanceUntilIdle()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        verify(playbackManager).skipBackwardSuspend(
+            sourceView = any(),
+            jumpAmountSeconds = eq(10),
+        )
+        verify(bookmarkHelper, never()).handleAddBookmarkAction(any(), any())
+    }
+
+    @Test
+    fun `car FAST_FORWARD key skips forward`() = runTest {
+        val carCallback = buildCarCallback()
+        mockSkipSettings()
+
+        val handled = sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, target = carCallback)
+        testScope.advanceUntilIdle()
+
+        assertTrue(handled)
+        verify(playbackManager).skipForwardSuspend(
+            sourceView = any(),
+            jumpAmountSeconds = eq(30),
+        )
+    }
+
+    @Test
+    fun `car REWIND key skips back`() = runTest {
+        val carCallback = buildCarCallback()
+        mockSkipSettings()
+
+        val handled = sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_REWIND, target = carCallback)
+        testScope.advanceUntilIdle()
+
+        assertTrue(handled)
+        verify(playbackManager).skipBackwardSuspend(
+            sourceView = any(),
+            jumpAmountSeconds = eq(10),
+        )
+    }
+
+    @Test
+    fun `car key repeat from a held button is consumed without skipping`() = runTest {
+        val carCallback = buildCarCallback()
+        mockSkipSettings()
+
+        val handled = sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_NEXT, target = carCallback, repeatCount = 1)
+        testScope.advanceUntilIdle()
+
+        assertTrue(handled)
+        verify(playbackManager, never()).skipForwardSuspend(
+            sourceView = any(),
+            jumpAmountSeconds = any(),
+        )
+    }
+
+    @Test
+    fun `car STOP key is consumed and does nothing`() = runTest {
+        val carCallback = buildCarCallback()
+
+        val handled = sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_STOP, target = carCallback)
+        testScope.advanceUntilIdle()
+
+        assertTrue(handled)
+        verifyNoInteractions(playbackManager)
+    }
+
+    @Test
+    fun `phone STOP key is left to the default handling`() {
+        val handled = sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_STOP)
+
+        assertFalse(handled)
+    }
+
     // --- onAddMediaItems resolved item tests ---
 
     @Test
@@ -561,13 +663,29 @@ class Media3SessionCallbackTest {
 
     // --- Helpers ---
 
-    private fun sendMediaButtonEvent(keyCode: Int) {
-        val keyEvent = KeyEvent(KeyEvent.ACTION_DOWN, keyCode)
+    private fun sendMediaButtonEvent(
+        keyCode: Int,
+        target: Media3SessionCallback = callback,
+        repeatCount: Int = 0,
+    ): Boolean {
+        val keyEvent = KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, keyCode, repeatCount)
         val intent = Intent(Intent.ACTION_MEDIA_BUTTON).apply {
             putExtra(Intent.EXTRA_KEY_EVENT, keyEvent)
         }
-        callback.onMediaButtonEvent(mockSession, mockController, intent)
+        return target.onMediaButtonEvent(mockSession, mockController, intent)
     }
+
+    private fun buildCarCallback() = Media3SessionCallback(
+        playbackManager = playbackManager,
+        episodeManager = episodeManager,
+        podcastManager = podcastManager,
+        settings = settings,
+        actions = actions,
+        bookmarkHelper = bookmarkHelper,
+        scopeProvider = { testScope },
+        contextProvider = { RuntimeEnvironment.getApplication() },
+        isAutomotive = true,
+    )
 
     private fun mockHeadphoneNextAction(action: HeadphoneAction) {
         val setting = mock<au.com.shiftyjelly.pocketcasts.preferences.UserSetting<HeadphoneAction>>()

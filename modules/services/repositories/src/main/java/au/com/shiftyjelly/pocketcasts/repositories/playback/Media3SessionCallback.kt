@@ -61,6 +61,8 @@ internal class Media3SessionCallback(
     private val bookmarkHelper: BookmarkHelper,
     private val scopeProvider: () -> CoroutineScope,
     private val contextProvider: () -> Context,
+    // PodHopper: true in the car build, where steering-wheel keys always skip (see onMediaButtonEvent).
+    private val isAutomotive: Boolean = false,
     private val source: SourceView = SourceView.MEDIA_BUTTON_BROADCAST_ACTION,
     internal val commandMutex: Mutex = Mutex(),
 ) : MediaSession.Callback {
@@ -209,7 +211,58 @@ internal class Media3SessionCallback(
             return true
         }
 
-        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Media3 media button event: keyCode=${keyEvent.keyCode}")
+        // PodHopper: holding a button sends a stream of repeats, so only the first press is logged.
+        if (keyEvent.repeatCount == 0) {
+            LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Media3 media button event: keyCode=${keyEvent.keyCode}")
+        }
+
+        // PodHopper: in the car, every skip-style key skips by the configured seconds, whichever
+        // one the car sends for its steering-wheel buttons. The car's screen shows the app's own
+        // skip buttons instead of next/previous track, so these keys must not depend on what is
+        // on screen, and they skip straight away instead of waiting on the headphone multi-tap
+        // timing and headphone action settings. Holding a button sends repeats, which are ignored so
+        // one hold is one skip.
+        if (isAutomotive) {
+            when (keyEvent.keyCode) {
+                KeyEvent.KEYCODE_MEDIA_NEXT,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+                -> {
+                    if (keyEvent.repeatCount == 0) {
+                        launchCommand("Car skip forward key") {
+                            playbackManager.skipForwardSuspend(
+                                sourceView = source,
+                                jumpAmountSeconds = settings.skipForwardInSecs.value,
+                            )
+                        }
+                    }
+                    return true
+                }
+
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                KeyEvent.KEYCODE_MEDIA_REWIND,
+                KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+                -> {
+                    if (keyEvent.repeatCount == 0) {
+                        launchCommand("Car skip back key") {
+                            playbackManager.skipBackwardSuspend(
+                                sourceView = source,
+                                jumpAmountSeconds = settings.skipBackInSecs.value,
+                            )
+                        }
+                    }
+                    return true
+                }
+
+                // PodHopper: some car media services send a stop key in place of a steering-wheel
+                // skip they could not route. It carries no direction, and letting it through would
+                // pause playback on a skip press, so it is logged and ignored in the car.
+                KeyEvent.KEYCODE_MEDIA_STOP -> {
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car media stop key ignored")
+                    return true
+                }
+            }
+        }
 
         // Dedicated pause key has explicit semantics — handle it directly.
         // KEYCODE_MEDIA_PLAY is routed through the multi-tap system because some
@@ -396,9 +449,12 @@ internal val TRANSPORT_PLAYER_COMMANDS: Player.Commands = Player.Commands.Builde
         // available commands; a controller only gets the intersection of the two sets.
         Player.COMMAND_SEEK_FORWARD,
         Player.COMMAND_SEEK_BACK,
-        // PodHopper: also grant next/previous so the car's hardware/steering-wheel skip buttons,
-        // which invoke these rather than seek-forward/back, reach the seekToNext/seekToPrevious
-        // overrides and jump 30s/10s. Must stay in sync with the player's available commands above.
+        // PodHopper: also grant next/previous. Some car media services turn a steering-wheel skip
+        // into a direct skip-to-next/previous call rather than a key press; granting these lets
+        // that call reach the seekToNext/seekToPrevious overrides, which skip forward/back by the
+        // configured seconds. In the car these stay granted even though the car's screen shows the
+        // app's own skip buttons in those slots. Must stay in sync with the player's available
+        // commands.
         Player.COMMAND_SEEK_TO_NEXT,
         Player.COMMAND_SEEK_TO_PREVIOUS,
         Player.COMMAND_STOP,

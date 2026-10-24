@@ -17,6 +17,7 @@ import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.repositories.extensions.getArtworkUrl
+import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 
 /**
  * Bridges the app's playback layer to Media3's [Player] interface.
@@ -182,10 +183,12 @@ class PocketCastsForwardingPlayer(
                 // buttons did, with no second set of buttons to duplicate them.
                 Player.COMMAND_SEEK_FORWARD,
                 Player.COMMAND_SEEK_BACK,
-                // PodHopper: advertise the next/previous commands too. A car's hardware (and
-                // steering-wheel) skip buttons invoke these, not the seek-forward/back pair above.
-                // The seekToNext/seekToPrevious overrides below route them to the configured
-                // skip-forward/back, so the wheel buttons jump 30s/10s the way Audible and Libby do.
+                // PodHopper: advertise the next/previous commands too. Some car media services turn
+                // a steering-wheel skip into a direct skip-to-next/previous call, and only make it
+                // when these commands are available. The seekToNext/seekToPrevious overrides below
+                // route them to the configured skip-forward/back, so the wheel buttons jump 30s/10s
+                // the way Audible and Libby do. In the car the screen still shows the app's own skip
+                // buttons in those slots (see Media3AutomotiveStrategy).
                 Player.COMMAND_SEEK_TO_NEXT,
                 Player.COMMAND_SEEK_TO_PREVIOUS,
                 Player.COMMAND_STOP,
@@ -195,8 +198,8 @@ class PocketCastsForwardingPlayer(
             .build()
     }
 
-    // PodHopper: getAvailableCommands() above advertises seek-to-next/previous so the car publishes
-    // forward/back transport controls. isCommandAvailable must agree, or Media3's skip handler
+    // PodHopper: getAvailableCommands() above advertises seek-to-next/previous so a car media service
+    // can call them directly. isCommandAvailable must agree, or Media3's skip handler
     // (onSkipToNext/onSkipToPrevious) sees the command as unavailable, and falls back to
     // seekToNextMediaItem/seekToPreviousMediaItem (no next item, so nothing happens) instead of the
     // seekToNext/seekToPrevious overrides below. Force these two true; leave the rest to the
@@ -221,10 +224,14 @@ class PocketCastsForwardingPlayer(
     }
 
     override fun seekToNext() {
+        // PodHopper: logged so a car log shows whether a steering-wheel press arrived as a direct
+        // skip call (this line) or as a key press (the media button event line).
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Skip to next command received")
         onSkipForward?.invoke() ?: super.seekToNext()
     }
 
     override fun seekToPrevious() {
+        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Skip to previous command received")
         onSkipBack?.invoke() ?: super.seekToPrevious()
     }
 

@@ -163,7 +163,7 @@ class PocketCastsForwardingPlayerTest {
     }
 
     @Test
-    fun `available commands expose only core controls`() {
+    fun `available commands expose core controls plus skip commands`() {
         val commands = forwardingPlayer.availableCommands
 
         assertTrue(commands.contains(Player.COMMAND_PLAY_PAUSE))
@@ -172,10 +172,12 @@ class PocketCastsForwardingPlayerTest {
         assertTrue(commands.contains(Player.COMMAND_STOP))
         assertTrue(commands.contains(Player.COMMAND_GET_CURRENT_MEDIA_ITEM))
         assertTrue(commands.contains(Player.COMMAND_GET_METADATA))
-        assertFalse(commands.contains(Player.COMMAND_SEEK_FORWARD))
-        assertFalse(commands.contains(Player.COMMAND_SEEK_BACK))
-        assertFalse(commands.contains(Player.COMMAND_SEEK_TO_NEXT))
-        assertFalse(commands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
+        // PodHopper: seek and next/previous are exposed so car controls and steering wheels reach
+        // the skip overrides.
+        assertTrue(commands.contains(Player.COMMAND_SEEK_FORWARD))
+        assertTrue(commands.contains(Player.COMMAND_SEEK_BACK))
+        assertTrue(commands.contains(Player.COMMAND_SEEK_TO_NEXT))
+        assertTrue(commands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
     }
 
     @Test
@@ -595,7 +597,7 @@ class PocketCastsForwardingPlayerTest {
     }
 
     @Test
-    fun `swapPlayer excludes seek to next and previous`() {
+    fun `swapPlayer keeps seek to next and previous available`() {
         val player = PocketCastsForwardingPlayer(mockPlayer)
 
         val newWrappedPlayer = mock<Player> {
@@ -603,8 +605,10 @@ class PocketCastsForwardingPlayerTest {
         }
         val swapped = player.swapPlayer(newWrappedPlayer)
 
-        assertFalse(swapped.availableCommands.contains(Player.COMMAND_SEEK_TO_NEXT))
-        assertFalse(swapped.availableCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
+        assertTrue(swapped.availableCommands.contains(Player.COMMAND_SEEK_TO_NEXT))
+        assertTrue(swapped.availableCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
+        assertTrue(swapped.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT))
+        assertTrue(swapped.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS))
     }
 
     // --- setMediaItems / addMediaItems / prepare interception tests ---
