@@ -833,8 +833,8 @@ class MediaSessionManager(
                             // unplayed in the car's cached lists, which once baited replays of completed
                             // episodes. Those lists are the changed podcasts' own nodes and the filter
                             // nodes, both invalidated by name below, plus the podcasts list. The root's
-                            // children are the top-level menu (Podcasts, Up Next, Playlists, Discover,
-                            // Profile), which no played status can change, so it never contributed to that
+                            // children are the top-level menu (Podcasts, Up Next, Playlists, Discover),
+                            // which no played status can change, so it never contributed to that
                             // fix. Sign-in and subscription changes DO alter the menu and still invalidate
                             // the root; they are separate observers above.
                             notifyBrowseChanged(

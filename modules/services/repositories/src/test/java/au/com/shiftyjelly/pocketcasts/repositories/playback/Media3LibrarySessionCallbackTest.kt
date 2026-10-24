@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.session.MediaConstants.EXTRAS_KEY_ROOT_CHILDREN_LIMIT
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
@@ -14,6 +15,7 @@ import androidx.media3.session.SessionCommands
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
+import au.com.shiftyjelly.pocketcasts.preferences.UserSetting
 import au.com.shiftyjelly.pocketcasts.repositories.playback.auto.PackageValidator
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
@@ -413,6 +415,88 @@ class Media3LibrarySessionCallbackTest {
         callback.onSearch(mockSession, mockController, "empty", null)
 
         verify(mockSession).notifySearchResultChanged(eq(mockController), eq("empty"), eq(0), anyOrNull())
+    }
+
+    // --- Car top-level tab limit (PodHopper) ---
+
+    @Test
+    fun `car root menu is cut to the tab limit the car reports`() = runTest {
+        val carCallback = buildSignedInCarCallback()
+        val tabs = (1..4).map { createMediaItem("tab$it", "Tab $it", browsable = true) }
+        whenever(browseTreeProvider.loadChildren(eq(MEDIA_ID_ROOT), any())).thenReturn(tabs)
+
+        carCallback.onGetLibraryRoot(mockSession, mockController, libraryParamsWithTabLimit(3))
+        val result = carCallback.onGetChildren(mockSession, mockController, MEDIA_ID_ROOT, 0, Int.MAX_VALUE, null).get()
+
+        assertEquals(listOf("tab1", "tab2", "tab3"), result.value!!.map { it.mediaId })
+    }
+
+    @Test
+    fun `car root menu is unchanged when the car sends no tab limit`() = runTest {
+        val carCallback = buildSignedInCarCallback()
+        val tabs = (1..4).map { createMediaItem("tab$it", "Tab $it", browsable = true) }
+        whenever(browseTreeProvider.loadChildren(eq(MEDIA_ID_ROOT), any())).thenReturn(tabs)
+
+        carCallback.onGetLibraryRoot(mockSession, mockController, null)
+        val result = carCallback.onGetChildren(mockSession, mockController, MEDIA_ID_ROOT, 0, Int.MAX_VALUE, null).get()
+
+        assertEquals(4, result.value!!.size)
+    }
+
+    @Test
+    fun `car tab limit does not cut lists below the top level`() = runTest {
+        val carCallback = buildSignedInCarCallback()
+        val rows = (1..5).map { createMediaItem("row$it", "Row $it", browsable = true) }
+        whenever(browseTreeProvider.loadChildren(eq(FILTERS_ROOT), any())).thenReturn(rows)
+
+        carCallback.onGetLibraryRoot(mockSession, mockController, libraryParamsWithTabLimit(3))
+        val result = carCallback.onGetChildren(mockSession, mockController, FILTERS_ROOT, 0, Int.MAX_VALUE, null).get()
+
+        assertEquals(5, result.value!!.size)
+    }
+
+    @Test
+    fun `phone ignores the car tab limit`() = runTest {
+        val tabs = (1..4).map { createMediaItem("tab$it", "Tab $it", browsable = true) }
+        whenever(browseTreeProvider.loadChildren(eq(MEDIA_ID_ROOT), any())).thenReturn(tabs)
+
+        callback.onGetLibraryRoot(mockSession, mockController, libraryParamsWithTabLimit(3))
+        val result = callback.onGetChildren(mockSession, mockController, MEDIA_ID_ROOT, 0, Int.MAX_VALUE, null).get()
+
+        assertEquals(4, result.value!!.size)
+    }
+
+    private fun libraryParamsWithTabLimit(limit: Int): MediaLibraryService.LibraryParams {
+        val extras = Bundle().apply { putInt(EXTRAS_KEY_ROOT_CHILDREN_LIMIT, limit) }
+        return MediaLibraryService.LibraryParams.Builder()
+            .setExtras(extras)
+            .build()
+    }
+
+    private fun buildSignedInCarCallback(): Media3LibrarySessionCallback {
+        val automotiveContext: Context = mock()
+        val automotivePackageManager: PackageManager = mock()
+        val metaData = Bundle().apply { putBoolean("podhopper_automotive", true) }
+        val appInfo = ApplicationInfo().apply { this.metaData = metaData }
+        whenever(automotivePackageManager.getApplicationInfo(any<String>(), any<Int>())).thenReturn(appInfo)
+        whenever(automotiveContext.packageManager).thenReturn(automotivePackageManager)
+        whenever(automotiveContext.packageName).thenReturn("au.com.shiftyjelly.pocketcasts.debug")
+
+        val refreshToken = mock<UserSetting<String>>()
+        whenever(refreshToken.value).thenReturn("signed-in")
+        whenever(mockSettings.podhopperRefreshToken).thenReturn(refreshToken)
+
+        return Media3LibrarySessionCallback(
+            sessionCallback = sessionCallback,
+            browseTreeProvider = browseTreeProvider,
+            playbackManager = playbackManager,
+            episodeManager = episodeManager,
+            podcastManager = podcastManager,
+            settings = mockSettings,
+            packageValidator = null,
+            scopeProvider = { testScope },
+            contextProvider = { automotiveContext },
+        )
     }
 
     private fun createMediaItem(

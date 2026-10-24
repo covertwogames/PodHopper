@@ -11,6 +11,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Rating
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaConstants.EXTRAS_KEY_ROOT_CHILDREN_LIMIT
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
@@ -29,6 +30,7 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,6 +56,10 @@ internal class Media3LibrarySessionCallback(
 ) : MediaLibraryService.MediaLibrarySession.Callback {
 
     private val scope: CoroutineScope get() = scopeProvider()
+
+    // PodHopper: how many top-level tabs each car media app says it can show, from the hint it sends
+    // when it asks for the library root. Keyed by the asking app's package; no entry means no hint.
+    private val rootChildrenLimits = ConcurrentHashMap<String, Int>()
 
     override fun onConnect(
         session: MediaSession,
@@ -190,7 +196,16 @@ internal class Media3LibrarySessionCallback(
         browser: MediaSession.ControllerInfo,
         params: MediaLibraryService.LibraryParams?,
     ): ListenableFuture<LibraryResult<MediaItem>> {
-        LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car requested the library root from ${browser.packageName} (recent=${params?.isRecent == true}, suggested=${params?.isSuggested == true})")
+        // PodHopper: remember the car's top-level tab limit so the car menu never offers more tabs
+        // than the car can show (see onGetChildren). Zero or missing means the car sent no limit.
+        val rootChildrenLimit = params?.extras?.getInt(EXTRAS_KEY_ROOT_CHILDREN_LIMIT, 0) ?: 0
+        if (rootChildrenLimit > 0) {
+            rootChildrenLimits[browser.packageName] = rootChildrenLimit
+        }
+        LogBuffer.i(
+            LogBuffer.TAG_PLAYBACK,
+            "Car requested the library root from ${browser.packageName} (recent=${params?.isRecent == true}, suggested=${params?.isSuggested == true}, tab limit=${if (rootChildrenLimit > 0) rootChildrenLimit else "none"})",
+        )
         val isRecent = params?.isRecent == true
         val isSuggested = params?.isSuggested == true
         val rootId = browseTreeProvider.getRootId(
@@ -274,9 +289,14 @@ internal class Media3LibrarySessionCallback(
         // error is returned here from onGetChildren rather than onGetLibraryRoot because root errors
         // are not forwarded to the legacy browser the car connects as.
         val context = contextProvider()
-        if (Util.isAutomotive(context) && settings.podhopperRefreshToken.value.isEmpty()) {
+        val isAutomotive = Util.isAutomotive(context)
+        if (isAutomotive && settings.podhopperRefreshToken.value.isEmpty()) {
             return Futures.immediateFuture(buildCarSignInRequiredResult(context))
         }
+        // PodHopper: on the car, the top-level menu is cut to the number of tabs this car media app
+        // said it can show, dropping from the end (the least used tab), so the car never has to drop
+        // tabs itself. Cars that send no limit get the menu unchanged.
+        val rootChildrenLimit = if (isAutomotive && parentId == MEDIA_ID_ROOT) rootChildrenLimits[browser.packageName] else null
         // PodHopper: refresh cross-device positions when the car opens a browse page, so episode
         // lists reflect progress made on other devices. Throttled and login-gated inside the sync,
         // and it never adopts: navigating pages must not change what is playing.
@@ -284,7 +304,13 @@ internal class Media3LibrarySessionCallback(
         val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
         scope.launch {
             try {
-                val items = browseTreeProvider.loadChildren(parentId, contextProvider())
+                val loaded = browseTreeProvider.loadChildren(parentId, contextProvider())
+                val items = if (rootChildrenLimit != null && loaded.size > rootChildrenLimit) {
+                    LogBuffer.i(LogBuffer.TAG_PLAYBACK, "Car menu cut to $rootChildrenLimit tab(s) for ${browser.packageName}")
+                    loaded.take(rootChildrenLimit)
+                } else {
+                    loaded
+                }
                 val paginated = paginate(items, page, pageSize)
                 future.set(LibraryResult.ofItemList(paginated, params))
             } catch (e: Exception) {

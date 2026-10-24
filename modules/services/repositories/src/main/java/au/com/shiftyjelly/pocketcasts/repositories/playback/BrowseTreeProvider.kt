@@ -457,7 +457,6 @@ class BrowseTreeProvider @Inject constructor(
             extras = extrasContentAsList,
         )
         val discoverItem = buildListMediaItem(context, id = DISCOVER_ROOT, title = LR.string.discover, drawable = IR.drawable.auto_tab_discover)
-        val profileItem = buildListMediaItem(context, id = PROFILE_ROOT, title = LR.string.profile, drawable = IR.drawable.auto_tab_profile, extras = extrasContentAsList)
 
         // PodHopper: Up Next was unreachable in the car. The browse node and its list builder
         // already existed and were handled, but no root menu ever offered the entry, so there was
@@ -469,11 +468,24 @@ class BrowseTreeProvider @Inject constructor(
         // subscriptions were present, but right after car sign-in the subscription sync has not
         // finished yet, so countSubscribed() is momentarily 0 and the car would open on Discover.
         // Podcasts is the expected home tab, so it always leads.
-        return listOf(podcastsItem, upNextItem, filtersItem, discoverItem, profileItem)
+        //
+        // PodHopper: exactly four tabs. Car media screens usually show at most four top-level
+        // tabs and may drop the rest, so a fifth tab (the old Profile tab, which held Starred and
+        // Listening History) could be missing entirely. Those two lists now open from the top of
+        // the Playlists tab (see loadFiltersRoot), and the old Files row, the retired cloud
+        // storage feature the phone already hides, is no longer offered.
+        return listOf(podcastsItem, upNextItem, filtersItem, discoverItem)
     }
 
     private suspend fun loadFiltersRoot(context: Context): List<MediaItem> {
-        return getPlaylistPreviews().mapNotNull {
+        // PodHopper: Starred and Listening History lead the Playlists tab. They are episode lists
+        // like the playlists below them, and this keeps them reachable now that the car has no
+        // Profile tab. Same ids as before, so loadChildren opens them exactly as it did.
+        val episodeLists = listOf(
+            buildListMediaItem(context, id = PROFILE_STARRED, title = LR.string.profile_navigation_starred, drawable = IR.drawable.automotive_filter_star),
+            buildListMediaItem(context, id = PROFILE_LISTENING_HISTORY, title = LR.string.profile_navigation_listening_history, drawable = IR.drawable.automotive_listening_history),
+        )
+        val playlists = getPlaylistPreviews().mapNotNull {
             Timber.d("Filters ${it.title}")
             try {
                 AutoConverter.convertPlaylistToMediaItem(context, it)
@@ -482,6 +494,7 @@ class BrowseTreeProvider @Inject constructor(
                 null
             }
         }
+        return episodeLists + playlists
     }
 
     /**
@@ -545,6 +558,8 @@ class BrowseTreeProvider @Inject constructor(
         return country.ifBlank { "US" }
     }
 
+    // PodHopper: the car no longer offers a Profile tab (see loadAutomotiveRootChildren). This is
+    // kept only so a car that still asks for the old Profile node gets its lists instead of an error.
     private fun loadProfileRoot(context: Context): List<MediaItem> {
         return buildList {
             val isPaidUser = settings.cachedSubscription.value != null
