@@ -847,6 +847,21 @@ class MediaSessionManager(
             }
             .catch { Timber.e(it, "Error observing episode status changes") }
             .launchIn(scope)
+
+        // PodHopper: the car's Starred list (Playlists > Starred) is cached by the car like any other
+        // browse list, so an episode starred or unstarred while that list was already open did not
+        // show the change until the list was reopened. Tell the car to reload it whenever a star
+        // changes. Gated on automotive, like the sign-in observer above: only the car has this list.
+        if (Util.isAutomotive(context)) {
+            PodHopperEpisodeStatusBus.starredChanges
+                .onEach {
+                    withContext(Dispatchers.Main) {
+                        notifyBrowseChanged("starred-changed", PROFILE_STARRED)
+                    }
+                }
+                .catch { Timber.e(it, "Error observing starred changes") }
+                .launchIn(scope)
+        }
     }
 
     @OptIn(UnstableApi::class)

@@ -403,6 +403,8 @@ class EpisodeManagerImpl @Inject constructor(
             lastStarredDate = modified,
             uuid = episode.uuid,
         )
+        // PodHopper: tell the car's media browser the Starred list changed (see PodHopperEpisodeStatusBus).
+        PodHopperEpisodeStatusBus.notifyStarredChanged()
     }
 
     override suspend fun starEpisode(episode: PodcastEpisode, starred: Boolean, sourceView: SourceView) {
@@ -413,6 +415,8 @@ class EpisodeManagerImpl @Inject constructor(
             lastStarredDate = modifiedDate,
             uuid = episode.uuid,
         )
+        // PodHopper: tell the car's media browser the Starred list changed (see PodHopperEpisodeStatusBus).
+        PodHopperEpisodeStatusBus.notifyStarredChanged()
 
         val event = if (starred) {
             EpisodeStarredEvent(
@@ -438,6 +442,8 @@ class EpisodeManagerImpl @Inject constructor(
                 lastStarredDate = modified,
             )
         }
+        // PodHopper: tell the car's media browser the Starred list changed (see PodHopperEpisodeStatusBus).
+        PodHopperEpisodeStatusBus.notifyStarredChanged()
     }
 
     override suspend fun toggleStarEpisode(episode: PodcastEpisode, sourceView: SourceView) {
