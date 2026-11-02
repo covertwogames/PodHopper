@@ -255,6 +255,33 @@ class Media3LibrarySessionCallbackTest {
     }
 
     @Test
+    fun `onConnect treats caller as unknown when the caller check throws`() {
+        val packageValidator: PackageValidator = mock()
+        whenever(mockController.packageName).thenReturn("com.hidden.app")
+        whenever(mockController.uid).thenReturn(12345)
+        whenever(packageValidator.isKnownCaller("com.hidden.app", 12345)).thenThrow(IllegalStateException("caller check failed"))
+
+        val callbackWithValidator = Media3LibrarySessionCallback(
+            sessionCallback = sessionCallback,
+            browseTreeProvider = browseTreeProvider,
+            playbackManager = playbackManager,
+            episodeManager = episodeManager,
+            podcastManager = podcastManager,
+            settings = mockSettings,
+            packageValidator = packageValidator,
+            scopeProvider = { testScope },
+            contextProvider = { mockContext },
+        )
+
+        val result = callbackWithValidator.onConnect(mockSession, mockController)
+
+        assertTrue(result.isAccepted)
+        assertEquals(SessionCommands.EMPTY, result.availableSessionCommands)
+        assertTrue(result.availablePlayerCommands.contains(Player.COMMAND_PLAY_PAUSE))
+        verify(sessionCallback, never()).onConnect(any(), any())
+    }
+
+    @Test
     fun `onConnect accepts known caller when packageValidator accepts`() {
         val packageValidator: PackageValidator = mock()
         whenever(mockController.packageName).thenReturn("au.com.shiftyjelly.pocketcasts.known")

@@ -6,9 +6,9 @@ class RefreshResponse {
 
     private val updates = HashMap<String, List<PodcastEpisode>>()
 
-    // PodHopper watch: the watch's streamed refresh passes only the episodes not already stored, so
-    // it records each feed's total episode count here. Nothing else sets it, so everywhere else the
-    // refresh pipeline reads the count from the full episode list, exactly as before.
+    // PodHopper: the on-device refreshes (phone, car and watch) pass only the episodes not already
+    // stored, so they record each feed's total episode count here. Where it is not set, the refresh
+    // pipeline reads the count from the episode list, exactly as before.
     private val totalEpisodeCounts = HashMap<String, Int>()
 
     // PodHopper: each downloaded feed's version markers (ETag, Last-Modified), keyed by feed URL.

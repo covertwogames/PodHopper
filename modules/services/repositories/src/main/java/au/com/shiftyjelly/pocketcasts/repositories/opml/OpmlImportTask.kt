@@ -67,8 +67,7 @@ class OpmlImportTask @AssistedInject constructor(
         private const val INPUT_URL = "INPUT_URL"
         private const val WORKER_TAG = "OpmlImportTask.Tag"
 
-        // PodHopper: how many feeds are fetched and parsed at once during an import. Matches the
-        // bounded parallelism the local refresh engine uses.
+        // PodHopper: how many feeds are fetched and parsed at once during an import.
         private const val MAX_CONCURRENT_IMPORTS = 6
 
         fun run(uri: Uri, context: Context) {

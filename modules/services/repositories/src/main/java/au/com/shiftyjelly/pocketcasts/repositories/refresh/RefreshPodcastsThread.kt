@@ -160,6 +160,13 @@ class RefreshPodcastsThread(
             }
 
             return ListenableWorker.Result.failure()
+        } catch (e: OutOfMemoryError) {
+            // PodHopper: a refresh that runs out of memory used to take the whole app down, and
+            // because the last refresh time is only saved on success, the next app open ran the same
+            // refresh and crashed again. Fail this refresh instead; everything it held is released.
+            LogBuffer.e(LogBuffer.TAG_BACKGROUND_TASKS, e, "Refresh failed: out of memory")
+            refreshFailedOrCancelled("Out of memory")
+            return ListenableWorker.Result.failure()
         }
     }
 
@@ -177,14 +184,18 @@ class RefreshPodcastsThread(
         // PodHopper: refresh by re-parsing each subscribed feed on-device, no Pocket Casts server.
         // On the watch, feeds are read one at a time and a batch at a time, keeping only episodes
         // not already stored, because reading every feed whole at once does not fit in a watch's
-        // memory. Phone and car are unchanged.
+        // memory. Phone and car read whole feeds a few at a time, and each feed keeps only its
+        // episodes that are not already stored as soon as it finishes, so memory never holds every
+        // episode of every changed feed at once (for example right after a big podcast import).
+        val episodeDao = entryPoint.appDatabase().episodeDao()
         val response = if (Util.isWearOs(context)) {
-            val episodeDao = entryPoint.appDatabase().episodeDao()
             feedRefresher.refreshPodcastsStreaming(podcasts) { uuids ->
                 runBlocking { episodeDao.findByUuids(uuids) }.mapTo(HashSet()) { it.uuid }
             }
         } else {
-            feedRefresher.refreshPodcastsLocally(podcasts)
+            feedRefresher.refreshPodcastsLocally(podcasts) { podcastUuid ->
+                episodeDao.findByPodcastUuid(podcastUuid).toHashSet()
+            }
         }
         val elapsedTime = String.format("%d ms", SystemClock.elapsedRealtime() - startTime)
         LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - podcasts parsed locally - $elapsedTime")
@@ -318,9 +329,9 @@ class RefreshPodcastsThread(
         for (podcastUuid in result.getPodcastsWithUpdates()) {
             val podcast = podcastManager.findPodcastByUuidBlocking(podcastUuid) ?: continue
             var episodes = result.getUpdatesForPodcast(podcastUuid)
-            // PodHopper: the watch's streamed refresh passes only the episodes not already stored,
-            // plus the feed's total episode count. Everywhere else there is no separate count and the
-            // list is the whole feed, so this is the list size, exactly as before.
+            // PodHopper: every refresh (phone, car and watch) passes only the episodes not already
+            // stored, plus the feed's total episode count, so decisions that depend on the feed's size
+            // see the whole feed, exactly as before. The list size is only a fallback.
             val feedEpisodeCount = result.getTotalEpisodeCount(podcastUuid) ?: episodes?.size ?: 0
             if (episodes == null || feedEpisodeCount == 0) {
                 continue // no updates

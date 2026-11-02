@@ -1,6 +1,7 @@
 package au.com.shiftyjelly.pocketcasts.repositories.refresh
 
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.FeedParser
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.FeedValidatorStore
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.NewestEpisodes
@@ -9,6 +10,7 @@ import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -40,10 +42,39 @@ class FeedRefreshManager @Inject constructor(
     private data class FeedUpdate(
         val podcastUuid: String,
         val feedUrl: String,
-        val result: FeedParser.RefreshFetchResult,
+        val outcome: FeedOutcome,
     )
 
-    fun refreshPodcastsLocally(podcasts: List<Podcast>): RefreshResponse {
+    /**
+     * PodHopper: what one feed's refresh produced. A changed feed keeps only its episodes that are not
+     * already stored, plus the feed's total episode count, so a parsed feed's full episode list is
+     * let go as soon as that feed finishes instead of being held until every feed is done.
+     */
+    private sealed interface FeedOutcome {
+        data object NotModified : FeedOutcome
+
+        data object Failed : FeedOutcome
+
+        data class Updated(
+            val newEpisodes: List<PodcastEpisode>,
+            val totalEpisodeCount: Int,
+            val validators: FeedParser.FeedValidators?,
+        ) : FeedOutcome
+    }
+
+    /**
+     * Refreshes every subscribed feed on the phone and car.
+     *
+     * [findStoredUuids] returns the uuids of the episodes already stored for a podcast. Each changed
+     * feed keeps only the episodes not in that set, and records its total episode count alongside,
+     * so the refresh pipeline makes exactly the decisions it made from the full list: its add step
+     * only ever inserted episodes that were not already stored. This mirrors what the watch's
+     * [refreshPodcastsStreaming] already does, without the watch's newest-episodes cap.
+     */
+    fun refreshPodcastsLocally(
+        podcasts: List<Podcast>,
+        findStoredUuids: suspend (podcastUuid: String) -> Set<String>,
+    ): RefreshResponse {
         val response = RefreshResponse()
         val semaphore = Semaphore(MAX_CONCURRENT_FEED_REFRESHES)
         // Parse feeds in parallel with a bounded number running at once, so the network waits overlap
@@ -60,7 +91,7 @@ class FeedRefreshManager @Inject constructor(
                         FeedUpdate(
                             podcastUuid = podcast.uuid,
                             feedUrl = feedUrl,
-                            result = feedParser.fetchForRefresh(feedUrl, validatorStore.get(feedUrl)),
+                            outcome = refreshFeed(podcast.uuid, feedUrl, findStoredUuids),
                         )
                     }
                 }
@@ -71,18 +102,19 @@ class FeedRefreshManager @Inject constructor(
             if (update == null) {
                 continue
             }
-            when (val result = update.result) {
-                is FeedParser.RefreshFetchResult.NotModified -> unchanged++
+            when (val outcome = update.outcome) {
+                is FeedOutcome.NotModified -> unchanged++
 
-                is FeedParser.RefreshFetchResult.Failure -> {
+                is FeedOutcome.Failed -> {
                     LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - skipped ${update.podcastUuid}, feed unavailable")
                 }
 
-                is FeedParser.RefreshFetchResult.Updated -> {
-                    if (result.feed.episodes.isNotEmpty()) {
-                        response.addUpdate(update.podcastUuid, result.feed.episodes)
+                is FeedOutcome.Updated -> {
+                    if (outcome.totalEpisodeCount > 0) {
+                        response.addUpdate(update.podcastUuid, outcome.newEpisodes)
+                        response.setTotalEpisodeCount(update.podcastUuid, outcome.totalEpisodeCount)
                     }
-                    result.validators?.let { response.setFeedValidators(update.feedUrl, it.etag, it.lastModified) }
+                    outcome.validators?.let { response.setFeedValidators(update.feedUrl, it.etag, it.lastModified) }
                 }
             }
         }
@@ -90,6 +122,53 @@ class FeedRefreshManager @Inject constructor(
             LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - $unchanged of ${podcasts.size} feeds unchanged since the last refresh")
         }
         return response
+    }
+
+    private suspend fun refreshFeed(
+        podcastUuid: String,
+        feedUrl: String,
+        findStoredUuids: suspend (podcastUuid: String) -> Set<String>,
+    ): FeedOutcome {
+        return try {
+            when (val result = feedParser.fetchForRefresh(feedUrl, validatorStore.get(feedUrl))) {
+                is FeedParser.RefreshFetchResult.NotModified -> FeedOutcome.NotModified
+
+                is FeedParser.RefreshFetchResult.Failure -> FeedOutcome.Failed
+
+                is FeedParser.RefreshFetchResult.Updated -> {
+                    val episodes = result.feed.episodes
+                    val stored = if (episodes.isEmpty()) emptySet() else storedUuidsOrNone(podcastUuid, findStoredUuids)
+                    FeedOutcome.Updated(
+                        newEpisodes = episodes.filterNot { it.uuid in stored },
+                        totalEpisodeCount = episodes.size,
+                        validators = result.validators,
+                    )
+                }
+            }
+        } catch (e: OutOfMemoryError) {
+            // A single enormous feed can be too big to read. Skip it for this refresh rather than
+            // letting the error take the whole app down; the rest of the feeds still refresh.
+            LogBuffer.e(LogBuffer.TAG_BACKGROUND_TASKS, e, "Refresh - skipped $podcastUuid, feed too large to read")
+            FeedOutcome.Failed
+        }
+    }
+
+    /**
+     * The uuids already stored for [podcastUuid]. If the lookup fails, nothing is filtered out, which
+     * is the old behaviour: the refresh's add step still skips every episode that is already stored.
+     */
+    private suspend fun storedUuidsOrNone(
+        podcastUuid: String,
+        findStoredUuids: suspend (podcastUuid: String) -> Set<String>,
+    ): Set<String> {
+        return try {
+            findStoredUuids(podcastUuid)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LogBuffer.e(LogBuffer.TAG_BACKGROUND_TASKS, e, "Refresh - could not read stored episodes for $podcastUuid")
+            emptySet()
+        }
     }
 
     /**
@@ -207,7 +286,10 @@ class FeedRefreshManager @Inject constructor(
     }
 
     companion object {
-        private const val MAX_CONCURRENT_FEED_REFRESHES = 6
+        // PodHopper: each feed being read holds its whole download and parsed episode list in memory,
+        // so this bounds the peak. Three keeps network waits overlapping while leaving enough headroom
+        // for very large feeds, such as right after a new user imports a big podcast list.
+        private const val MAX_CONCURRENT_FEED_REFRESHES = 3
         private const val STORED_IN_A_ROW_TO_STOP = 5
     }
 }

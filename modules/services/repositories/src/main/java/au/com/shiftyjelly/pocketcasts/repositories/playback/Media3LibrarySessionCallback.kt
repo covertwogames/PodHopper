@@ -65,7 +65,15 @@ internal class Media3LibrarySessionCallback(
         session: MediaSession,
         controller: MediaSession.ControllerInfo,
     ): MediaSession.ConnectionResult {
-        if (packageValidator != null && !packageValidator.isKnownCaller(controller.packageName, controller.uid)) {
+        // PodHopper: Media3 does not catch exceptions thrown from onConnect, so a failure inside the
+        // caller check would crash the app. Treat any such failure as an unknown caller instead.
+        val isKnownCaller = packageValidator == null || try {
+            packageValidator.isKnownCaller(controller.packageName, controller.uid)
+        } catch (e: Exception) {
+            LogBuffer.e(LogBuffer.TAG_PLAYBACK, e, "Caller check failed for ${controller.packageName}, treating it as unknown")
+            false
+        }
+        if (!isKnownCaller) {
             // Unknown callers (e.g., Tasker, Automate) get transport controls only, no library
             // browsing or custom commands. This matches the legacy MediaBrowserServiceCompat
             // behavior where onGetRoot() returned null for unknown callers but transport
