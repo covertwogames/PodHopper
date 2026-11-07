@@ -636,6 +636,11 @@ class EpisodeManagerImpl @Inject constructor(
                     episodeDao.updateArchivedNoSyncBlocking(true, System.currentTimeMillis(), episode.uuid)
                 }
                 episode.isArchived = true
+                // PodHopper: tell the car's media browser again now that the archive is saved. The
+                // played-status change already asked it to reload this podcast's lists and the
+                // playlists, but this write lands a moment later, and a reload that ran before it would
+                // still show the finished episode in New Releases.
+                PodHopperEpisodeStatusBus.notifyStatusChanged(episode.podcastUuid)
                 cleanUpEpisode(episode, playbackManager)
             }
         }

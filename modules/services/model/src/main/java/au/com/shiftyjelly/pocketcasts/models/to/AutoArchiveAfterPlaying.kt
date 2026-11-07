@@ -3,7 +3,6 @@ package au.com.shiftyjelly.pocketcasts.models.to
 import android.content.Context
 import androidx.annotation.StringRes
 import au.com.shiftyjelly.pocketcasts.localization.R
-import au.com.shiftyjelly.pocketcasts.utils.Util
 import com.automattic.eventhorizon.AutoArchivePlayedType
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -16,7 +15,13 @@ sealed class AutoArchiveAfterPlaying(
     @StringRes val stringRes: Int,
 ) {
     companion object {
-        fun defaultValue(context: Context) = if (Util.isAutomotive(context)) Never else AfterPlaying
+        // PodHopper: the car archives played episodes after playing, the same as the phone and watch.
+        // It used to never archive, so a finished episode stayed in the car's New Releases list, which
+        // only drops episodes once they're archived. The car has no setting for this, so this default is
+        // what every car uses. Playing, queueing or unmarking an archived episode unarchives it again.
+        // The context parameter is kept so the callers stay as they are.
+        @Suppress("UNUSED_PARAMETER")
+        fun defaultValue(context: Context): AutoArchiveAfterPlaying = AfterPlaying
 
         fun fromString(value: String?, context: Context) = All.find { context.getString(it.stringRes) == value } ?: defaultValue(context)
 
