@@ -22,7 +22,6 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
-import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperCarDiagnostics
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.utils.TimberDebugTree
@@ -60,8 +59,6 @@ class AutomotiveApplication :
     @Inject lateinit var playbackManager: PlaybackManager
 
     @Inject lateinit var podHopperPositionSync: PodHopperPositionSync
-
-    @Inject lateinit var podHopperCarDiagnostics: PodHopperCarDiagnostics
 
     @Inject lateinit var notificationHelper: NotificationHelper
 
@@ -163,9 +160,8 @@ class AutomotiveApplication :
         // network is cellular and whose power state is not a phone battery. Applied once so a
         // user change in settings is never overwritten on a later launch.
 
-        // PodHopper: playback diagnostics watcher. The car has no logcat, so bursts of playback
-        // failures upload a log snapshot to Supabase Storage for offline analysis.
-        podHopperCarDiagnostics.start()
+        // PodHopper: no log leaves the car on its own. The only upload is the "Upload diagnostic
+        // logs" row on the car settings screen, which the driver has to tap.
 
         // PodHopper: the car has no logcat, so a fatal crash normally dies without a trace and
         // can only be inferred from timing patterns in the log. This wrapper writes the crash
