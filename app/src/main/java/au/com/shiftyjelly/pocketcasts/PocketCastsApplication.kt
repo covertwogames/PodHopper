@@ -17,6 +17,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserv
 import au.com.shiftyjelly.pocketcasts.repositories.file.FileStorage
 import au.com.shiftyjelly.pocketcasts.repositories.file.StorageOptions
 import au.com.shiftyjelly.pocketcasts.repositories.jobs.VersionMigrationsWorker
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperDevices
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationManager
@@ -81,6 +82,8 @@ class PocketCastsApplication :
     @Inject lateinit var settings: Settings
 
     @Inject lateinit var fileStorage: FileStorage
+
+    @Inject lateinit var podHopperDevices: PodHopperDevices
 
     @Inject lateinit var playbackManager: PlaybackManager
 
@@ -152,6 +155,10 @@ class PocketCastsApplication :
 
         setupApp()
         cleanupDatabaseExportFileIfExists()
+
+        // PodHopper: keep this phone on the account's list of signed-in devices, and clear its
+        // library if it was removed from that list on another device.
+        podHopperDevices.start()
     }
 
     private fun setupAnalytics() {

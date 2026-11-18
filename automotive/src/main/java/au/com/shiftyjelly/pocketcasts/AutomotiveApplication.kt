@@ -19,6 +19,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadStatusObserv
 import au.com.shiftyjelly.pocketcasts.repositories.jobs.VersionMigrationsWorker
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperDevices
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.notification.NotificationHelper
@@ -59,6 +60,8 @@ class AutomotiveApplication :
     @Inject lateinit var playbackManager: PlaybackManager
 
     @Inject lateinit var podHopperPositionSync: PodHopperPositionSync
+
+    @Inject lateinit var podHopperDevices: PodHopperDevices
 
     @Inject lateinit var notificationHelper: NotificationHelper
 
@@ -107,6 +110,11 @@ class AutomotiveApplication :
         setupAnalytics()
         setupApp()
         setupForegroundSync()
+
+        // PodHopper: keep this car on the account's list of signed-in devices. A car that is
+        // signed out, for any reason, clears the library stored on it, so the next driver starts
+        // with nothing of the previous one's. This also runs the check once at every start.
+        podHopperDevices.start()
     }
 
     override val workManagerConfiguration: Configuration

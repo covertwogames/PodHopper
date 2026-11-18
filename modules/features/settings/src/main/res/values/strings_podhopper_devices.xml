@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- PodHopper: Settings > Signed-in devices. Shows every place the account is signed in and
+         lets the person sign any of them out from here. -->
+    <string name="podhopper_devices_title">Signed-in devices</string>
+    <string name="podhopper_devices_logged_out">This shows every device signed in to your PodHopper account. Tap on the Profile page and log in first.</string>
+    <string name="podhopper_devices_intro">These are the devices signed in to your PodHopper account. If you no longer have one of them, sign it out here.</string>
+    <string name="podhopper_devices_loading">Loading your devices...</string>
+    <string name="podhopper_devices_error">Could not load your devices. Check your connection and try again.</string>
+    <string name="podhopper_devices_retry">Try again</string>
+
+    <!-- Kinds of device -->
+    <string name="podhopper_devices_type_phone">Phone</string>
+    <string name="podhopper_devices_type_tablet">Tablet</string>
+    <string name="podhopper_devices_type_car">Car</string>
+    <string name="podhopper_devices_type_watch">Watch</string>
+    <string name="podhopper_devices_type_other">Device</string>
+    <string name="podhopper_devices_type_unknown">Unknown device</string>
+    <!-- Kind of device, then its model. For example: Car: Cadillac LYRIQ -->
+    <string name="podhopper_devices_name_with_model">%1$s: %2$s</string>
+
+    <!-- Second line of each device -->
+    <string name="podhopper_devices_this_device">This device</string>
+    <string name="podhopper_devices_last_active">Last active %1$s</string>
+    <string name="podhopper_devices_signed_in_on">Signed in %1$s</string>
+
+    <!-- Actions -->
+    <string name="podhopper_devices_sign_out">Sign out</string>
+    <string name="podhopper_devices_sign_out_others">Sign out of all other devices</string>
+    <string name="podhopper_devices_cancel">Cancel</string>
+    <string name="podhopper_devices_confirm_one">Sign this device out of your PodHopper account? A car or watch clears the podcasts stored on it. A phone or tablet does too when it is signed out from here.</string>
+    <string name="podhopper_devices_confirm_others">Sign every other device out of your PodHopper account? Each one clears the podcasts stored on it and has to sign in again. This device stays signed in.</string>
+    <string name="podhopper_devices_working">Signing out...</string>
+    <string name="podhopper_devices_done_one">That device has been signed out.</string>
+    <string name="podhopper_devices_done_others">Your other devices have been signed out.</string>
+    <string name="podhopper_devices_failed">Could not sign out. Check your connection and try again.</string>
+
+    <string name="podhopper_devices_footer">A signed-out device can keep working for up to an hour, and clears the podcasts stored on it the next time PodHopper runs on it with a connection. Devices running an older version of PodHopper show as Unknown device.</string>
+
+</resources>

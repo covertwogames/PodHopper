@@ -28,7 +28,8 @@
 
     <application
         android:name=".AutomotiveApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        tools:replace="android:allowBackup"
         android:icon="${appIcon}"
         android:label="@string/app_name"
         android:supportsRtl="true"

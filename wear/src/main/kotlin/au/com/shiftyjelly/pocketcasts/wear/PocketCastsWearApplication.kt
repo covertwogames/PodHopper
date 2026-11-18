@@ -18,6 +18,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackServiceToggle
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperDevices
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSyncWorker
 import au.com.shiftyjelly.pocketcasts.shared.AppLifecycleObserver
 import au.com.shiftyjelly.pocketcasts.shared.DownloadStatisticsReporter
@@ -72,6 +73,8 @@ class PocketCastsWearApplication :
 
     @Inject lateinit var coilImageLoader: ImageLoader
 
+    @Inject lateinit var podHopperDevices: PodHopperDevices
+
     @Inject @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
@@ -87,6 +90,10 @@ class PocketCastsWearApplication :
         setupLogging()
         setupAnalytics()
         setupApp()
+
+        // PodHopper: keep this watch on the account's list of signed-in devices. A watch that is
+        // signed out, for any reason, clears the library stored on it.
+        podHopperDevices.start()
     }
 
     private fun setupLogging() {

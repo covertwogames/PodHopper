@@ -83,10 +83,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * PodHopper: signs the watch out of its PodHopper account, the same way the phone's profile
-     * screen does. Forgets this device's sync bookkeeping so signing into a different account next
-     * starts clean. No podcast, episode or download data is touched. Clearing the session returns
-     * the watch to the pairing screen.
+     * PodHopper: signs the watch out of its PodHopper account and tells the server. Clearing the
+     * session returns the watch to the pairing screen. A signed-out watch does not keep anyone's
+     * library: PodHopperDevices sees the sign-out and clears the podcasts, queue and downloads
+     * stored here, so the next sign-in starts from that account's copy.
      */
     fun signOut() {
         supabaseClient.logout()

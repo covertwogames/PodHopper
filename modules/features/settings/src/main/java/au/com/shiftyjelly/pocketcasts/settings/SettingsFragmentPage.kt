@@ -25,6 +25,7 @@ import au.com.shiftyjelly.pocketcasts.compose.theme
 import au.com.shiftyjelly.pocketcasts.settings.about.AboutFragment
 import au.com.shiftyjelly.pocketcasts.settings.carsync.PodHopperCarSyncFragment
 import au.com.shiftyjelly.pocketcasts.settings.deleteaccount.PodHopperDeleteAccountFragment
+import au.com.shiftyjelly.pocketcasts.settings.devices.PodHopperDevicesFragment
 import au.com.shiftyjelly.pocketcasts.settings.developer.DeveloperFragment
 import au.com.shiftyjelly.pocketcasts.settings.history.HistoryFragment
 import au.com.shiftyjelly.pocketcasts.settings.notifications.NotificationsSettingsFragment
@@ -111,6 +112,7 @@ fun SettingsFragmentPage(
             }
             item {
                 SyncAccountToCarRow(onClick = { openFragment(PodHopperCarSyncFragment()) })
+                SignedInDevicesRow(onClick = { openFragment(PodHopperDevicesFragment()) })
             }
             item {
                 PrivacyRow(onClick = { openFragment(PrivacyFragment()) })
@@ -295,6 +297,15 @@ private fun SyncAccountToCarRow(onClick: () -> Unit) {
     SettingRow(
         primaryText = stringResource(SR.string.podhopper_car_sync_title),
         icon = painterResource(SR.drawable.podhopper_settings_car),
+        modifier = Modifier.rowModifier(onClick),
+    )
+}
+
+@Composable
+private fun SignedInDevicesRow(onClick: () -> Unit) {
+    SettingRow(
+        primaryText = stringResource(SR.string.podhopper_devices_title),
+        icon = painterResource(IR.drawable.ic_profile_settings),
         modifier = Modifier.rowModifier(onClick),
     )
 }
