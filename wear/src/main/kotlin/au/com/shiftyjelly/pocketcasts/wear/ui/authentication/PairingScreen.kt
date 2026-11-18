@@ -115,6 +115,18 @@ private fun PairingContent(
                             modifier = Modifier.padding(top = 8.dp),
                         )
                     }
+                    // PodHopper: signing in means agreeing to the Terms and Privacy Policy. The
+                    // watch has no browser, so the line says where to read them. The full
+                    // addresses are also under Settings, About on the watch.
+                    item {
+                        Text(
+                            text = stringResource(LR.string.podhopper_watch_terms_notice),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.caption3,
+                            color = MaterialTheme.colors.onSecondary,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    }
                 }
 
                 is UiState.Expired -> {

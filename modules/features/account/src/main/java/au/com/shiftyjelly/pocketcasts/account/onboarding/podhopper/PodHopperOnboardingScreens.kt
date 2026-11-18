@@ -115,7 +115,11 @@ fun PodHopperOnboardingFlow(
     when (step) {
         OnboardingStep.Welcome -> WelcomeStep(
             onLogin = { step = OnboardingStep.Login },
-            onSkipConfirmed = { step = OnboardingStep.Notifications },
+            onSkipConfirmed = {
+                // The dialog they just confirmed says continuing means agreeing to the Terms.
+                viewModel.agreeWithoutAccount()
+                step = OnboardingStep.Notifications
+            },
         )
 
         OnboardingStep.Login -> LoginStep(
@@ -199,7 +203,14 @@ private fun WelcomeStep(
         AlertDialog(
             onDismissRequest = { showSkipWarning = false },
             text = {
-                TextP40(text = stringResource(LR.string.podhopper_skip_warning))
+                Column {
+                    TextP40(text = stringResource(LR.string.podhopper_skip_warning))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TermsLinksText(
+                        text = stringResource(LR.string.podhopper_terms_skip_notice),
+                        textAlign = TextAlign.Start,
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -263,6 +274,11 @@ private fun LoginStep(
         )
         StatusMessage(authState)
         Spacer(modifier = Modifier.height(24.dp))
+        TermsLinksText(
+            text = stringResource(LR.string.podhopper_terms_login_notice),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         if (busy) {
             CircularProgressIndicator(color = MaterialTheme.theme.colors.primaryInteractive01)
         } else {
@@ -298,6 +314,10 @@ private fun SignupStep(
     var emailError by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf(false) }
     var confirmError by remember { mutableStateOf(false) }
+    // PodHopper: an account cannot be created until the box agreeing to the Terms of Service and
+    // Privacy Policy is ticked. It always starts empty.
+    var agreed by remember { mutableStateOf(false) }
+    var agreedError by remember { mutableStateOf(false) }
     val busy = authState is AuthState.Busy
 
     fun submit() {
@@ -307,7 +327,8 @@ private fun SignupStep(
         emailError = !validEmail
         passwordError = !validPassword
         confirmError = !validConfirm
-        if (validEmail && validPassword && validConfirm) {
+        agreedError = !agreed
+        if (validEmail && validPassword && validConfirm && agreed) {
             onCreate(email, password)
         }
     }
@@ -373,6 +394,29 @@ private fun SignupStep(
         )
         if (confirmError) {
             FieldError(stringResource(LR.string.podhopper_signup_passwords_mismatch))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Checkbox(
+                checked = agreed,
+                enabled = !busy,
+                onCheckedChange = {
+                    agreed = it
+                    agreedError = false
+                },
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            TermsLinksText(
+                text = stringResource(LR.string.podhopper_terms_checkbox),
+                textAlign = TextAlign.Start,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        if (agreedError) {
+            FieldError(stringResource(LR.string.podhopper_terms_checkbox_required))
         }
         StatusMessage(authState)
         Spacer(modifier = Modifier.height(24.dp))

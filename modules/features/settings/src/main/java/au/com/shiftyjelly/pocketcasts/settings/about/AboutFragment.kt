@@ -161,6 +161,20 @@ private fun AboutPage(
                     onClick = { openUrl("https://podhopper.app", context) },
                 )
             }
+            // PodHopper: the Terms of Service and Privacy Policy people agreed to, always one tap
+            // away. Both open the published pages in the browser.
+            item {
+                RowTextButton(
+                    text = stringResource(LR.string.settings_about_terms_of_serivce),
+                    onClick = { openUrl(Settings.INFO_TOS_URL, context) },
+                )
+            }
+            item {
+                RowTextButton(
+                    text = stringResource(LR.string.settings_about_privacy_policy),
+                    onClick = { openUrl(Settings.INFO_PRIVACY_URL, context) },
+                )
+            }
             item {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             }

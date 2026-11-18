@@ -60,6 +60,7 @@ import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract.OnboardingFinish
 import au.com.shiftyjelly.pocketcasts.account.onboarding.podhopper.PodHopperOnboardingActivity
+import au.com.shiftyjelly.pocketcasts.account.onboarding.podhopper.PodHopperTermsActivity
 import au.com.shiftyjelly.pocketcasts.analytics.SourceView
 import au.com.shiftyjelly.pocketcasts.compose.AppTheme
 import au.com.shiftyjelly.pocketcasts.compose.components.AnimatedNonNullVisibility
@@ -140,6 +141,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperPositionSync
 import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperSubscriptionSync
+import au.com.shiftyjelly.pocketcasts.repositories.podhopper.PodHopperTerms
 import au.com.shiftyjelly.pocketcasts.repositories.refresh.RefreshPodcastsTask
 import au.com.shiftyjelly.pocketcasts.repositories.search.ItunesFeedSearcher
 import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
@@ -243,6 +245,9 @@ class MainActivity :
 
     @Inject
     lateinit var podHopperSubscriptionSync: PodHopperSubscriptionSync
+
+    @Inject
+    lateinit var podHopperTerms: PodHopperTerms
 
     @Inject
     lateinit var podcastManager: PodcastManager
@@ -649,6 +654,15 @@ class MainActivity :
 
     override fun onResume() {
         super.onResume()
+
+        // PodHopper: anyone who finished first-run setup before the Terms of Service existed is
+        // asked to agree once. First-run setup records agreement itself, so this only ever shows
+        // for an install that was already in use. Once agreed, make sure the account has a copy.
+        if (settings.hasCompletedOnboarding() && podHopperTerms.needsAgreement()) {
+            startActivity(PodHopperTermsActivity.newInstance(this))
+        } else {
+            podHopperTerms.syncToAccountAsync()
+        }
 
         refreshApp()
         // PodHopper: BumpStatsTask (anonymous stat pings to the WordPress.com bump stats endpoint)

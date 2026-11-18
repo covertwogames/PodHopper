@@ -9,5 +9,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.Transparent"/>
+        <activity
+            android:name="au.com.shiftyjelly.pocketcasts.account.onboarding.podhopper.PodHopperTermsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Transparent"/>
     </application>
 </manifest>

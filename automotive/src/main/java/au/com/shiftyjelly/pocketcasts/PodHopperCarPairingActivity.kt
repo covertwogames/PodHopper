@@ -1,6 +1,7 @@
 package au.com.shiftyjelly.pocketcasts
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
@@ -64,15 +66,43 @@ import au.com.shiftyjelly.pocketcasts.ui.R as UR
  * PodHopper: the car (Android Automotive) sign-in screen. Reached while parked, either from the
  * media browser's "Sign In" prompt or from car Settings. Shows a pairing code the phone approves,
  * with a direct email and password fallback. Closes itself once signed in.
+ *
+ * Both ways of signing in show a line saying that signing in means agreeing to the Terms of
+ * Service and Privacy Policy, with a "Read the Terms" button. The car has no web browser, so that
+ * button swaps this screen for the built-in Terms page and Back returns to sign-in. Pairing keeps
+ * running underneath, so approving the code on the phone while reading still signs the car in.
  */
 @AndroidEntryPoint
 class PodHopperCarPairingActivity : AppCompatActivity() {
 
     private lateinit var viewModel: PodHopperCarPairingViewModel
 
+    private val showTerms = mutableStateOf(false)
+
+    // Enabled only while the Terms page is showing, so Back closes that page first and otherwise
+    // leaves the sign-in screen exactly as before.
+    private val closeTermsOnBack = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            setTermsShown(false)
+        }
+    }
+
+    private fun setTermsShown(shown: Boolean) {
+        showTerms.value = shown
+        closeTermsOnBack.isEnabled = shown
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // The car recreates this screen when it switches between day and night. Stay on the Terms.
+        outState.putBoolean(STATE_SHOW_TERMS, showTerms.value)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[PodHopperCarPairingViewModel::class.java]
+        onBackPressedDispatcher.addCallback(this, closeTermsOnBack)
+        setTermsShown(savedInstanceState?.getBoolean(STATE_SHOW_TERMS) == true)
 
         val composeView = ComposeView(this).apply {
             setContent {
@@ -83,17 +113,72 @@ class PodHopperCarPairingActivity : AppCompatActivity() {
                             finish()
                         }
                     }
-                    PairingScreen(
-                        state = state,
-                        onRetry = { viewModel.startPairing() },
-                        onShowEmail = { viewModel.showEmailEntry() },
-                        onSubmitEmail = { email, password -> viewModel.submitEmail(email, password) },
-                        onBackToPairing = { viewModel.backToPairing() },
-                    )
+                    if (showTerms.value) {
+                        TermsReader(onBack = { setTermsShown(false) })
+                    } else {
+                        PairingScreen(
+                            state = state,
+                            onRetry = { viewModel.startPairing() },
+                            onShowEmail = { viewModel.showEmailEntry() },
+                            onSubmitEmail = { email, password -> viewModel.submitEmail(email, password) },
+                            onBackToPairing = { viewModel.backToPairing() },
+                            onReadTerms = { setTermsShown(true) },
+                        )
+                    }
                 }
             }
         }
         setContentView(composeView)
+    }
+
+    private companion object {
+        const val STATE_SHOW_TERMS = "show_terms"
+    }
+}
+
+/**
+ * PodHopper: the built-in Terms page with a way back to sign-in pinned above it, so the driver
+ * never has to rely on a system Back button that some head units hide.
+ */
+@Composable
+private fun TermsReader(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
+        TextButton(
+            onClick = onBack,
+            modifier = Modifier.padding(start = 32.dp, top = 12.dp),
+        ) {
+            Text(
+                text = stringResource(LR.string.podhopper_car_terms_back),
+                fontSize = 24.sp,
+                color = MaterialTheme.theme.colors.primaryInteractive01,
+            )
+        }
+        PodHopperTermsPage(modifier = Modifier.weight(1f))
+    }
+}
+
+/**
+ * PodHopper: the line that says signing in means agreeing to the Terms and Privacy Policy, with
+ * the button that opens the built-in Terms. Shown wherever the car can actually sign in.
+ */
+@Composable
+private fun TermsNotice(onReadTerms: () -> Unit) {
+    Text(
+        text = stringResource(LR.string.podhopper_car_terms_notice),
+        fontSize = 20.sp,
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.theme.colors.primaryText02,
+    )
+    TextButton(onClick = onReadTerms) {
+        Text(
+            text = stringResource(LR.string.podhopper_car_terms_read),
+            fontSize = 22.sp,
+            color = MaterialTheme.theme.colors.primaryInteractive01,
+        )
     }
 }
 
@@ -104,6 +189,7 @@ private fun PairingScreen(
     onShowEmail: () -> Unit,
     onSubmitEmail: (String, String) -> Unit,
     onBackToPairing: () -> Unit,
+    onReadTerms: () -> Unit,
 ) {
     val context = LocalContext.current
     val logo = @Composable {
@@ -164,6 +250,9 @@ private fun PairingScreen(
                     fontSize = 20.sp,
                     color = MaterialTheme.theme.colors.primaryText02,
                 )
+                // Kept in the pinned area with the code so it is on screen without scrolling.
+                Spacer(Modifier.height(20.dp))
+                TermsNotice(onReadTerms = onReadTerms)
             },
         )
 
@@ -196,19 +285,19 @@ private fun PairingScreen(
         is UiState.EmailEntry -> CenteredScroll {
             logo()
             Spacer(Modifier.height(24.dp))
-            EmailContent(isError = false, isSubmitting = false, onSubmit = onSubmitEmail, onBack = onBackToPairing)
+            EmailContent(isError = false, isSubmitting = false, onSubmit = onSubmitEmail, onBack = onBackToPairing, onReadTerms = onReadTerms)
         }
 
         is UiState.EmailSubmitting -> CenteredScroll {
             logo()
             Spacer(Modifier.height(24.dp))
-            EmailContent(isError = false, isSubmitting = true, onSubmit = onSubmitEmail, onBack = onBackToPairing)
+            EmailContent(isError = false, isSubmitting = true, onSubmit = onSubmitEmail, onBack = onBackToPairing, onReadTerms = onReadTerms)
         }
 
         is UiState.EmailError -> CenteredScroll {
             logo()
             Spacer(Modifier.height(24.dp))
-            EmailContent(isError = true, isSubmitting = false, onSubmit = onSubmitEmail, onBack = onBackToPairing)
+            EmailContent(isError = true, isSubmitting = false, onSubmit = onSubmitEmail, onBack = onBackToPairing, onReadTerms = onReadTerms)
         }
 
         is UiState.Success -> CenteredScroll {
@@ -331,6 +420,7 @@ private fun EmailContent(
     isSubmitting: Boolean,
     onSubmit: (String, String) -> Unit,
     onBack: () -> Unit,
+    onReadTerms: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -388,7 +478,9 @@ private fun EmailContent(
             modifier = Modifier.fillMaxWidth(),
         )
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(20.dp))
+    TermsNotice(onReadTerms = onReadTerms)
+    Spacer(Modifier.height(12.dp))
     if (isSubmitting) {
         CircularProgressIndicator(color = MaterialTheme.theme.colors.primaryInteractive01)
     } else {

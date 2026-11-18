@@ -49,11 +49,16 @@ class AutomotiveAboutFragment : Fragment() {
     ) = contentWithoutConsumedInsets {
         AutomotiveTheme {
             AboutPage(
+                onOpenTerms = { openTerms() },
                 onOpenPrivacy = { openPrivacy() },
                 onOpenLicenses = { openLicenses() },
                 onOpenHelp = { openHelp() },
             )
         }
+    }
+
+    private fun openTerms() {
+        addPage(AutomotiveTermsFragment())
     }
 
     private fun openPrivacy() {
@@ -77,6 +82,7 @@ class AutomotiveAboutFragment : Fragment() {
 
 @Composable
 private fun AboutPage(
+    onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenLicenses: () -> Unit,
     onOpenHelp: () -> Unit,
@@ -104,6 +110,10 @@ private fun AboutPage(
             modifier = Modifier.padding(top = 56.dp, bottom = 16.dp),
         )
         SubTitle(stringResource(LR.string.settings_about_legal))
+        TextLinkButton(
+            text = stringResource(LR.string.settings_about_terms_of_serivce),
+            onClick = { onOpenTerms() },
+        )
         TextLinkButton(
             text = stringResource(LR.string.settings_about_privacy_policy),
             onClick = { onOpenPrivacy() },
@@ -155,5 +165,5 @@ private fun TextLinkButton(text: String, onClick: () -> Unit, modifier: Modifier
 @Composable
 @Preview
 private fun AboutPageRow() {
-    AboutPage(onOpenPrivacy = {}, onOpenLicenses = {}, onOpenHelp = {})
+    AboutPage(onOpenTerms = {}, onOpenPrivacy = {}, onOpenLicenses = {}, onOpenHelp = {})
 }
